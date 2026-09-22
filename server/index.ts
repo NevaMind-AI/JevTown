@@ -4,6 +4,16 @@ import { parse as parseEnv } from 'dotenv';
 import { chatCompletion, fetchEmbeddingBatch, detectMismatchedLLMProvider } from './model/llm.ts';
 import { recordObservation } from './model/langfuse.ts';
 import type { TraceEntry } from '../agent/model/trace.ts';
+import { databaseUrl, migrate } from './db/index.ts';
+import {
+  applyBatch,
+  bootstrap,
+  callsInWindow,
+  claimSession,
+  createWorld,
+  readEvents,
+  recordLlmCall,
+} from './worlds.ts';
 
 /**
  * The key-holding model proxy.
@@ -29,7 +39,13 @@ const PORT = Number(process.env.MODEL_PROXY_PORT) || 3001;
  */
 const CALL_CAP = Number(process.env.MODEL_PROXY_CALL_CAP) || 2000;
 
+/** Per-world quota (docs/11 §4.4), over a trailing window. Off when no database is configured. */
+const WORLD_QUOTA = Number(process.env.MODEL_WORLD_QUOTA) || 1000;
+const WORLD_QUOTA_WINDOW_MS = Number(process.env.MODEL_WORLD_QUOTA_WINDOW_MS) || 60 * 60 * 1000;
+
 let callsServed = 0;
+
+let storageReady = false;
 
 /** Load `.env.local` into the process, without clobbering anything already set. */
 function loadEnv() {
@@ -69,9 +85,14 @@ function send(response: ServerResponse, status: number, body: unknown) {
 }
 
 async function handle(request: IncomingMessage, response: ServerResponse) {
-  const path = (request.url ?? '').split('?')[0].replace(/^\/llm/, '');
-
+  const url = new URL(request.url ?? '/', 'http://localhost');
   if (request.method === 'OPTIONS') return send(response, 204, {});
+
+  if (url.pathname.startsWith('/worlds')) {
+    return await handleWorlds(request, response, url);
+  }
+
+  const path = url.pathname.replace(/^\/llm/, '');
   if (request.method !== 'POST') return send(response, 405, { error: 'POST only' });
 
   // The trace endpoint is free: it writes observability, never a model call, and counting it
@@ -93,17 +114,100 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
 
   if (path === '/chat') {
     const body = await readJson(request);
+    const quota = await overQuota(body.worldId);
+    if (quota) return send(response, 429, { error: quota });
+    const started = Date.now();
     const result = await chatCompletion({ ...body, stream: false });
+    await logCall({
+      worldId: body.worldId,
+      purpose: body.trace?.name,
+      model: body.model,
+      promptTokens: result.usage?.input,
+      completionTokens: result.usage?.output,
+      latencyMs: Date.now() - started,
+      traceId: body.trace?.traceId,
+    });
     return send(response, 200, result);
   }
 
   if (path === '/embed') {
-    const { texts } = (await readJson(request)) as { texts: string[] };
+    const { texts, worldId } = (await readJson(request)) as { texts: string[]; worldId?: string };
+    const quota = await overQuota(worldId);
+    if (quota) return send(response, 429, { error: quota });
+    const started = Date.now();
     const { embeddings, ms } = await fetchEmbeddingBatch(texts);
+    await logCall({ worldId, purpose: 'embed', latencyMs: Date.now() - started });
     return send(response, 200, { embeddings, ms });
   }
 
   return send(response, 404, { error: `Unknown endpoint ${path}` });
+}
+
+/**
+ * The per-world quota.
+ *
+ * Returns a message when the world is over, `undefined` when it is not or when there is no
+ * database to ask. A missing database means no quota rather than no calls: the proxy has to keep
+ * working for anyone running without storage, and the process cap still applies.
+ */
+async function overQuota(worldId: string | undefined): Promise<string | undefined> {
+  if (!storageReady || !worldId) return undefined;
+  const used = await callsInWindow(worldId, WORLD_QUOTA_WINDOW_MS);
+  if (used < WORLD_QUOTA) return undefined;
+  return `World ${worldId} has used ${used} model calls in the last ${Math.round(
+    WORLD_QUOTA_WINDOW_MS / 60000,
+  )} minutes, at or over its quota of ${WORLD_QUOTA}.`;
+}
+
+/** Best-effort: a spend record that cannot be written must not fail the call it describes. */
+async function logCall(call: Parameters<typeof recordLlmCall>[0]) {
+  if (!storageReady) return;
+  try {
+    await recordLlmCall(call);
+  } catch (error) {
+    console.error('Could not record an llm_calls row:', error);
+  }
+}
+
+/** The storage routes. Whole-batch or nothing, and never a simulation step (docs/11 §4.1). */
+async function handleWorlds(request: IncomingMessage, response: ServerResponse, url: URL) {
+  if (!storageReady) {
+    return send(response, 503, { error: 'No DATABASE_URL is configured; storage is disabled.' });
+  }
+  const segments = url.pathname.split('/').filter(Boolean); // worlds[, :id[, action]]
+  const method = request.method ?? 'GET';
+
+  if (segments.length === 1 && method === 'POST') {
+    const body = await readJson(request);
+    if (!body?.id) return send(response, 400, { error: 'A world needs an id' });
+    return send(response, 200, await createWorld(body));
+  }
+
+  const worldId = segments[1];
+  if (!worldId) return send(response, 404, { error: 'Unknown storage route' });
+  const action = segments[2];
+
+  if (action === 'bootstrap' && method === 'GET') {
+    const result = await bootstrap(worldId);
+    if (!result) return send(response, 404, { error: `No world ${worldId}` });
+    return send(response, 200, result);
+  }
+  if (action === 'session' && method === 'POST') {
+    const body = await readJson(request);
+    const result = await claimSession(worldId, body);
+    return send(response, result.ok ? 200 : 409, result);
+  }
+  if (action === 'batches' && method === 'POST') {
+    const body = await readJson(request);
+    const result = await applyBatch(worldId, body);
+    return send(response, result.ok ? 200 : 409, result);
+  }
+  if (action === 'events' && method === 'GET') {
+    const from = Number(url.searchParams.get('from') ?? 0);
+    const to = Number(url.searchParams.get('to') ?? Number.MAX_SAFE_INTEGER);
+    return send(response, 200, { events: await readEvents(worldId, from, to) });
+  }
+  return send(response, 404, { error: 'Unknown storage route' });
 }
 
 loadEnv();
@@ -112,6 +216,23 @@ try {
 } catch (error) {
   console.error(`Model proxy: ${(error as Error).message}`);
 }
+
+async function openStorage() {
+  if (!databaseUrl()) {
+    console.log('No DATABASE_URL; running as a model proxy only.');
+    return;
+  }
+  try {
+    await migrate();
+    storageReady = true;
+    console.log('Storage ready.');
+  } catch (error) {
+    // A proxy that cannot reach its database is still a proxy. The storage routes answer 503
+    // until it can, which is a better failure than refusing to start.
+    console.error(`Storage unavailable: ${(error as Error).message}`);
+  }
+}
+void openStorage();
 
 createServer((request, response) => {
   handle(request, response).catch((error: unknown) => {
