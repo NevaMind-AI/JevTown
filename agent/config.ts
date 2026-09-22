@@ -30,3 +30,16 @@ export function numMemoriesToSearch(fallback: number): number {
 export function mysteryGiftEnabled(): boolean {
   return setting('GOD_MYSTERY_GIFT') === '1';
 }
+
+/**
+ * Which decider answers the *action* decision -- what to do next -- the chat model or Jev
+ * (docs/12 §2). Named for the decision rather than for the agent, because it is one of several an
+ * agent makes: `ACTION_DECIDER` is a sibling of whatever eventually chooses how state is written.
+ *
+ * A flag rather than a replacement, because the two are not equivalent — the Jev decider drops the
+ * prose the chat one writes. Keeping both selectable is also what makes them comparable: same
+ * manifest, same world, one variable.
+ */
+export function decider(): 'llm' | 'jev' {
+  return setting('ACTION_DECIDER') === 'jev' ? 'jev' : 'llm';
+}

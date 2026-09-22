@@ -2,6 +2,7 @@ import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { parse as parseEnv } from 'dotenv';
 import { chatCompletion, fetchEmbeddingBatch, detectMismatchedLLMProvider } from './model/llm.ts';
+import { systemOne, type SystemOneRequest } from './model/jev.ts';
 import { recordObservation } from './model/langfuse.ts';
 import type { TraceEntry } from '../agent/model/trace.ts';
 import { databaseUrl, migrate } from './db/index.ts';
@@ -122,6 +123,31 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
       worldId: body.worldId,
       purpose: body.trace?.name,
       model: body.model,
+      promptTokens: result.usage?.input,
+      completionTokens: result.usage?.output,
+      latencyMs: Date.now() - started,
+      traceId: body.trace?.traceId,
+    });
+    return send(response, 200, result);
+  }
+
+  // The other kind of model call (docs/12 §5). It counts against the same cap and the same quota,
+  // which is deliberately blunt: both are denominated in calls, and a System One call costs about
+  // two thousandths of what a chat completion does. Raise `MODEL_PROXY_CALL_CAP` for a long run
+  // with the Jev decider rather than exempting it -- a runaway loop is still a runaway loop.
+  if (path === '/systemone') {
+    // Typed on the way in, as `/embed` is: the route forwards a body it has not read, so the one
+    // field it does read -- the world to bill -- is worth naming.
+    const body = (await readJson(request)) as SystemOneRequest & { worldId?: string };
+    const quota = await overQuota(body.worldId);
+    if (quota) return send(response, 429, { error: quota });
+    const started = Date.now();
+    const result = await systemOne(body);
+    await logCall({
+      worldId: body.worldId,
+      purpose: body.trace?.name,
+      // What answered, not what was asked for: an alias hides the version.
+      model: result.model,
       promptTokens: result.usage?.input,
       completionTokens: result.usage?.output,
       latencyMs: Date.now() - started,
