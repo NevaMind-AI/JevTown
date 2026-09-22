@@ -1,4 +1,4 @@
-import { ChatTrace, LLMMessage, chatCompletion, fetchEmbedding } from './model/llm';
+import { ChatTrace, LLMMessage, chatCompletion, fetchEmbedding } from './model/client';
 import { asyncMap } from '../engine/util/asyncMap';
 import { GameId } from '../engine/aiTown/ids';
 import { Tracer } from './model/tracing';

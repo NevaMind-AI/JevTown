@@ -1,4 +1,4 @@
-import { LLMMessage, chatCompletion, fetchEmbedding } from './model/llm';
+import { LLMMessage, chatCompletion, fetchEmbedding } from './model/client';
 import { GameId } from '../engine/aiTown/ids';
 import { AgentContext } from './ports';
 import {

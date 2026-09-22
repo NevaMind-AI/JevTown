@@ -1,4 +1,4 @@
-import { LLMMessage, chatCompletion } from './model/llm';
+import { LLMMessage, chatCompletion } from './model/client';
 import * as memory from './memory';
 import * as embeddingsCache from './embeddingsCache';
 import { GameId } from '../engine/aiTown/ids';

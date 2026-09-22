@@ -1,4 +1,4 @@
-import { chatCompletion } from './model/llm';
+import { chatCompletion } from './model/client';
 import { extractJsonObject } from '../engine/prose/envelope';
 import {
   BOTH_TIERS_STATE_CONTRACT,

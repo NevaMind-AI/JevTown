@@ -1,5 +1,5 @@
 import { AgentContext } from './ports';
-import { fetchEmbeddingBatch } from './model/llm';
+import { fetchEmbeddingBatch } from './model/client';
 
 /**
  * Embeddings are expensive and repeat constantly, so they are cached by a hash of their text.

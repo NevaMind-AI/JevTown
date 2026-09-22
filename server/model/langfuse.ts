@@ -17,6 +17,11 @@
 // Everything here is best-effort. If the keys are unset we never build a span; if the export
 // fails we log and move on. A tracing backend must never be able to fail a sim tick.
 
+import type { Observation, TraceEntry, TraceRef } from '../../agent/model/trace.ts';
+import { randomSpanId } from '../../agent/model/trace.ts';
+
+export type { Observation, TraceEntry, TraceRef };
+
 const OTLP_PATH = '/api/public/otel/v1/traces';
 
 // Attribute values above this are truncated. Prompts in this codebase carry whole transcripts and
@@ -64,46 +69,6 @@ export function langfuseEnabled(): boolean {
   return langfuseConfig() !== null;
 }
 
-// ---------------------------------------------------------------- ids
-
-const HEX = '0123456789abcdef';
-
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  const bytes = new Uint8Array(digest);
-  let out = '';
-  for (const byte of bytes) out += HEX[byte >> 4] + HEX[byte & 15];
-  return out;
-}
-
-/**
- * A stable OTLP trace id (16 bytes / 32 hex chars) for a logical unit of work.
- *
- * This is what makes a conversation span across processes. A tier-(a) conversation turn is its own
- * `agentGenerateMessage` action invocation, so there is no in-memory parent to hang children off
- * and nothing shared between turns but the conversation id itself. Hashing that id gives every
- * turn the same trace id with zero coordination and nothing to persist.
- */
-export async function traceIdForKey(key: string): Promise<string> {
-  return (await sha256Hex(key)).slice(0, 32);
-}
-
-/** A stable OTLP span id (8 bytes / 16 hex chars) for a logical unit of work. */
-export async function spanIdForKey(key: string): Promise<string> {
-  // Offset into a different part of the digest than `traceIdForKey` so a span id is never a
-  // prefix of its own trace id -- purely cosmetic, but it makes the two easy to tell apart when
-  // reading logs.
-  return (await sha256Hex(key)).slice(32, 48);
-}
-
-export function randomSpanId(): string {
-  return crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-}
-
-export function randomTraceId(): string {
-  return crypto.randomUUID().replace(/-/g, '');
-}
-
 // ---------------------------------------------------------------- span construction
 
 type AttributeValue =
@@ -124,49 +89,6 @@ type OtlpSpan = {
   endTimeUnixNano: string;
   attributes: Attribute[];
   status?: { code: number; message?: string };
-};
-
-export type ObservationLevel = 'DEBUG' | 'DEFAULT' | 'WARNING' | 'ERROR';
-
-export type ObservationType =
-  | 'span'
-  | 'generation'
-  | 'event'
-  | 'embedding'
-  | 'agent'
-  | 'tool'
-  | 'chain';
-
-/** Where an observation hangs: which trace, and under which parent (if any). */
-export type TraceRef = {
-  traceId: string;
-  /** Omit to make this observation a root of its trace. Langfuse tolerates several roots. */
-  parentSpanId?: string;
-  /** Names the *trace*, not the observation. Set it on the spans that should title the trace. */
-  traceName?: string;
-  sessionId?: string;
-  userId?: string;
-  tags?: string[];
-  traceMetadata?: Record<string, unknown>;
-};
-
-export type Observation = {
-  name: string;
-  /** Force a specific span id -- used when the span must be re-emitted and merged across calls. */
-  spanId?: string;
-  type?: ObservationType;
-  /** Epoch ms. */
-  startTime: number;
-  /** Epoch ms. */
-  endTime: number;
-  input?: unknown;
-  output?: unknown;
-  model?: string;
-  modelParameters?: Record<string, unknown>;
-  usage?: { input?: number; output?: number; total?: number };
-  metadata?: Record<string, unknown>;
-  level?: ObservationLevel;
-  statusMessage?: string;
 };
 
 function str(key: string, value: string): Attribute {
