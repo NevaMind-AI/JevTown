@@ -3,11 +3,11 @@ import { Id } from '../_generated/dataModel';
 import { ActionCtx, internalMutation } from '../_generated/server';
 import { api, internal } from '../_generated/api';
 import { LLMMessage, chatCompletion } from '../util/llm';
-import { GameId } from '../aiTown/ids';
-import { MAX_INTERACTION_TURNS } from '../constants';
-import { ENVELOPE_INSTRUCTION, TARGET_ENVELOPE_INSTRUCTION } from '../prose/contract';
-import { parseEnvelope } from '../prose/envelope';
-import { parseStateDocument } from '../prose/stateDocument';
+import { GameId } from '../../engine/aiTown/ids';
+import { MAX_INTERACTION_TURNS } from '../../engine/constants';
+import { ENVELOPE_INSTRUCTION, TARGET_ENVELOPE_INSTRUCTION } from '../../engine/prose/contract';
+import { parseEnvelope } from '../../engine/prose/envelope';
+import { parseStateDocument } from '../../engine/prose/stateDocument';
 import {
   PromptContext,
   commonKnowledgeSection,

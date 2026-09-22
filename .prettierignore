@@ -2,6 +2,7 @@
 /website/
 
 # Generated files (Prettier also respects .gitignore)
+/convex/_generated/
 /data/gentle.js
 /data/animations/
 /src/editor/maps/

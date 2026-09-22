@@ -2,7 +2,7 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
 import closeImg from '../../assets/close.svg';
-import { GameId } from '../../convex/aiTown/ids';
+import { GameId } from '../../engine/aiTown/ids';
 import { ServerGame } from '../hooks/serverGame';
 import { SelectElement } from './Player';
 import { StateDocument } from './StateDocument';

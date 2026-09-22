@@ -3,9 +3,9 @@ import { ActionCtx, DatabaseReader, internalMutation, internalQuery } from '../_
 import { Doc, Id } from '../_generated/dataModel';
 import { internal } from '../_generated/api';
 import { ChatTrace, LLMMessage, chatCompletion, fetchEmbedding } from '../util/llm';
-import { asyncMap } from '../util/asyncMap';
-import { GameId, agentId, conversationId, playerId } from '../aiTown/ids';
-import { SerializedPlayer } from '../aiTown/player';
+import { asyncMap } from '../../engine/util/asyncMap';
+import { GameId, agentId, conversationId, playerId } from '../../engine/aiTown/ids';
+import { SerializedPlayer } from '../../engine/aiTown/player';
 import { memoryFields } from './schema';
 import { Tracer } from './tracing';
 

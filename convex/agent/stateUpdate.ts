@@ -2,11 +2,15 @@ import { Id } from '../_generated/dataModel';
 import { ActionCtx } from '../_generated/server';
 import { api, internal } from '../_generated/api';
 import { LLMMessage, chatCompletion, fetchEmbedding } from '../util/llm';
-import { GameId } from '../aiTown/ids';
-import { ENVELOPE_INSTRUCTION, STATE_REASK_LIMIT, STATE_WORD_BUDGET } from '../prose/contract';
-import { EnvelopeUpdate, parseEnvelope } from '../prose/envelope';
+import { GameId } from '../../engine/aiTown/ids';
+import {
+  ENVELOPE_INSTRUCTION,
+  STATE_REASK_LIMIT,
+  STATE_WORD_BUDGET,
+} from '../../engine/prose/contract';
+import { EnvelopeUpdate, parseEnvelope } from '../../engine/prose/envelope';
 import { Tracer } from './tracing';
-import { Conformance, StateDocument, parseStateDocument } from '../prose/stateDocument';
+import { Conformance, StateDocument, parseStateDocument } from '../../engine/prose/stateDocument';
 import { stateWritingSystemPrompt } from './promptContext';
 import { calculateImportance } from './memory';
 

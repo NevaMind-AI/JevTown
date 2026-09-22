@@ -10,14 +10,14 @@ import {
   createEntityArgs,
   subtractEntityAnchors,
   validateWorldFile,
-} from './aiTown/worldFile';
+} from '../engine/aiTown/worldFile';
 import { insertInput } from './aiTown/insertInput';
 import { Id } from './_generated/dataModel';
 import { createEngine } from './aiTown/main';
-import { ENGINE_ACTION_DURATION } from './constants';
+import { ENGINE_ACTION_DURATION } from '../engine/constants';
 import { detectMismatchedLLMProvider } from './util/llm';
-import { Rng } from './util/rng';
-import { COMMON_KNOWLEDGE_ID } from './prose/contract';
+import { Rng } from '../engine/util/rng';
+import { COMMON_KNOWLEDGE_ID } from '../engine/prose/contract';
 import { appendEntityState } from './prose/store';
 
 // `data/gentle.js` predates docs/07-map-entity-split.md and exports neither `collision` nor

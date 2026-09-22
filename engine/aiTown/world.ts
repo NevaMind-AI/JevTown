@@ -11,13 +11,6 @@ import { Rng, serializedRng } from '../util/rng';
 // from the point they're next loaded even though their history isn't reproducible.
 const LEGACY_SEED = 0;
 
-export const historicalLocations = v.array(
-  v.object({
-    playerId,
-    location: v.bytes(),
-  }),
-);
-
 export const serializedWorld = {
   nextId: v.number(),
 
@@ -35,7 +28,6 @@ export const serializedWorld = {
   // at an entity's (docs/05 §5.3, §8). The prose itself is never in the world document; this
   // integer is the change signal, and it is the only thing common knowledge costs per step.
   commonKnowledgeVersion: v.optional(v.number()),
-  historicalLocations: v.optional(historicalLocations),
 };
 export type SerializedWorld = ObjectType<typeof serializedWorld>;
 
@@ -48,10 +40,9 @@ export class World {
   agents: Map<GameId<'agents'>, Agent>;
   entities: Map<GameId<'entities'>, Entity>;
   commonKnowledgeVersion: number;
-  historicalLocations?: Map<GameId<'players'>, ArrayBuffer>;
 
   constructor(serialized: SerializedWorld) {
-    const { nextId, historicalLocations } = serialized;
+    const { nextId } = serialized;
 
     this.nextId = nextId;
     this.seed = serialized.seed ?? LEGACY_SEED;
@@ -61,13 +52,6 @@ export class World {
     this.agents = parseMap(serialized.agents, Agent, (a) => a.id);
     this.entities = parseMap(serialized.entities ?? [], Entity, (e) => e.id);
     this.commonKnowledgeVersion = serialized.commonKnowledgeVersion ?? 0;
-
-    if (historicalLocations) {
-      this.historicalLocations = new Map();
-      for (const { playerId, location } of historicalLocations) {
-        this.historicalLocations.set(parseGameId('players', playerId), location);
-      }
-    }
   }
 
   playerConversation(player: Player): Conversation | undefined {
@@ -103,12 +87,6 @@ export class World {
       agents: this.sortedAgents().map((a) => a.serialize()),
       entities: this.sortedEntities().map((e) => e.serialize()),
       commonKnowledgeVersion: this.commonKnowledgeVersion,
-      historicalLocations:
-        this.historicalLocations &&
-        [...this.historicalLocations.entries()].map(([playerId, location]) => ({
-          playerId,
-          location,
-        })),
     };
   }
 }

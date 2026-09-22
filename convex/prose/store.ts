@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { DatabaseReader, DatabaseWriter, internalMutation } from '../_generated/server';
 import { Id } from '../_generated/dataModel';
-import { AUDIT_EXCERPT_CHARS, BLOB_THRESHOLD_BYTES } from './contract';
+import { AUDIT_EXCERPT_CHARS, BLOB_THRESHOLD_BYTES } from '../../engine/prose/contract';
 
 /**
  * Write helpers for the prose tier. These are plain functions over the database rather than

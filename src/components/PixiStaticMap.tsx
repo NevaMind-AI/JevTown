@@ -1,6 +1,7 @@
 import { PixiComponent, applyDefaultProps } from '@pixi/react';
 import * as PIXI from 'pixi.js';
-import type { AnimatedSprite, MapRender, TileMap } from '../../prototype/mapData';
+import type { AnimatedSprite, WorldMap } from '../../engine/aiTown/worldMap';
+import type { MapRender } from '../../prototype/mapData';
 
 /**
  * The rendering subset of a world map.
@@ -26,11 +27,7 @@ export type RenderableMap = Pick<
 
 export const PixiStaticMap = PixiComponent('StaticMap', {
   create: (props: {
-<<<<<<< HEAD
-    map: TileMap & { animationSheets?: MapRender['animationSheets'] };
-=======
     map: RenderableMap & { animationSheets?: MapRender['animationSheets'] };
->>>>>>> 2937c94 (🔀 merge: bring feat/agentic onto dev (phase 1))
     assetBase?: string;
     [k: string]: any;
   }) => {

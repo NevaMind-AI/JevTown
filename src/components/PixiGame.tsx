@@ -18,7 +18,6 @@ export const PixiGame = (props: {
   worldId: Id<'worlds'>;
   engineId: Id<'engines'>;
   game: ServerGame;
-  historicalTime: number | undefined;
   width: number;
   height: number;
   setSelectedElement: SelectElement;
@@ -129,7 +128,6 @@ export const PixiGame = (props: {
           player={p}
           isViewer={p.id === humanPlayerId}
           onClick={props.setSelectedElement}
-          historicalTime={props.historicalTime}
         />
       ))}
     </TownViewport>

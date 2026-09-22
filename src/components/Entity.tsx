@@ -1,7 +1,7 @@
 import { Container, Graphics, Text } from '@pixi/react';
 import * as PIXI from 'pixi.js';
 import { useCallback } from 'react';
-import { Entity as ServerEntity } from '../../convex/aiTown/entity.ts';
+import { Entity as ServerEntity } from '../../engine/aiTown/entity.ts';
 import { ServerGame } from '../hooks/serverGame.ts';
 import { SelectElement } from './Player.tsx';
 
