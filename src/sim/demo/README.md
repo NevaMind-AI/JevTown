@@ -69,9 +69,21 @@ the gap between them, for one map, is an adapter and a world file rather than a 
 ## Watching it
 
 The first line takes a few seconds: every agent's opening decision is a model call, and
-`MIN_DECISION_INTERVAL` gates how often one may make another. The panel on the right is the
-transcript; bubbles over heads are the last eight seconds. The camera follows the crowd unless you
-turn that off, and the viewport drags and zooms either way.
+`MIN_DECISION_INTERVAL` gates how often one may make another. Bubbles over heads are the last eight
+seconds. The camera follows the crowd; the viewport drags and zooms, but a drag away from them is
+pulled back within a second.
+
+The panel on the right is one column in time order, with a switch for each of the two streams in it:
+
+- **decisions** — one line per `agentDecideAction`: who decided, what they chose, and the decider's
+  own `reason` for it. Under `ACTION_DECIDER=jev` that reason is the distribution the choice came
+  from (`seek 0.83 · talk to Bob p=0.62 c=0.70`, docs/12 §3); under the default chat decider it is a
+  sentence. Anything the decider reported as a problem is listed under it.
+- **conversations** — the transcript, one block per conversation so a two-way exchange is not
+  shredded by the decisions three other agents made during it.
+
+The checkbox is labelled for whichever decider the flag selected, so a panel saying `llm decisions`
+is `ACTION_DECIDER` not being set.
 
 If it stays silent, the console says why — a `429` is the call cap, and everything else is
 `agent/model/client.ts` failing to reach the proxy.

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Container, Stage } from '@pixi/react';
 import { Scene } from '../../prototype/content';
+import { decider } from '../../agent/config';
 import { StoredMessage } from '../../agent/ports';
 import { GameSnapshot } from '../hooks/gameSnapshot';
 import { useElementSize } from '../hooks/useElementSize';
@@ -104,7 +105,6 @@ function DemoStage({ scene, runtime }: { scene: Scene; runtime: AgenticRuntime }
   const [wrapperRef, { width, height }] = useElementSize();
   const [, setFrame] = useState(0);
   const messages = useConversationMessages(runtime);
-  const [follow, setFollow] = useState(true);
   const [focus, setFocus] = useState({
     x: runtime.game.worldMap.width / 2,
     y: runtime.game.worldMap.height / 2,
@@ -116,12 +116,10 @@ function DemoStage({ scene, runtime }: { scene: Scene; runtime: AgenticRuntime }
    * `PixiViewport` clamps zoom to *cover* the screen rather than to fit the map in it
    * (`viewportScale`), so on this room there is always more world than viewport and the cast
    * will not stay in it on their own. Recentring on their midpoint once a second is enough to
-   * follow them without the picture sliding continuously -- and it stops entirely when the
-   * checkbox is off, because the viewport is draggable and a follow that cannot be switched off
-   * would drag it back.
+   * follow them without the picture sliding continuously. There is no switch for it: the viewport
+   * still drags and zooms, but a drag away from the crowd is pulled back at the next tick.
    */
   useEffect(() => {
-    if (!follow) return;
     const timer = window.setInterval(() => {
       const players = runtime.game.world.sortedPlayers();
       if (!players.length) return;
@@ -131,7 +129,7 @@ function DemoStage({ scene, runtime }: { scene: Scene; runtime: AgenticRuntime }
       });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [runtime, follow]);
+  }, [runtime]);
 
   useEffect(() => {
     let handle = 0;
@@ -173,7 +171,7 @@ function DemoStage({ scene, runtime }: { scene: Scene; runtime: AgenticRuntime }
               map={game.worldMap}
               width={width}
               height={height}
-              focus={follow ? focus : undefined}
+              focus={focus}
               // The room draws itself with art, so the tile layers stay unpainted -- the same
               // decision `LocalGame` makes for every `remaining-time` scene.
               background={<></>}
@@ -224,7 +222,7 @@ function DemoStage({ scene, runtime }: { scene: Scene; runtime: AgenticRuntime }
           </Stage>
         )}
       </div>
-      <Transcript runtime={runtime} log={messages.log} follow={follow} onFollow={setFollow} />
+      <Transcript runtime={runtime} log={messages.log} />
     </div>
   );
 }
@@ -279,64 +277,202 @@ function useConversationMessages(runtime: AgenticRuntime) {
   return { spoken, log };
 }
 
+/** The arguments of `agentDecideAction`, the input a decision re-enters the world through. */
+type DecideArgs = {
+  agentId: string;
+  action: 'approach' | 'wander' | 'idle';
+  target?: string;
+  anchor?: string;
+  description?: string;
+  reason: string;
+  problems?: string[];
+};
+
+interface DecisionEntry {
+  id: string;
+  at: number;
+  who: string;
+  what: string;
+  reason: string;
+  problems: string[];
+}
+
+/**
+ * The decisions, read straight off the runtime's input log.
+ *
+ * Nothing extra is recorded to show these. Every decision already re-enters the world as an
+ * `agentDecideAction` input (docs/09 §5) and `AgenticRuntime.send` stamps each input with the wall
+ * time it landed, which is exactly what is needed to merge them with the transcript in time order.
+ * A decision belongs to no conversation by definition -- it is what an agent does *instead* of
+ * being in one -- so this is the only place the two streams meet.
+ *
+ * `reason` is the field worth reading, and what it contains depends on who answered. Under
+ * `ACTION_DECIDER=jev` the model writes no prose at all and the reason is synthesized from the
+ * numbers -- `seek 0.83 · talk to Bob p=0.62 c=0.70`, the distribution the choice actually came
+ * from (docs/12 §3). Under the chat decider it is a sentence the model wrote about itself. Both
+ * are that decider's raw output, so both are shown verbatim rather than prettified.
+ */
+function decisionLog(runtime: AgenticRuntime): DecisionEntry[] {
+  const entries: DecisionEntry[] = [];
+  for (const event of runtime.events()) {
+    if (event.name !== 'agentDecideAction') continue;
+    const args = event.args as DecideArgs;
+    const agent = runtime.game.world.agents.get(args.agentId as never);
+    entries.push({
+      id: `decision-${event.idx}`,
+      at: event.wallTime,
+      who: agent ? nameIn(runtime, agent.playerId) : args.agentId,
+      what: describeAction(runtime, args),
+      reason: args.reason,
+      problems: args.problems ?? [],
+    });
+  }
+  return entries;
+}
+
+function nameIn(runtime: AgenticRuntime, playerId: string): string {
+  return runtime.game.playerDescriptions.get(playerId as never)?.name ?? playerId;
+}
+
+/** What the decider picked: the action, and the thing it is about. */
+function describeAction(runtime: AgenticRuntime, args: DecideArgs): string {
+  switch (args.action) {
+    case 'approach':
+      // A tier-(a) target is a player id and has a name; anything else is an entity, which does
+      // not, so its id stands in.
+      return `approach ${
+        args.target?.startsWith('p:') ? nameIn(runtime, args.target) : (args.target ?? '?')
+      }`;
+    case 'wander':
+      // Anchor ids are snake_case and readable once they are not, as in `decideJev.ts`.
+      return `wander to the ${(args.anchor ?? '?').replace(/_/g, ' ')}`;
+    default:
+      return args.description ?? 'idle';
+  }
+}
+
+/**
+ * The right-hand column: decisions and conversations, in one list, in the order they happened.
+ *
+ * Two independent switches rather than two panes. The point of the check is the loop -- decide,
+ * walk, invite, converse -- and a decision sitting between the conversation it interrupted and the
+ * one it started is the only arrangement in which that is visible. Either stream can be turned off
+ * on its own: the decisions alone are the decider under a microscope, the conversations alone are
+ * what the demo used to show.
+ *
+ * A conversation stays a **single block** rather than dissolving into its lines. Two agents talking
+ * is one thing happening, and interleaving its messages with three other agents' decisions would
+ * shred it. The block sorts by its first line, so it keeps its place in the column while it grows
+ * and the decisions taken during it fall in after it.
+ */
 function Transcript({
   runtime,
   log,
-  follow,
-  onFollow,
 }: {
   runtime: AgenticRuntime;
   log: { id: string; list: StoredMessage[] }[];
-  follow: boolean;
-  onFollow: (value: boolean) => void;
 }) {
+  const [showDecisions, setShowDecisions] = useState(true);
+  const [showConversations, setShowConversations] = useState(true);
   const bottom = useRef<HTMLDivElement>(null);
   const total = log.reduce((sum, entry) => sum + entry.list.length, 0);
+  const live = new Set([...runtime.game.world.conversations.keys()]);
+  const agents = runtime.game.world.agents.size;
+
+  const feed = [
+    ...(showConversations
+      ? log.map((conversation) => ({
+          kind: 'conversation' as const,
+          at: conversation.list[0]?.createdAt ?? 0,
+          ...conversation,
+        }))
+      : []),
+    ...(showDecisions
+      ? decisionLog(runtime).map((decision) => ({ kind: 'decision' as const, ...decision }))
+      : []),
+  ].sort((a, b) => a.at - b.at);
+
   useEffect(() => {
     // A block body, not a concise one: a concise arrow hands React whatever the call returned as
     // the effect's cleanup, and React calls it.
     bottom.current?.scrollIntoView({ block: 'end' });
-  }, [total]);
-  const nameOf = (playerId: string) =>
-    runtime.game.playerDescriptions.get(playerId as never)?.name ?? playerId;
-  const live = new Set([...runtime.game.world.conversations.keys()]);
-  const agents = runtime.game.world.agents.size;
+  }, [feed.length, total]);
 
   return (
-    <aside className="flex min-h-0 shrink-0 flex-col gap-3 overflow-y-auto border-brown-900 bg-brown-800 px-4 py-5 lg:w-96 lg:border-l-8">
-      <header>
+    <aside className="flex max-h-[50dvh] min-h-0 shrink-0 flex-col border-brown-900 bg-brown-800 lg:max-h-none lg:w-96 lg:border-l-8">
+      {/*
+        The header does not scroll: the switches are the controls for what is below them, and a
+        column that grows all evening would carry them off the top within a minute. So the panel
+        is the flex container and only the feed inside it scrolls -- which is also why the aside
+        needs a bounded height when it is stacked under the stage rather than beside it, since
+        nothing else would stop it from growing past the viewport on a narrow screen.
+      */}
+      <header className="shrink-0 border-b border-brown-900 px-4 pb-3 pt-5">
         <h1 className="text-lg">Solarium · agentic flow check</h1>
         <p className="text-sm opacity-70">
           {agents} agent{agents === 1 ? '' : 's'}, no player, no god, nothing saved. {total} message
           {total === 1 ? '' : 's'} so far.
         </p>
-        <label className="mt-2 flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={follow} onChange={(e) => onFollow(e.target.checked)} />
-          Keep the camera on the agents
-        </label>
+        <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={showDecisions}
+              onChange={(e) => setShowDecisions(e.target.checked)}
+            />
+            {/* Named for whoever is actually answering: the flag has two settings (docs/12 §2). */}
+            {decider()} decisions
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={showConversations}
+              onChange={(e) => setShowConversations(e.target.checked)}
+            />
+            conversations
+          </label>
+        </div>
       </header>
-      {log.length === 0 && (
-        <p className="text-sm opacity-70">
-          Nobody has spoken yet. The first decision is a model call, so give it a few seconds — and
-          check the console if it stays quiet.
-        </p>
-      )}
-      {log.map(({ id, list }) => (
-        <section key={id} className="border border-brown-500 p-3">
-          <h2 className="mb-2 text-xs uppercase tracking-wide opacity-60">
-            {live.has(id as never) ? 'talking' : 'ended'}
-          </h2>
-          <ol className="flex flex-col gap-2">
-            {list.map((message) => (
-              <li key={message.messageUuid} className="text-sm">
-                <span className="opacity-60">{nameOf(message.author)}: </span>
-                {message.text}
-              </li>
-            ))}
-          </ol>
-        </section>
-      ))}
-      <div ref={bottom} />
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-4">
+        {feed.length === 0 && (
+          <p className="text-sm opacity-70">
+            {showDecisions || showConversations
+              ? 'Nothing has happened yet. The first decision is a model call, so give it a few seconds — and check the console if it stays quiet.'
+              : 'Both switches are off, so there is nothing to show.'}
+          </p>
+        )}
+        {feed.map((entry) =>
+          entry.kind === 'conversation' ? (
+            <section key={entry.id} className="border border-brown-500 p-3">
+              <h2 className="mb-2 text-xs uppercase tracking-wide opacity-60">
+                {live.has(entry.id as never) ? 'talking' : 'ended'}
+              </h2>
+              <ol className="flex flex-col gap-2">
+                {entry.list.map((message) => (
+                  <li key={message.messageUuid} className="text-sm">
+                    <span className="opacity-60">{nameIn(runtime, message.author)}: </span>
+                    {message.text}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ) : (
+            <div key={entry.id} className="border-l-2 border-brown-500 pl-3">
+              <p className="text-sm">
+                <span className="opacity-60">{entry.who} · </span>
+                {entry.what}
+              </p>
+              <p className="text-xs opacity-60">{entry.reason}</p>
+              {entry.problems.map((problem, i) => (
+                <p key={i} className="text-xs text-brown-300">
+                  {problem}
+                </p>
+              ))}
+            </div>
+          ),
+        )}
+        <div ref={bottom} />
+      </div>
     </aside>
   );
 }
