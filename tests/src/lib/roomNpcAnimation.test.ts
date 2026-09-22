@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import asset from '../../../public/assets/room-npcs/rowan.json';
 import { loadRoomNpcAsset, roomNpcFrame, roomNpcId } from '../../../src/lib/roomNpcAnimation';
 

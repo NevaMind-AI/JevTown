@@ -6,7 +6,7 @@
     "play:local": "vite --mode memory",
     "build:local": "vite build --mode memory",
     "prototype": "tsc --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck --outDir .prototype prototype/world.ts prototype/cli.ts && node .prototype/cli.js",
-    "test:prototype": "jest --runInBand tests/engine",
+    "test:prototype": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand tests/engine",
     "dev": "npm run play:local",
     "build": "tsc && vite build --mode memory",
     "fmt": "prettier --write .",

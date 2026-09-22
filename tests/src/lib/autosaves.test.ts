@@ -1,13 +1,17 @@
+import { jest } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { MemoryWorld } from '../../../prototype/world';
-import { catalogue, playSlot, restoreSlot, saveChunk } from '../../../src/lib/autosaves';
 import room from '../../../content/scenes/room.json';
 import corridor from '../../../content/scenes/corridor.json';
 import story from '../../../content/story.json';
 
-jest.mock('../../../src/lib/localMode', () => ({ saveDirectory: 'test-saves' }));
+// ESM mocks apply only to modules imported after registration.
+jest.unstable_mockModule('../../../src/lib/localMode', () => ({ saveDirectory: 'test-saves' }));
 
 test('storage writes two-endpoint segments, restores old files, and rejects corruption before publishing', async () => {
+  const { catalogue, playSlot, restoreSlot, saveChunk } = await import(
+    '../../../src/lib/autosaves'
+  );
   const files = new Map<string, string>();
   const directory = {
     getDirectoryHandle: async () => directory,

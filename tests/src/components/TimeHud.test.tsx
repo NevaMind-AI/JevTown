@@ -2,8 +2,6 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import TimeHud from '../../../src/components/TimeHud';
 
-jest.mock('../../../src/components/TimeHud.css', () => ({}));
-
 test('HUD displays separate clocks, midnight and overdraft', () => {
   const initial = renderToStaticMarkup(<TimeHud balance={25200} storyTime={64800} />);
   expect(initial).toContain('18:00');

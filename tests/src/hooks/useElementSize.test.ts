@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { observeElementSize } from '../../../src/hooks/useElementSize';
 
 test('remeasures container changes without a window resize and disconnects', () => {
