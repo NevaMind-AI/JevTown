@@ -24,6 +24,29 @@ import { GameId } from '../../engine/aiTown/ids';
  * that reason: a snapshot has to survive `JSON.stringify`.
  */
 
+/**
+ * One durable write, as it leaves for the backend.
+ *
+ * The store is append-only everywhere it matters, so "what is new since last time" is a sequence
+ * number rather than a diff. World state ships whole every batch (docs/11 §7.1); these tables do
+ * not, because their write rhythm is different -- prose changes on change, not every tick -- and
+ * shipping the lot each time would carry documents that did not move (§7.2).
+ */
+export type StoreChange =
+  | { seq: number; kind: 'entityState'; entityId: string; version: number; state: string }
+  | { seq: number; kind: 'blob'; hash: string; content: string }
+  | { seq: number; kind: 'message'; message: StoredMessage }
+  | { seq: number; kind: 'memory'; memory: StoredMemory }
+  | { seq: number; kind: 'conversation'; conversation: ArchivedConversation }
+  | { seq: number; kind: 'playerName'; playerId: string; name: string }
+  | { seq: number; kind: 'transcript'; row: TranscriptRow }
+  | { seq: number; kind: 'audit'; row: AuditRow & { seq: number } }
+  | { seq: number; kind: 'turn'; turn: InteractionTurn & { seq: number } }
+  | { seq: number; kind: 'embedding'; textHash: string; embedding: number[] };
+
+/** `Omit` does not distribute over a union; this does, so each variant keeps its own fields. */
+type WithoutSeq<T> = T extends unknown ? Omit<T, 'seq'> : never;
+
 export interface AgentStoreSnapshot {
   format: 'agent-store-1';
   entityState: [string, { version: number; state: string }[]][];
@@ -37,6 +60,9 @@ export interface AgentStoreSnapshot {
   turns: (InteractionTurn & { seq: number })[];
   embeddings: [string, number[]][];
   nextMemoryId: number;
+  changes: StoreChange[];
+  nextChangeSeq: number;
+  auditSeq: number;
 }
 
 /**
@@ -74,6 +100,29 @@ export class InMemoryAgentStore implements AgentStore {
   private turns: (InteractionTurn & { seq: number })[] = [];
   private embeddings = new Map<string, number[]>();
   private nextMemoryId = 1;
+  /** Unshipped durable writes, oldest first. Pruned once the backend acknowledges them. */
+  private changes: StoreChange[] = [];
+  private nextChangeSeq = 1;
+  private auditSeq = 0;
+
+  private record(change: WithoutSeq<StoreChange>) {
+    this.changes.push({ ...change, seq: this.nextChangeSeq++ } as StoreChange);
+  }
+
+  /** Everything written after `seq`, for the next batch. */
+  changesSince(seq: number): StoreChange[] {
+    return this.changes.filter((change) => change.seq > seq);
+  }
+
+  /** The sequence a batch would ship up to. */
+  get changeSeq(): number {
+    return this.nextChangeSeq - 1;
+  }
+
+  /** Drop what the backend has durably taken. Called only on a acknowledged batch. */
+  pruneChanges(throughSeq: number) {
+    this.changes = this.changes.filter((change) => change.seq > throughSeq);
+  }
 
   // ---------------------------------------------------------------- prose
 
@@ -101,10 +150,13 @@ export class InMemoryAgentStore implements AgentStore {
     versions.push({ version, state });
     versions.sort((a, b) => a.version - b.version);
     this.entityState.set(entityId, versions);
+    this.record({ kind: 'entityState', entityId, version, state });
   }
 
   writeBlob(hash: string, content: string) {
-    if (!this.blobs.has(hash)) this.blobs.set(hash, content);
+    if (this.blobs.has(hash)) return;
+    this.blobs.set(hash, content);
+    this.record({ kind: 'blob', hash, content });
   }
 
   readBlob(hash: string): string | undefined {
@@ -123,16 +175,19 @@ export class InMemoryAgentStore implements AgentStore {
     if (list.some((m) => m.messageUuid === message.messageUuid)) return;
     list.push(message);
     this.messages.set(message.conversationId, list);
+    this.record({ kind: 'message', message });
   }
 
   // ---------------------------------------------------------------- memory
 
   async insertMemory(memory: Omit<StoredMemory, 'id' | 'createdAt'>): Promise<void> {
-    this.memories.push({
+    const stored: StoredMemory = {
       ...memory,
       id: `m:${this.nextMemoryId++}`,
       createdAt: Date.now(),
-    });
+    };
+    this.memories.push(stored);
+    this.record({ kind: 'memory', memory: stored });
   }
 
   async searchMemories(
@@ -178,14 +233,16 @@ export class InMemoryAgentStore implements AgentStore {
 
   /** Called by the runtime when a conversation leaves the world document. */
   archiveConversation(conversation: ArchivedConversation) {
-    if (!this.conversations.has(conversation.id)) {
-      this.conversations.set(conversation.id, conversation);
-    }
+    if (this.conversations.has(conversation.id)) return;
+    this.conversations.set(conversation.id, conversation);
+    this.record({ kind: 'conversation', conversation });
   }
 
   /** Called by the runtime when a player leaves, so its name outlives it. */
   rememberPlayerName(playerId: string, name: string) {
+    if (this.playerNames.get(playerId) === name) return;
     this.playerNames.set(playerId, name);
+    this.record({ kind: 'playerName', playerId, name });
   }
 
   async playerName(playerId: string): Promise<string | undefined> {
@@ -232,7 +289,9 @@ export class InMemoryAgentStore implements AgentStore {
 
   async appendGodTranscript(row: Omit<TranscriptRow, 'seq'>): Promise<void> {
     const seq = (this.transcript[this.transcript.length - 1]?.seq ?? 0) + 1;
-    this.transcript.push({ ...row, seq });
+    const stored = { ...row, seq };
+    this.transcript.push(stored);
+    this.record({ kind: 'transcript', row: stored });
   }
 
   async auditsAfter(inputNumber: number): Promise<AuditRow[]> {
@@ -242,13 +301,16 @@ export class InMemoryAgentStore implements AgentStore {
   /** Called by the runtime as it drains the engine's prose queue. */
   appendAudit(audit: AuditRow) {
     this.audits.push(audit);
+    this.record({ kind: 'audit', row: { ...audit, seq: ++this.auditSeq } });
   }
 
   // ---------------------------------------------------------------- interaction
 
   async recordInteractionTurn(turn: InteractionTurn): Promise<void> {
     const seq = this.turns.filter((t) => t.interactionId === turn.interactionId).length;
-    this.turns.push({ ...turn, seq });
+    const stored = { ...turn, seq };
+    this.turns.push(stored);
+    this.record({ kind: 'turn', turn: stored });
   }
 
   /** The last exchange an entity took part in, oldest turn first. For the entity panel. */
@@ -272,7 +334,11 @@ export class InMemoryAgentStore implements AgentStore {
   }
 
   async cacheEmbeddings(entries: { textHash: string; embedding: number[] }[]): Promise<void> {
-    for (const entry of entries) this.embeddings.set(entry.textHash, entry.embedding);
+    for (const entry of entries) {
+      if (this.embeddings.has(entry.textHash)) continue;
+      this.embeddings.set(entry.textHash, entry.embedding);
+      this.record({ kind: 'embedding', textHash: entry.textHash, embedding: entry.embedding });
+    }
   }
 
   // ---------------------------------------------------------------- persistence
@@ -291,6 +357,9 @@ export class InMemoryAgentStore implements AgentStore {
       turns: this.turns,
       embeddings: [...this.embeddings.entries()],
       nextMemoryId: this.nextMemoryId,
+      changes: this.changes,
+      nextChangeSeq: this.nextChangeSeq,
+      auditSeq: this.auditSeq,
     });
   }
 
@@ -317,5 +386,8 @@ export class InMemoryAgentStore implements AgentStore {
     this.turns = copy.turns;
     this.embeddings = new Map(copy.embeddings);
     this.nextMemoryId = copy.nextMemoryId;
+    this.changes = copy.changes ?? [];
+    this.nextChangeSeq = copy.nextChangeSeq ?? 1;
+    this.auditSeq = copy.auditSeq ?? 0;
   }
 }

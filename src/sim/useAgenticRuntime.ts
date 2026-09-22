@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { AgenticRuntime } from './agenticRuntime';
 import { createAgenticWorld } from './createAgenticWorld';
+import { IndexedDbOutbox, SyncClient } from './syncClient';
 
 /**
  * The agentic world, attached to the tab that is already running a simulation.
@@ -16,6 +17,20 @@ import { createAgenticWorld } from './createAgenticWorld';
  * of game time — and, with agents attached, rather than firing a burst of model calls for a
  * night nobody was present for. A second interval here would quietly lose that.
  */
+
+/**
+ * How often a batch goes out.
+ *
+ * docs/11 §9 F2 asks for this number and for what forces an early flush. Five seconds is the
+ * answer to the first: a crash costs at most that much play, and it is far longer than a batch
+ * takes to write. The second half is still open — a model result and a scene change are the
+ * obvious candidates — and until it is settled the interval is the only trigger, which is the
+ * conservative direction because it never flushes mid-operation.
+ */
+const FLUSH_INTERVAL_MS = 5_000;
+/** Well inside any reasonable lease expiry, and cheap: renewing is the same call as claiming. */
+const HEARTBEAT_INTERVAL_MS = 15_000;
+
 export function useAgenticRuntime(): AgenticRuntime | undefined {
   const runtime = useRef<AgenticRuntime | null | undefined>(undefined);
   if (runtime.current === undefined) {
@@ -32,5 +47,47 @@ export function useAgenticRuntime(): AgenticRuntime | undefined {
       }
     }
   }
+  useAgenticSync(runtime.current ?? undefined);
   return runtime.current ?? undefined;
+}
+
+/**
+ * Ship the world to the backend, when there is one to ship it to.
+ *
+ * Off unless `VITE_SYNC_WORLD_ID` names a world, so the default session stays entirely local and
+ * needs no database. When it is on, the tab claims the writer lease, re-sends anything the last
+ * session left unacknowledged, and flushes on a timer.
+ */
+function useAgenticSync(runtime: AgenticRuntime | undefined) {
+  useEffect(() => {
+    const worldId = (import.meta as any).env?.VITE_SYNC_WORLD_ID as string | undefined;
+    if (!runtime || !worldId) return;
+
+    let stopped = false;
+    const sync = new SyncClient({
+      worldId,
+      runtime,
+      outbox: new IndexedDbOutbox(),
+      onReadOnly: (reason) =>
+        console.warn(`This world is now read-only and will not be saved. ${reason}`),
+    });
+
+    const flush = window.setInterval(() => {
+      if (!stopped) void sync.flush().catch((error) => console.error('Batch failed:', error));
+    }, FLUSH_INTERVAL_MS);
+    const heartbeat = window.setInterval(() => {
+      if (!stopped) void sync.heartbeat().catch(() => {});
+    }, HEARTBEAT_INTERVAL_MS);
+
+    void sync.start().catch((error) => console.error('Could not claim the world:', error));
+
+    return () => {
+      stopped = true;
+      window.clearInterval(flush);
+      window.clearInterval(heartbeat);
+      // One last attempt on the way out. It may not finish, which is exactly why the outbox is
+      // written before a batch is sent rather than after.
+      void sync.flush().catch(() => {});
+    };
+  }, [runtime]);
 }

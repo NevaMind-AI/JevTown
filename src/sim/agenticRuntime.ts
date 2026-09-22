@@ -107,9 +107,29 @@ export class AgenticRuntime {
     return this.currentTime;
   }
 
-  /** The log so far. Phase 5 ships this in batches; for now it is what a save writes out. */
+  /** The log so far. Batches ship slices of it (docs/11 §4.3). */
   events(): readonly LoggedEvent[] {
     return this.log;
+  }
+
+  /** Everything logged after `idx`, for the next batch. */
+  eventsSince(idx: number): LoggedEvent[] {
+    return this.log.filter((event) => event.idx > idx);
+  }
+
+  /**
+   * Drop what the backend has durably taken.
+   *
+   * The log is append-only and the backend is where it lives; keeping an acknowledged prefix in
+   * the tab buys nothing and grows without bound over a long session.
+   */
+  pruneEvents(throughIdx: number) {
+    this.log = this.log.filter((event) => event.idx > throughIdx);
+  }
+
+  /** The highest idx assigned so far, which is also this world's version (docs/11 §4.3). */
+  get version(): number {
+    return this.nextIdx - 1;
   }
 
   /**

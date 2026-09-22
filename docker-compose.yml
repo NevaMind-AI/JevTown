@@ -1,0 +1,21 @@
+# The browser owns the simulation (docs/11 §1), so there is no game server here. What runs
+# alongside the frontend is storage; the key-holding model proxy runs from `npm run proxy`.
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - '${PGPORT:-5432}:5432'
+    environment:
+      - POSTGRES_PASSWORD=${PGPASSWORD:-dev}
+      - POSTGRES_DB=${PGDATABASE:-remaining_time}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      start_period: 5s
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
