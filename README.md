@@ -1,10 +1,80 @@
-# Remaining Time
+# Jev Town
 
 A pixel-art narrative game by NevaMind-AI, built around relics, choices, and digital life. It is an
 MVP in progress: TypeScript, React, and PixiJS, running a local world entirely in the browser — no
 backend, no account, and no model service required to play.
 
-## What you can play today
+The same world runs in two modes. **Story mode** is the game: you walk the rooms and the NPCs follow
+authored content. **Jev demo mode** hands the room to prompt-driven agents and takes the player out
+of it. They share the engine, the content, and the renderer; what differs is who decides what
+happens next.
+
+## Architecture
+
+The game is a client-only application. Everything that makes a world — the collision grid, the
+scenes, the dialogue, the tasks — is data loaded at runtime, and the simulation runs in the tab.
+
+| Layer            | Where it lives                   | What it holds                                                            |
+| ---------------- | -------------------------------- | ------------------------------------------------------------------------ |
+| Rendering and UI | `src/`                           | React components, the PixiJS viewport, HUD, dialogue, panels             |
+| Simulation core  | `prototype/`                     | World stepping, pathfinding, entities, schedules, recording and replay   |
+| Content contract | `content/`                       | Scene and story capability tables — what the engine can express          |
+| Playable content | `public/content/remaining-time/` | The manifest, scenes, stories, and assets actually loaded by the browser |
+| Authoring source | `art/`, `scripts/`               | Map/portal/NPC recipes and the exporters that generate the runtime JSON  |
+
+Content loads through a manifest: it names the scenes and stories for a content version, scenes
+place entities and define collision and portals, and stories attach dialogue, effects, and tasks to
+entity IDs. Runtime state — position, inventory, task facts, recorded history — is owned by the tab
+and persisted to OPFS; a save embeds the content it was created against, which is why new content
+needs a new timeline.
+
+The build is a plain Vite static site. `dist/` can be served from any static host; the asset base
+path is set by `base: '/ai-town/'` in [vite.config.ts](vite.config.ts), with path rewrites in
+[vercel.json](vercel.json).
+
+### How Jev decides
+
+> Lives on `feat/jev-demo-solarium` (commit `98693c`) until it merges to `main`.
+
+An agent's "what do I do next" call goes to a **System One** model (TypeSafe's Jev) instead of a
+chat model. The principle it serves is the one the engine was already built on: **the engine filters
+the option set; the model chooses within it.** A chat model asked for JSON can always name a target
+that was never offered, and the only available answer is to throw the decision away and idle. A
+Choice question closes that hole — the request carries the options, the answer is one of them, so an
+illegal move is not caught, it is unrepresentable.
+
+One request carries five questions, answered in parallel against a single `state` object:
+
+| id            | type   | asks                                                                 |
+| ------------- | ------ | -------------------------------------------------------------------- |
+| `seek`        | noul   | now is a moment to go to somebody or something, rather than stay put |
+| `target`      | choice | of these, the one worth going to                                     |
+| `roam`        | noul   | if not going to anybody, walking somewhere else beats staying put    |
+| `place`       | choice | of these places, the one worth walking to for no particular reason   |
+| `idle_length` | choice | if you stay, how long before it is worth looking around again        |
+
+The answers compose in a fixed order — seek someone out, else wander, else stand still — and each
+gate falls through to the next rather than collapsing to an idle, so pacing that used to be tone in
+a prompt is three named thresholds in one file (`SEEK_THRESHOLD`, `ROAM_THRESHOLD`,
+`CHOICE_CONFIDENCE_FLOOR`).
+
+What it costs is prose, because Jev generates no text. `intent` and `emoji` are dropped — an idling
+agent under this decider has no speech bubble — `description` becomes one of two hard-coded strings,
+and `reason` is synthesized from the numbers (`seek 0.81 · talk to Bob p=0.96 c=0.93`), which is the
+distribution the choice actually came from rather than the model's account of itself.
+
+Nothing else moves. Same manifest, same `Decision` type, same replay path; conversations, memory,
+and state documents are still chat-model work, and this replaces one call out of four. It is a
+second decider behind a flag, not a replacement: `VITE_ACTION_DECIDER=jev` switches it on and `llm`
+stays the default. On the proxy side Jev is a third config axis (`JEV_API_URL`, `JEV_API_KEY`,
+`JEV_MODEL`, pinned to a version rather than an alias), not an `LLMProvider` variant — it speaks
+`POST /v1/systemone`, not the OpenAI wire format. A decision costs roughly $0.00002, about two
+thousandths of a chat completion for the same job.
+
+The full specification, including the options rejected at each point, is
+[docs/12-system-one-decider.md](docs/12-system-one-decider.md) on that branch.
+
+## Story mode — Remaining Time
 
 - **The room world.** Start in unit 404 and explore 26 connected rooms, interacting with NPCs and
   props, and completing the S01 door-tag investigation. The full main story is still being built.
@@ -15,7 +85,7 @@ Room contents and known limits are documented in the
 [room content package](public/content/remaining-time/README.md). LLM small talk for NPCs is not
 wired into the main line yet, and traversal feel still needs per-map tuning.
 
-## Quick start
+### Quick start
 
 Requires **Node.js 22 LTS (22.22.1 or a newer patch)** and npm:
 
@@ -64,43 +134,25 @@ change rooms.
 - After editing story or map content, start a new timeline to load it; existing saves keep the
   content embedded in them.
 
-## Architecture
+## Jev demo mode
 
-The game is a client-only application. Everything that makes a world — the collision grid, the
-scenes, the dialogue, the tasks — is data loaded at runtime, and the simulation runs in the tab.
+> Lives on `feat/jev-demo-solarium` until it merges to `main`.
 
-| Layer            | Where it lives                   | What it holds                                                            |
-| ---------------- | -------------------------------- | ------------------------------------------------------------------------ |
-| Rendering and UI | `src/`                           | React components, the PixiJS viewport, HUD, dialogue, panels             |
-| Simulation core  | `prototype/`                     | World stepping, pathfinding, entities, schedules, recording and replay   |
-| Content contract | `content/`                       | Scene and story capability tables — what the engine can express          |
-| Playable content | `public/content/remaining-time/` | The manifest, scenes, stories, and assets actually loaded by the browser |
-| Authoring source | `art/`, `scripts/`               | Map/portal/NPC recipes and the exporters that generate the runtime JSON  |
-
-Content loads through a manifest: it names the scenes and stories for a content version, scenes
-place entities and define collision and portals, and stories attach dialogue, effects, and tasks to
-entity IDs. Runtime state — position, inventory, task facts, recorded history — is owned by the tab
-and persisted to OPFS; a save embeds the content it was created against, which is why new content
-needs a new timeline.
-
-The build is a plain Vite static site. `dist/` can be served from any static host; the asset base
-path is set by `base: '/ai-town/'` in [vite.config.ts](vite.config.ts), with path rewrites in
-[vercel.json](vercel.json).
-
-## Running the agentic demo
-
-An experimental branch runs prompt-driven agents on a `dev` room, with nobody playing. It replaces
-the game rather than joining it: unset the flag and the same branch is the game again.
+`npm run play:demo` runs prompt-driven agents on a `dev` room, with nobody playing. It replaces the
+game rather than joining it: `npm run play:local` is the game again, unchanged.
 
 ```sh
-git checkout feat/jev-demo-solarium
 npm ci
-VITE_AGENTIC_DEMO=1 npm run play:local
+npm run play:demo
 ```
 
-Then open `http://localhost:5173/ai-town/`. On that branch `play:local` starts two processes: Vite,
-and a small Node proxy that holds the model credentials so the browser never sees one. The
-simulation itself still runs in the browser; the proxy never executes simulation logic.
+Then open `http://localhost:5173/ai-town/`. Either script starts two processes: Vite, and a small
+Node proxy that holds the model credentials so the browser never sees one. The simulation itself
+still runs in the browser; the proxy never executes simulation logic.
+
+The only difference between the two is the Vite mode. `play:demo` runs `vite --mode demo`, which
+loads the committed [.env.demo](.env.demo) in addition to your `.env.local`; that file sets the one
+flag that selects the demo, and deliberately nothing else.
 
 ### Credentials
 
@@ -116,16 +168,17 @@ LLM_EMBEDDING_MODEL=...
 ```
 
 `OPENAI_API_KEY`, `TOGETHER_API_KEY`, and a local Ollama host are supported as alternatives; the
-proxy reports which provider it picked, and why, on boot.
+proxy reports which provider it picked, and why, on boot. To run the System One decider, the proxy
+also reads `JEV_API_KEY` (and optionally `JEV_API_URL` and `JEV_MODEL`).
 
 ### Knobs
 
-Client flags need the `VITE_` prefix (Vite only exposes those to the bundle) and can also go in
-`.env.local`:
+Client flags need the `VITE_` prefix (Vite only exposes those to the bundle) and belong in
+`.env.local`, not in `.env.demo` — Vite loads the mode file last, so a knob set there would override
+the one you set for yourself:
 
 | Flag                         | Effect                                                           |
 | ---------------------------- | ---------------------------------------------------------------- |
-| `VITE_AGENTIC_DEMO=1`        | Runs the demo instead of the game                                |
 | `VITE_DEMO_AGENTS=n`         | Cast size, clamped to `[1, 50]`; five by default                 |
 | `VITE_ACTION_DECIDER=jev`    | Uses the typed System One decider instead of the chat model      |
 | `VITE_DISABLE_MEMORY=true`   | Skips embeddings, for a backend with no embedding model          |
@@ -138,9 +191,14 @@ Every decision and every line of dialogue is a model call, so a large cast is ex
 off in this demo — a reload starts a new world — and enabling it is a matter of setting
 `DATABASE_URL` and starting the bundled Postgres with `docker compose up -d postgres`.
 
-The branch carries its own notes next to the code: `src/sim/demo/README.md` for the demo itself,
+The demo carries its own notes next to the code: `src/sim/demo/README.md` for the demo itself,
 `server/README.md` for the proxy and storage service, and `docs/` for the design documents behind
 them.
+
+## Demo video
+
+Thirty seconds of the demo running, five agents on the solarium room:
+[assets/jev_30s.mp4](assets/jev_30s.mp4) — GitHub plays it inline on the file page.
 
 ## Authoring content and assets
 
