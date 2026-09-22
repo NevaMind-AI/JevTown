@@ -1,0 +1,771 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "room-travel",
+  "vars": {},
+  "interactions": {
+    "unit-404.return": {
+      "text": "通往下层回廊。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往下层回廊",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-deck.to-transit": {
+      "text": "通往转运厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往转运厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-deck.enter-404": {
+      "text": "通往404 号舱。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往404 号舱",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-deck.enter-kitchen": {
+      "text": "通往公共厨房。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往公共厨房",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-deck.enter-rhea": {
+      "text": "通往Rhea 的补时铺（中继器）。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往Rhea 的补时铺（中继器）",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-deck.enter-clinic": {
+      "text": "通往基础诊所。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往基础诊所",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-deck.laundry-a": {
+      "text": "通往旧洗衣管道。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往旧洗衣管道",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-deck.laundry-b": {
+      "text": "通往旧洗衣管道。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往旧洗衣管道",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-deck.duct-b": {
+      "text": "通往检修捷径。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往检修捷径",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-kitchen.return": {
+      "text": "通往下层回廊。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往下层回廊",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-clinic.return": {
+      "text": "通往下层回廊。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往下层回廊",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "rhea-den.return": {
+      "text": "通往下层回廊。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往下层回廊",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-service-duct.east": {
+      "text": "通往下层回廊。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往下层回廊",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-service-duct.to-cooling": {
+      "text": "通往冷却柱机房（隐藏房间）。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往冷却柱机房（隐藏房间）",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-laundry-duct.west": {
+      "text": "通往下层回廊。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往下层回廊",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-laundry-duct.east": {
+      "text": "通往下层回廊。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往下层回廊",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "low-cooling-room.return": {
+      "text": "通往检修捷径。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往检修捷径",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "transit-hall.to-solarium": {
+      "text": "通往私人电梯厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往私人电梯厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "transit-hall.to-low": {
+      "text": "通往下层回廊。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往下层回廊",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "transit-hall.to-civic": {
+      "text": "通往计时所大厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往计时所大厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "transit-hall.to-embers": {
+      "text": "通往余烬公开赌桌大厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往余烬公开赌桌大厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "civic-office.return": {
+      "text": "通往转运厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往转运厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "civic-office.to-archive": {
+      "text": "通往封存区。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往封存区",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "civic-office.to-mediation": {
+      "text": "通往争议调解室。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往争议调解室",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "civic-office.to-zeroing": {
+      "text": "通往归零等候区。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往归零等候区",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "civic-office.to-consult": {
+      "text": "通往合约咨询室。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往合约咨询室",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "civic-mediation.return": {
+      "text": "通往计时所大厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往计时所大厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "civic-consult.return": {
+      "text": "通往计时所大厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往计时所大厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "civic-zeroing-lounge.return": {
+      "text": "通往计时所大厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往计时所大厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "civic-archive.return": {
+      "text": "通往计时所大厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往计时所大厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "solarium.enter-lobby": {
+      "text": "通往私人电梯厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往私人电梯厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "solarium.enter-reception": {
+      "text": "通往Celeste 宅接待会厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往Celeste 宅接待会厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "solarium.enter-gallery": {
+      "text": "通往展厅与估值台。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往展厅与估值台",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "solarium.enter-archive": {
+      "text": "通往档案室 / 收藏库。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往档案室 / 收藏库",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "solarium.enter-noel": {
+      "text": "通往Noel 的私人厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往Noel 的私人厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "solarium.bridge-tower": {
+      "text": "通往屋顶一天花园。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往屋顶一天花园",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "solarium.service-lift": {
+      "text": "通往屋顶一天花园。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往屋顶一天花园",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "sky-lobby.return": {
+      "text": "通往高层天井。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往高层天井",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "sky-lobby.lift": {
+      "text": "通往转运厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往转运厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "celeste-reception.return": {
+      "text": "通往高层天井。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往高层天井",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "celeste-gallery.return": {
+      "text": "通往高层天井。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往高层天井",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "celeste-archive.return": {
+      "text": "通往高层天井。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往高层天井",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "noel-suite.return": {
+      "text": "通往高层天井。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往高层天井",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "one-day-garden.bridge-entry": {
+      "text": "通往高层天井。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往高层天井",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "one-day-garden.lift-entry": {
+      "text": "通往高层天井。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往高层天井",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "one-day-garden.to-vault": {
+      "text": "通往花园维护层密室。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往花园维护层密室",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "garden-vault.return": {
+      "text": "通往屋顶一天花园。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往屋顶一天花园",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "embers-floor.return": {
+      "text": "通往转运厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往转运厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "embers-floor.to-backstage": {
+      "text": "通往后台 / Lyra 化妆间。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往后台 / Lyra 化妆间",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "embers-floor.to-office": {
+      "text": "通往Rook 的账房。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往Rook 的账房",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "embers-floor.to-lounge": {
+      "text": "通往休息间。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往休息间",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "embers-lounge.return": {
+      "text": "通往余烬公开赌桌大厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往余烬公开赌桌大厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "embers-backstage.return": {
+      "text": "通往余烬公开赌桌大厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往余烬公开赌桌大厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "embers-back-office.return": {
+      "text": "通往余烬公开赌桌大厅。",
+      "choices": [
+        {
+          "id": "travel",
+          "text": "前往余烬公开赌桌大厅",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "clock": {
+    "realSecondsPerTick": 30,
+    "gameSecondsPerTick": 600,
+    "idlePauseSeconds": 60,
+    "initialBalanceSeconds": 432000,
+    "startTimeSeconds": 64800
+  }
+}

@@ -1,0 +1,424 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "embers-floor",
+    "name": "余烬公开赌桌大厅",
+    "english": "Embers Floor",
+    "district": "余烬",
+    "kind": "interior",
+    "parent": "transit-hall",
+    "level": 1,
+    "description": "赌桌围绕中央过道，北侧舞台面向大厅。西侧是休息间，东侧是 Rook 的账房。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/embers-floor.png",
+    "spawn": [
+      178,
+      712
+    ],
+    "walkable": [
+      [
+        [
+          108,
+          209
+        ],
+        [
+          1422,
+          209
+        ],
+        [
+          1422,
+          955
+        ],
+        [
+          108,
+          955
+        ]
+      ],
+      [
+        [
+          0,
+          340
+        ],
+        [
+          149,
+          340
+        ],
+        [
+          149,
+          447
+        ],
+        [
+          0,
+          447
+        ]
+      ],
+      [
+        [
+          0,
+          661
+        ],
+        [
+          149,
+          661
+        ],
+        [
+          149,
+          788
+        ],
+        [
+          0,
+          788
+        ]
+      ],
+      [
+        [
+          1373,
+          340
+        ],
+        [
+          1536,
+          340
+        ],
+        [
+          1536,
+          447
+        ],
+        [
+          1373,
+          447
+        ]
+      ],
+      [
+        [
+          1032,
+          109
+        ],
+        [
+          1168,
+          109
+        ],
+        [
+          1168,
+          277
+        ],
+        [
+          1032,
+          277
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          146,
+          259,
+          194,
+          51
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          299,
+          281,
+          50,
+          47
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          562,
+          259,
+          410,
+          83
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1234,
+          281,
+          128,
+          80
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1372,
+          273,
+          41,
+          79
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          473,
+          465,
+          183,
+          140
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          466,
+          561,
+          191,
+          70
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          876,
+          465,
+          187,
+          140
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          876,
+          561,
+          191,
+          70
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          377,
+          576,
+          46,
+          54
+        ]
+      },
+      {
+        "id": "solid-10",
+        "rect": [
+          1110,
+          576,
+          46,
+          54
+        ]
+      },
+      {
+        "id": "solid-11",
+        "rect": [
+          219,
+          800,
+          431,
+          97
+        ]
+      },
+      {
+        "id": "solid-12",
+        "rect": [
+          276,
+          715,
+          240,
+          97
+        ]
+      },
+      {
+        "id": "solid-13",
+        "rect": [
+          312,
+          877,
+          217,
+          50
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          37,
+          718
+        ],
+        "target": "transit-hall",
+        "targetExit": "to-embers",
+        "kind": "door",
+        "edge": "w",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          186,
+          718
+        ],
+        "facing": "e",
+        "radius": 34
+      },
+      {
+        "id": "to-backstage",
+        "name": "后台",
+        "at": [
+          1095,
+          164
+        ],
+        "target": "embers-backstage",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1095,
+          284
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "to-office",
+        "name": "概念密码门 → Rook 的账房",
+        "at": [
+          1499,
+          393
+        ],
+        "target": "embers-back-office",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "e",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1327,
+          411
+        ],
+        "facing": "w",
+        "radius": 34
+      },
+      {
+        "id": "to-lounge",
+        "name": "休息间",
+        "at": [
+          37,
+          393
+        ],
+        "target": "embers-lounge",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "w",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          187,
+          393
+        ],
+        "facing": "e",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "E1",
+        "name": "入口门厅 / Flint 岗 / 出口",
+        "at": [
+          198,
+          662
+        ],
+        "events": [
+          "24c",
+          "07c",
+          "12c"
+        ],
+        "npcs": [
+          "Flint",
+          "作弊者"
+        ],
+        "note": "封锁时三门关闭",
+        "radius": 70
+      },
+      {
+        "id": "E2",
+        "name": "公开赌桌区",
+        "at": [
+          760,
+          553
+        ],
+        "events": [
+          "16b",
+          "06b",
+          "10b",
+          "30b",
+          "04c",
+          "29b"
+        ],
+        "npcs": [
+          "Rook",
+          "围观赌客"
+        ],
+        "note": "记忆牌 vs 时间轮盘；隔间；限时免费桌",
+        "radius": 70
+      },
+      {
+        "id": "E3",
+        "name": "筹码台与兑时机",
+        "at": [
+          543,
+          743
+        ],
+        "events": [
+          "26b",
+          "20b"
+        ],
+        "npcs": [
+          "Rook",
+          "兑时员"
+        ],
+        "note": "",
+        "radius": 70
+      },
+      {
+        "id": "E4",
+        "name": "舞台与观众席",
+        "at": [
+          773,
+          385
+        ],
+        "events": [
+          "14c"
+        ],
+        "npcs": [
+          "Lyra"
+        ],
+        "note": "Mira 第三段回声",
+        "radius": 70
+      },
+      {
+        "id": "E7",
+        "name": "概念密码门",
+        "at": [
+          1221,
+          411
+        ],
+        "events": [
+          "17c"
+        ],
+        "npcs": [
+          "Rook"
+        ],
+        "note": "三份观点终端",
+        "radius": 70
+      }
+    ]
+  }
+}

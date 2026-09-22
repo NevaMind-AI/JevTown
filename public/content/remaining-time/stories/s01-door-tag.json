@@ -1,0 +1,302 @@
+{
+  "schema_version": "1.0",
+  "content_version": "s01-guided-1",
+  "id": "s01-door-tag",
+  "vars": {
+    "s01_tag_observed": false,
+    "s01_ash_testimony": false,
+    "s01_record_read": false,
+    "s01_verified": false,
+    "s01_stored": false
+  },
+  "items": [
+    {
+      "id": "s01-door-tag",
+      "name": "317 消磁门牌",
+      "image": "assets/low-deck/door-tag-317.png",
+      "category": "任务物件",
+      "quality": "旧物",
+      "description": "从回廊墙上取下的旧门牌。姓名栏被擦白，右侧留有缺口。N-07已核对其与原住户Eden的关联，等待放入404暂存柜。"
+    }
+  ],
+  "clues": [
+    {
+      "id": "s01-tag-observation",
+      "slot": 1,
+      "text": "旧门牌上保留着317，姓名栏被擦得发白，下沿还有模糊底码，右侧有一道不规则缺口。",
+      "source": "317 消磁门牌 · 下层回廊墙面"
+    },
+    {
+      "id": "s01-ash-testimony",
+      "slot": 1,
+      "text": "Ash说门牌是他从317拆下的，右侧缺口是在拆牌时留下的。其余经手过程尚未查明。",
+      "source": "Ash · 下层回廊"
+    },
+    {
+      "id": "s01-resident-record",
+      "slot": 1,
+      "text": "Mira留下的公共房号记录摘抄保留了317的住户索引及门牌底码，没有抄录姓名。夹页提示可请N-07核对姓名索引。",
+      "source": "Mira的记录摘抄 · 404书桌"
+    },
+    {
+      "id": "s01-verified-identity",
+      "slot": 1,
+      "text": "N-07将门牌底码、旧记录与Ash证词相互核对，确认317关联的原住户为Eden，登记职业为清洁工。其余经手过程尚未查明。",
+      "source": "N-07 · 404"
+    }
+  ],
+  "interactions": {
+    "low-deck.door-tag-317": {
+      "text": "墙上挂着一块旧门牌：317。姓名的位置被擦得发白，下沿留着模糊底码，右侧有一道缺口。先记下这些特征，再问问附近的Ash。",
+      "replies": [
+        {
+          "when": { "task": "s01-door-tag", "step": "pickup" },
+          "text": "N-07已经核对了门牌的来历，并建议将原件带回404暂存。确认后取下墙上的门牌，放进背包，再回404北侧的暂存柜。"
+        },
+        {
+          "when": { "var": "s01_tag_observed", "equals": true },
+          "text": "你已经记下底码和缺口。门牌先留在墙上；按T查看下一步，跟随金色标记继续调查。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "record_tag",
+          "text": "记下底码和缺口，去问Ash。",
+          "when": { "task": "s01-door-tag", "step": "observe" },
+          "effects": [
+            { "op": "set", "var": "s01_tag_observed", "value": true },
+            { "op": "grant_clue", "clue": "s01-tag-observation" }
+          ]
+        },
+        {
+          "id": "pickup_tag",
+          "text": "取下门牌，带回404暂存。",
+          "when": { "task": "s01-door-tag", "step": "pickup" },
+          "effects": [{ "op": "pickup_item", "item": "s01-door-tag", "quantity": 1 }]
+        },
+        { "id": "leave_tag", "text": "暂时不动它。", "effects": [] }
+      ]
+    },
+    "ash": {
+      "text": "有事？我正看这边的维修情况。",
+      "topics": {
+        "door_tag": {
+          "text": "先看看墙上那块317门牌，记下底码和缺口，再来找我。就在404出口右侧，跟着金色标记走。",
+          "replies": [
+            {
+              "when": { "task": "s01-door-tag", "step": "ask_ash" },
+              "text": "认得。我从317拆下来的，右边那道缺口就是拆的时候留下的。想核对它原来属于谁？回404看看Mira留在书桌上的旧记录，再找N-07。先把我说的这段记下来。"
+            },
+            {
+              "when": { "var": "s01_ash_testimony", "equals": true },
+              "text": "牌子是我从317拆下来的，缺口也是那时候留下的。你已经记过了。接下来跟着任务指引查旧记录、找N-07核对就行。"
+            }
+          ]
+        }
+      },
+      "choices": [
+        {
+          "id": "ask_door_tag",
+          "text": "门口那块317的牌子，你认得吗？",
+          "opens": "door_tag",
+          "effects": []
+        },
+        {
+          "id": "record_ash",
+          "topic": "door_tag",
+          "text": "记下证词，回404查旧记录。",
+          "when": { "task": "s01-door-tag", "step": "ask_ash" },
+          "effects": [
+            { "op": "set", "var": "s01_ash_testimony", "value": true },
+            { "op": "grant_clue", "clue": "s01-ash-testimony" }
+          ]
+        },
+        {
+          "id": "back",
+          "topic": "door_tag",
+          "text": "回到刚才的话题。",
+          "opens": "root",
+          "effects": []
+        }
+      ]
+    },
+    "unit-404.old-record": {
+      "text": "一页旧房号记录，页角标着“Mira摘录／公共房号目录”。317后面保留着住户索引和门牌底码，没有抄录姓名。夹页写着：“姓名索引可请N-07核对。”",
+      "replies": [
+        {
+          "when": { "var": "s01_record_read", "equals": true },
+          "text": "317的住户索引和底码已经抄下，原纸仍留在书桌。N-07就在房间右上方；按T查看目前的调查进度。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "record_index",
+          "text": "记下317的索引和底码，去找N-07。",
+          "when": { "task": "s01-door-tag", "step": "read_record" },
+          "effects": [
+            { "op": "set", "var": "s01_record_read", "value": true },
+            { "op": "grant_clue", "clue": "s01-resident-record" }
+          ]
+        },
+        { "id": "close_record", "text": "合上记录。", "effects": [] }
+      ]
+    },
+    "n07": {
+      "text": "从房间下方出口前往回廊，先查看门口右侧墙上的317门牌。金色感叹号标出当前目标，跨房间时会标出出口。靠近后按E，按T看完整指引，不需要按R等待。",
+      "replies": [
+        {
+          "when": { "var": "s01_stored", "equals": true },
+          "text": "317门牌已在北侧柜中暂存。观察、证词、旧记录和核对结果都已保留；这只是暂存，不代表转让所有权或公开许可。"
+        },
+        {
+          "when": { "task": "s01-door-tag", "step": "store" },
+          "text": "门牌已经在你背包里。请到房间北侧中央的暂存柜前，按E选择“放入门牌，确认暂存”。放入原件后，这次入门调查才算完成。"
+        },
+        {
+          "when": { "var": "s01_verified", "equals": true },
+          "text": "已核对：门牌关联的原住户是Eden，登记职业为清洁工。接下来从下方出口回到回廊，取下317门牌，再带回北侧暂存柜。"
+        },
+        {
+          "when": { "task": "s01-door-tag", "step": "verify" },
+          "text": "你带来了门牌底码和缺口、Ash的拆牌证词，以及Mira留下的317住户索引。材料齐了。现在要将它们与我保存的姓名索引核对吗？"
+        },
+        {
+          "when": { "task": "s01-door-tag", "step": "read_record" },
+          "text": "还需要一份记录。去房间右侧书桌，站在桌子下方，查看金色感叹号标出的纸张，并记下317的索引。"
+        },
+        {
+          "when": { "task": "s01-door-tag", "step": "ask_ash" },
+          "text": "门牌特征已经记下。下一步到回廊找Ash，询问317门牌，再确认记下他的证词。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "verify_identity",
+          "text": "请核对这些记录。",
+          "when": { "task": "s01-door-tag", "step": "verify" },
+          "effects": [
+            { "op": "set", "var": "s01_verified", "value": true },
+            { "op": "grant_clue", "clue": "s01-verified-identity" }
+          ]
+        },
+        { "id": "continue", "text": "知道了，我按指引继续。", "effects": [] }
+      ]
+    },
+    "unit-404.cabinet": {
+      "text": "404北侧的柜子留着一个空格。先按任务指引查清门牌的来历，请N-07核对，再将原件带回来暂存。",
+      "replies": [
+        {
+          "when": { "var": "s01_stored", "equals": true },
+          "text": "暂存记录：317门牌已放入此柜，由404暂时保管。N-07的核对记录一并保留，原住户Eden的所有权和公开使用许可未发生变化。"
+        },
+        {
+          "when": { "task": "s01-door-tag", "step": "store" },
+          "text": "将背包里的317门牌放入这一格，登记为404暂存？确认后原件将从背包移入柜中。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "store_tag",
+          "text": "放入门牌，确认暂存。",
+          "when": { "task": "s01-door-tag", "step": "store" },
+          "effects": [
+            { "op": "take_item", "item": "s01-door-tag", "quantity": 1 },
+            { "op": "set", "var": "s01_stored", "value": true }
+          ]
+        },
+        {
+          "id": "leave_cabinet",
+          "text": "暂时不放。",
+          "when": { "var": "s01_stored", "equals": false },
+          "effects": []
+        }
+      ]
+    }
+  },
+  "tasks": [
+    {
+      "id": "s01-door-tag",
+      "title": "消磁门牌 · 入门调查",
+      "background": "你来到Mira留下的404号舱。门外墙上挂着一块姓名被擦白的317旧门牌，它的来历还不清楚。",
+      "description": "跟随金色标记逐步调查。!表示前往查看或拿取，?表示找人确认或交付；目标在另一房间时，标记先指向出口。靠近按E，T查看完整背景和当前步骤。无需等待。",
+      "steps": [
+        {
+          "id": "observe",
+          "marker": "!",
+          "text": "第1步：出404，查看门口右侧墙上的317门牌",
+          "background": "你刚来到404号舱，门外墙上那块旧门牌只剩清楚的317，姓名已被擦白。先从物件本身找线索。",
+          "description": "从房间下方出口到下层回廊，站到出口右侧门牌的下方路面。靠近金色!按E，选择“记下底码和缺口，去问Ash”。",
+          "condition": {
+            "event": "choice.confirmed",
+            "where": { "entityId": "low-deck.door-tag-317", "choiceId": "record_tag" },
+            "count": 1
+          }
+        },
+        {
+          "id": "ask_ash",
+          "marker": "?",
+          "text": "第2步：找回廊的Ash，询问门牌并记下证词",
+          "background": "你已经记下317门牌的模糊底码和右侧缺口，姓名无法辨认。附近的Ash也许知道这些痕迹的来历。",
+          "description": "从门牌处向右走，找到金色?下的Ash。靠近按E，选择“门口那块317的牌子，你认得吗？”，听完后选择“记下证词，回404查旧记录”。",
+          "condition": {
+            "event": "choice.confirmed",
+            "where": { "entityId": "ash", "choiceId": "record_ash" },
+            "count": 1
+          }
+        },
+        {
+          "id": "read_record",
+          "marker": "!",
+          "text": "第3步：回404，阅读右侧书桌上的旧住户记录",
+          "background": "门牌底码和缺口已经记下。Ash承认门牌是他从317拆下的，缺口也是当时留下的；他指引你查阅Mira留在404的旧记录。",
+          "description": "进入门牌旁的404入口。到房间右侧书桌下方，靠近金色!标出的纸张按E，选择“记下317的索引和底码，去找N-07”。",
+          "condition": {
+            "event": "choice.confirmed",
+            "where": { "entityId": "unit-404.old-record", "choiceId": "record_index" },
+            "count": 1
+          }
+        },
+        {
+          "id": "verify",
+          "marker": "?",
+          "text": "第4步：找404右上方的N-07，核对三份材料",
+          "background": "你查看了门牌、取得Ash的拆牌证词，又从Mira的公共房号摘抄中记下317的住户索引。三份材料齐备，但还没有确认原住户姓名。",
+          "description": "从书桌向上走，找到房间右上方金色?下的N-07。靠近按E，选择“请核对这些记录”。只打开对话不会推进。",
+          "condition": {
+            "event": "choice.confirmed",
+            "where": { "entityId": "n07", "choiceId": "verify_identity" },
+            "count": 1
+          }
+        },
+        {
+          "id": "pickup",
+          "marker": "!",
+          "text": "第5步：回到回廊，取下317门牌",
+          "background": "N-07结合门牌特征、Ash证词和旧记录，确认原住户为Eden，登记职业为清洁工。其他经手过程仍未查明；N-07建议先把原件带回404妥善暂存。",
+          "description": "从404下方出口回到回廊。到右侧墙下金色!处按E，选择“取下门牌，带回404暂存”。拿到后可按1查看背包；门牌将从墙上消失。",
+          "condition": {
+            "event": "choice.confirmed",
+            "where": { "entityId": "low-deck.door-tag-317", "choiceId": "pickup_tag" },
+            "count": 1
+          }
+        },
+        {
+          "id": "store",
+          "marker": "?",
+          "text": "第6步：回404，将门牌放入北侧中央的暂存柜",
+          "background": "你通过门牌、证词与旧记录确认了Eden的身份，并已将317门牌从墙上取下放入背包。现在需要完成实物暂存，而不是只答应保管。",
+          "description": "回404，走到房间北侧中央宽柜子的前方。靠近金色?按E，选择“放入门牌，确认暂存”。原件从背包移入柜中后，入门调查完成。",
+          "condition": {
+            "event": "choice.confirmed",
+            "where": { "entityId": "unit-404.cabinet", "choiceId": "store_tag" },
+            "count": 1
+          }
+        }
+      ],
+      "completion": {
+        "background": "你查看了317门牌，听Ash说明拆牌经过，读到Mira留下的旧记录，并请N-07核对出原住户Eden的身份。随后你取下门牌，将原件放入404北侧柜中暂存。",
+        "description": "入门调查已完成。门牌由404暂存，背包中不再持有原件；所有权与公开使用许可未改变。可查看柜中暂存记录，或按2回顾第1格的调查线索。"
+      }
+    }
+  ]
+}

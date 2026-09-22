@@ -1,0 +1,475 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "civic-office",
+    "name": "计时所大厅",
+    "english": "Civic Time Office",
+    "district": "计时所",
+    "kind": "interior",
+    "parent": "transit-hall",
+    "level": 1,
+    "description": "取号终端与五个服务窗口面向开阔大厅。侧翼通往调解、咨询和归零等候区，北门通往封存区。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/civic-office.png",
+    "spawn": [
+      1302,
+      706
+    ],
+    "walkable": [
+      [
+        [
+          127,
+          286
+        ],
+        [
+          1409,
+          286
+        ],
+        [
+          1409,
+          913
+        ],
+        [
+          127,
+          913
+        ]
+      ],
+      [
+        [
+          0,
+          441
+        ],
+        [
+          184,
+          441
+        ],
+        [
+          184,
+          546
+        ],
+        [
+          0,
+          546
+        ]
+      ],
+      [
+        [
+          0,
+          671
+        ],
+        [
+          184,
+          671
+        ],
+        [
+          184,
+          738
+        ],
+        [
+          0,
+          738
+        ]
+      ],
+      [
+        [
+          1330,
+          441
+        ],
+        [
+          1536,
+          441
+        ],
+        [
+          1536,
+          546
+        ],
+        [
+          1330,
+          546
+        ]
+      ],
+      [
+        [
+          1330,
+          671
+        ],
+        [
+          1536,
+          671
+        ],
+        [
+          1536,
+          738
+        ],
+        [
+          1330,
+          738
+        ]
+      ],
+      [
+        [
+          1277,
+          216
+        ],
+        [
+          1355,
+          216
+        ],
+        [
+          1355,
+          322
+        ],
+        [
+          1277,
+          322
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          710,
+          519,
+          123,
+          61
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          210,
+          778,
+          204,
+          102
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          236,
+          849,
+          48,
+          61
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          345,
+          848,
+          47,
+          64
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          732,
+          788,
+          76,
+          86
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          675,
+          804,
+          47,
+          52
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          818,
+          804,
+          42,
+          52
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          1181,
+          813,
+          53,
+          102
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          1287,
+          813,
+          53,
+          102
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          1110,
+          869,
+          48,
+          50
+        ]
+      },
+      {
+        "id": "solid-10",
+        "rect": [
+          1355,
+          869,
+          48,
+          50
+        ]
+      }
+    ],
+    "items": [
+      {
+        "id": "civic-pen",
+        "name": "身份校验笔",
+        "at": [
+          841,
+          902
+        ],
+        "description": "笔身保留着一份校验记录。"
+      }
+    ],
+    "occlusions": [
+      {
+        "id": "ticket-column",
+        "baseline": 581,
+        "polygon": [
+          [
+            736,
+            427
+          ],
+          [
+            748,
+            413
+          ],
+          [
+            764,
+            407
+          ],
+          [
+            766,
+            388
+          ],
+          [
+            776,
+            388
+          ],
+          [
+            778,
+            414
+          ],
+          [
+            796,
+            430
+          ],
+          [
+            805,
+            574
+          ],
+          [
+            733,
+            574
+          ]
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          1480,
+          706
+        ],
+        "target": "transit-hall",
+        "targetExit": "to-civic",
+        "kind": "door",
+        "edge": "e",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1302,
+          706
+        ],
+        "facing": "w",
+        "radius": 34
+      },
+      {
+        "id": "to-archive",
+        "name": "封存区",
+        "at": [
+          1316,
+          247
+        ],
+        "target": "civic-archive",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1316,
+          333
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "to-mediation",
+        "name": "争议调解室",
+        "at": [
+          37,
+          488
+        ],
+        "target": "civic-mediation",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "w",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          198,
+          488
+        ],
+        "facing": "e",
+        "radius": 34
+      },
+      {
+        "id": "to-zeroing",
+        "name": "归零等候区",
+        "at": [
+          37,
+          702
+        ],
+        "target": "civic-zeroing-lounge",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "w",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          198,
+          702
+        ],
+        "facing": "e",
+        "radius": 34
+      },
+      {
+        "id": "to-consult",
+        "name": "合约咨询室",
+        "at": [
+          1480,
+          488
+        ],
+        "target": "civic-consult",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "e",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1328,
+          488
+        ],
+        "facing": "w",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "C1",
+        "name": "安检门与身份扫描",
+        "at": [
+          1341,
+          659
+        ],
+        "events": [
+          "19a",
+          "09a"
+        ],
+        "npcs": [
+          "陌生老人",
+          "Meridian"
+        ],
+        "note": "",
+        "radius": 70
+      },
+      {
+        "id": "C2",
+        "name": "取号与队列",
+        "at": [
+          864,
+          550
+        ],
+        "events": [
+          "01b",
+          "03b",
+          "02b"
+        ],
+        "npcs": [
+          "排队居民",
+          "Adrian"
+        ],
+        "note": "停机队列；多人核验桌 vs 单人终端",
+        "radius": 70
+      },
+      {
+        "id": "C3",
+        "name": "服务窗口横列",
+        "at": [
+          672,
+          339
+        ],
+        "events": [
+          "08a",
+          "07a",
+          "23b",
+          "27a",
+          "18a"
+        ],
+        "npcs": [
+          "实习柜员",
+          "Adrian",
+          "Meridian"
+        ],
+        "note": "2 号台录错；4 号台认证；优先窗口；3 号台还笔；查档规则",
+        "radius": 70
+      },
+      {
+        "id": "C4",
+        "name": "Meridian 账户终端",
+        "at": [
+          1250,
+          768
+        ],
+        "events": [
+          "11b"
+        ],
+        "npcs": [
+          "Meridian"
+        ],
+        "note": "即时贷款弹窗",
+        "radius": 70
+      }
+    ]
+  }
+}

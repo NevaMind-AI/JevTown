@@ -1,0 +1,178 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "civic-consult",
+    "name": "合约咨询室",
+    "english": "Contract Consult",
+    "district": "计时所",
+    "kind": "interior",
+    "parent": "civic-office",
+    "level": 1,
+    "description": "访客可以在咨询桌前一起阅读合约与账户记录。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/civic-consult.png",
+    "spawn": [
+      378,
+      535
+    ],
+    "walkable": [
+      [
+        [
+          270,
+          251
+        ],
+        [
+          1260,
+          251
+        ],
+        [
+          1260,
+          884
+        ],
+        [
+          270,
+          884
+        ]
+      ],
+      [
+        [
+          211,
+          485
+        ],
+        [
+          312,
+          485
+        ],
+        [
+          312,
+          565
+        ],
+        [
+          211,
+          565
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          644,
+          286,
+          239,
+          82
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          681,
+          352,
+          66,
+          58
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          789,
+          349,
+          59,
+          61
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          887,
+          307,
+          72,
+          57
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1180,
+          375,
+          118,
+          297
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          588,
+          839,
+          74,
+          50
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          699,
+          798,
+          139,
+          86
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          877,
+          839,
+          62,
+          52
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          242,
+          532
+        ],
+        "target": "civic-office",
+        "targetExit": "to-consult",
+        "kind": "door",
+        "edge": "w",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          378,
+          532
+        ],
+        "facing": "e",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "C7",
+        "name": "合约咨询室",
+        "at": [
+          762,
+          456
+        ],
+        "events": [
+          "17a"
+        ],
+        "npcs": [
+          "Meridian"
+        ],
+        "note": "Meridian 要求提交遗物",
+        "radius": 70
+      }
+    ]
+  }
+}

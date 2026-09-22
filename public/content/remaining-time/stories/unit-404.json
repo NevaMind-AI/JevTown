@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-3-bed-sleep",
+  "id": "unit-404",
+  "vars": {},
+  "interactions": {
+    "unit-404.bed": {
+      "text": "床铺已经整理好，可以在这里睡一觉。睡眠会消耗经过的余时。",
+      "choices": [
+        {
+          "id": "sleep",
+          "text": "睡觉",
+          "effects": [{ "op": "sleep", "selectHours": true }]
+        }
+      ]
+    }
+  }
+}

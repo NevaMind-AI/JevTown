@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-1-kitchen-furnished-box-1",
+  "id": "low-kitchen",
+  "name": "公共厨房",
+  "map": {
+    "source": "maps/low-kitchen.json"
+  },
+  "anchors": {
+    "start": [24, 24],
+    "from-return": [24, 25]
+  },
+  "entities": [
+    {
+      "id": "low-kitchen.return",
+      "name": "返回",
+      "position": [21, 29],
+      "portalTiles": [
+        [21, 29],
+        [22, 29],
+        [23, 29],
+        [24, 29],
+        [25, 29],
+        [26, 29]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/low-kitchen/portal-box.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-deck",
+        "anchor": "from-enter-kitchen"
+      }
+    },
+    {
+      "id": "rowan",
+      "name": "Rowan",
+      "position": [18, 12],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/rowan-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "resident",
+      "name": "居民",
+      "position": [12, 20],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/resident-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

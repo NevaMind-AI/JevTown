@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "civic-zeroing-lounge",
+  "name": "归零等候区",
+  "map": {
+    "source": "maps/civic-zeroing-lounge.json"
+  },
+  "anchors": {
+    "start": [39, 17],
+    "from-return": [39, 17]
+  },
+  "entities": [
+    {
+      "id": "civic-zeroing-lounge.return",
+      "name": "返回",
+      "position": [44, 17],
+      "portalTiles": [
+        [44, 17],
+        [44, 16]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "civic-office",
+        "anchor": "from-to-zeroing"
+      }
+    },
+    {
+      "id": "volunteer",
+      "name": "陪伴志愿者",
+      "position": [30, 11],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/volunteer-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "resident-zeroing",
+      "name": "等候住户",
+      "position": [18, 11],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/resident-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

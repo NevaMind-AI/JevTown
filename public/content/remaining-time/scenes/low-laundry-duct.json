@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "low-laundry-duct",
+  "name": "旧洗衣管道",
+  "map": {
+    "source": "maps/low-laundry-duct.json"
+  },
+  "anchors": {
+    "start": [5, 14],
+    "from-west": [6, 14],
+    "from-east": [41, 14]
+  },
+  "entities": [
+    {
+      "id": "low-laundry-duct.west",
+      "name": "舱房层端",
+      "position": [4, 11],
+      "portalTiles": [
+        [4, 11],
+        [5, 11]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-deck",
+        "anchor": "from-laundry-a"
+      }
+    },
+    {
+      "id": "low-laundry-duct.east",
+      "name": "广场端",
+      "position": [42, 11],
+      "portalTiles": [
+        [42, 11],
+        [43, 11]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-deck",
+        "anchor": "from-laundry-b"
+      }
+    }
+  ]
+}

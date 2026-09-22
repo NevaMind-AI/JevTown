@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "content_version": "demo-1",
+  "id": "room",
+  "name": "404号舱",
+  "map": { "width": 12, "height": 10, "floorTile": 271, "wallTile": 732 },
+  "anchors": { "start": [3, 5], "from_corridor": [9, 5] },
+  "entities": [
+    { "id": "n07", "name": "N-07", "position": [5, 5], "character": "f2" },
+    {
+      "id": "room.exit",
+      "name": "走廊门",
+      "position": [10, 5],
+      "character": "door",
+      "portal": { "scene": "corridor", "anchor": "entrance" }
+    }
+  ]
+}

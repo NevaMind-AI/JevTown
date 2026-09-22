@@ -1,0 +1,1480 @@
+{
+  "format": "rhea-den-assets-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "rhea-den",
+    "name": "Rhea 的补时铺（中继器）",
+    "english": "Rhea's Den",
+    "district": "下层回廊",
+    "kind": "interior",
+    "parent": "low-deck",
+    "level": 0,
+    "description": "工具台与中继终端之间，Rhea 继续修补人们剩下的时间。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/rhea-den.png",
+    "spawn": [
+      770,
+      759
+    ],
+    "walkable": [
+      [
+        [
+          169,
+          237
+        ],
+        [
+          1352,
+          237
+        ],
+        [
+          1352,
+          805
+        ],
+        [
+          169,
+          805
+        ]
+      ],
+      [
+        [
+          673,
+          780
+        ],
+        [
+          864,
+          780
+        ],
+        [
+          864,
+          913
+        ],
+        [
+          673,
+          913
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          363,
+          238,
+          136,
+          44
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          515,
+          238,
+          40,
+          32
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          561,
+          234,
+          170,
+          113
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          740,
+          236,
+          77,
+          38
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          839,
+          240,
+          209,
+          45
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          1110,
+          230,
+          68,
+          51
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          1191,
+          250,
+          114,
+          52
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          165,
+          370,
+          164,
+          271
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          331,
+          526,
+          52,
+          62
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          1220,
+          491,
+          146,
+          196
+        ]
+      },
+      {
+        "id": "solid-10",
+        "rect": [
+          1180,
+          550,
+          75,
+          112
+        ]
+      },
+      {
+        "id": "solid-11",
+        "rect": [
+          1286,
+          367,
+          63,
+          120
+        ]
+      },
+      {
+        "id": "solid-12",
+        "rect": [
+          1259,
+          713,
+          114,
+          88
+        ]
+      },
+      {
+        "id": "solid-13",
+        "rect": [
+          160,
+          717,
+          87,
+          80
+        ]
+      },
+      {
+        "id": "furnished-bench-cabinet",
+        "rect": [
+          166,
+          345,
+          69,
+          31
+        ]
+      },
+      {
+        "id": "furnished-bench-side-case",
+        "rect": [
+          158,
+          650,
+          44,
+          46
+        ]
+      },
+      {
+        "id": "furnished-entrance-planter-left",
+        "rect": [
+          575,
+          841,
+          52,
+          42
+        ]
+      },
+      {
+        "id": "furnished-entrance-planter-right",
+        "rect": [
+          910,
+          841,
+          53,
+          42
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          770,
+          875
+        ],
+        "target": "low-deck",
+        "targetExit": "enter-rhea",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          770,
+          735
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "L12",
+        "name": "Rhea 的补时铺与中继器",
+        "at": [
+          409,
+          502
+        ],
+        "events": [
+          "25a"
+        ],
+        "npcs": [
+          "Rhea",
+          "Milo"
+        ],
+        "note": "Mira 第一段回声；Milo 交出 Finn 的快递芯片",
+        "radius": 70
+      }
+    ]
+  },
+  "objects": [
+    {
+      "id": "bed-rug",
+      "image": "bed-rug.png",
+      "position": [
+        518,
+        256
+      ],
+      "size": [
+        269,
+        144
+      ],
+      "footpoint": [
+        134.5,
+        144
+      ],
+      "collision": null,
+      "depth": 0
+    },
+    {
+      "id": "entrance-rug",
+      "image": "entrance-rug.png",
+      "position": [
+        660,
+        778
+      ],
+      "size": [
+        215,
+        111
+      ],
+      "footpoint": [
+        107.5,
+        111
+      ],
+      "collision": null,
+      "depth": 0
+    },
+    {
+      "id": "bedside-cabinet",
+      "image": "bedside-cabinet.png",
+      "position": [
+        512,
+        158
+      ],
+      "size": [
+        45,
+        93
+      ],
+      "footpoint": [
+        22.5,
+        93
+      ],
+      "collision": null,
+      "depth": 251
+    },
+    {
+      "id": "bedside-planter",
+      "image": "bedside-planter.png",
+      "position": [
+        514,
+        112
+      ],
+      "size": [
+        45,
+        71
+      ],
+      "footpoint": [
+        22.5,
+        67
+      ],
+      "collision": null,
+      "depth": 252
+    },
+    {
+      "id": "bookshelf-right",
+      "image": "bookshelf-right.png",
+      "position": [
+        837,
+        106
+      ],
+      "size": [
+        207,
+        157
+      ],
+      "footpoint": [
+        103.5,
+        157
+      ],
+      "collision": null,
+      "depth": 263
+    },
+    {
+      "id": "bookshelf-right-planter",
+      "image": "bookshelf-right-planter.png",
+      "position": [
+        900,
+        86
+      ],
+      "size": [
+        45,
+        50
+      ],
+      "footpoint": [
+        22.5,
+        52
+      ],
+      "collision": null,
+      "depth": 264
+    },
+    {
+      "id": "bookshelf-right-chest",
+      "image": "bookshelf-right-chest.png",
+      "position": [
+        953,
+        91
+      ],
+      "size": [
+        55,
+        46
+      ],
+      "footpoint": [
+        27.5,
+        53
+      ],
+      "collision": null,
+      "depth": 264
+    },
+    {
+      "id": "bookshelf-right-vine",
+      "image": "bookshelf-right-vine.png",
+      "position": [
+        997,
+        78
+      ],
+      "size": [
+        67,
+        193
+      ],
+      "footpoint": [
+        33.5,
+        66
+      ],
+      "collision": null,
+      "depth": 264
+    },
+    {
+      "id": "nightstand",
+      "image": "nightstand.png",
+      "position": [
+        741,
+        194
+      ],
+      "size": [
+        78,
+        75
+      ],
+      "footpoint": [
+        39.0,
+        75
+      ],
+      "collision": null,
+      "depth": 269
+    },
+    {
+      "id": "bookshelf-floor-box",
+      "image": "bookshelf-floor-box.png",
+      "position": [
+        966,
+        210
+      ],
+      "size": [
+        65,
+        59
+      ],
+      "footpoint": [
+        32.5,
+        59
+      ],
+      "collision": null,
+      "depth": 269
+    },
+    {
+      "id": "nightstand-planter",
+      "image": "nightstand-planter.png",
+      "position": [
+        744,
+        168
+      ],
+      "size": [
+        41,
+        48
+      ],
+      "footpoint": [
+        20.5,
+        48
+      ],
+      "collision": null,
+      "depth": 270
+    },
+    {
+      "id": "nightstand-crystal",
+      "image": "nightstand-crystal.png",
+      "position": [
+        773,
+        195
+      ],
+      "size": [
+        36,
+        42
+      ],
+      "footpoint": [
+        18.0,
+        40
+      ],
+      "collision": null,
+      "depth": 270
+    },
+    {
+      "id": "large-planter",
+      "image": "large-planter.png",
+      "position": [
+        1070,
+        105
+      ],
+      "size": [
+        122,
+        168
+      ],
+      "footpoint": [
+        61.0,
+        168
+      ],
+      "collision": null,
+      "depth": 273
+    },
+    {
+      "id": "bookshelf-left",
+      "image": "bookshelf-left.png",
+      "position": [
+        361,
+        98
+      ],
+      "size": [
+        146,
+        178
+      ],
+      "footpoint": [
+        73.0,
+        178
+      ],
+      "collision": null,
+      "depth": 276
+    },
+    {
+      "id": "bookshelf-left-planter",
+      "image": "bookshelf-left-planter.png",
+      "position": [
+        334,
+        65
+      ],
+      "size": [
+        113,
+        188
+      ],
+      "footpoint": [
+        56.5,
+        66
+      ],
+      "collision": null,
+      "depth": 277
+    },
+    {
+      "id": "bookshelf-left-chest",
+      "image": "bookshelf-left-chest.png",
+      "position": [
+        450,
+        83
+      ],
+      "size": [
+        45,
+        42
+      ],
+      "footpoint": [
+        22.5,
+        50
+      ],
+      "collision": null,
+      "depth": 277
+    },
+    {
+      "id": "locker",
+      "image": "locker.png",
+      "position": [
+        1190,
+        101
+      ],
+      "size": [
+        120,
+        203
+      ],
+      "footpoint": [
+        60.0,
+        203
+      ],
+      "collision": null,
+      "depth": 304
+    },
+    {
+      "id": "locker-chest",
+      "image": "locker-chest.png",
+      "position": [
+        1203,
+        86
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "footpoint": [
+        25.0,
+        47
+      ],
+      "collision": null,
+      "depth": 305
+    },
+    {
+      "id": "bed",
+      "image": "bed.png",
+      "position": [
+        564,
+        153
+      ],
+      "size": [
+        165,
+        197
+      ],
+      "footpoint": [
+        82.5,
+        197
+      ],
+      "collision": null,
+      "depth": 350
+    },
+    {
+      "id": "bench-cabinet",
+      "image": "bench-cabinet.png",
+      "position": [
+        162,
+        295
+      ],
+      "size": [
+        76,
+        91
+      ],
+      "footpoint": [
+        38.0,
+        91
+      ],
+      "collision": null,
+      "depth": 386
+    },
+    {
+      "id": "bench-planter",
+      "image": "bench-planter.png",
+      "position": [
+        160,
+        300
+      ],
+      "size": [
+        52,
+        54
+      ],
+      "footpoint": [
+        26.0,
+        53
+      ],
+      "collision": null,
+      "depth": 387
+    },
+    {
+      "id": "desk-terminal",
+      "image": "desk-terminal.png",
+      "position": [
+        1284,
+        293
+      ],
+      "size": [
+        80,
+        210
+      ],
+      "footpoint": [
+        40.0,
+        210
+      ],
+      "collision": null,
+      "depth": 503
+    },
+    {
+      "id": "stool",
+      "image": "stool.png",
+      "position": [
+        329,
+        510
+      ],
+      "size": [
+        61,
+        89
+      ],
+      "footpoint": [
+        30.5,
+        89
+      ],
+      "collision": null,
+      "depth": 599
+    },
+    {
+      "id": "bench-toolbox",
+      "image": "bench-toolbox.png",
+      "position": [
+        221,
+        592
+      ],
+      "size": [
+        84,
+        40
+      ],
+      "footpoint": [
+        42.0,
+        40
+      ],
+      "collision": null,
+      "depth": 632
+    },
+    {
+      "id": "workbench",
+      "image": "workbench.png",
+      "position": [
+        161,
+        371
+      ],
+      "size": [
+        172,
+        288
+      ],
+      "footpoint": [
+        86.0,
+        288
+      ],
+      "collision": null,
+      "depth": 659
+    },
+    {
+      "id": "bench-picture",
+      "image": "bench-picture.png",
+      "position": [
+        236,
+        331
+      ],
+      "size": [
+        73,
+        45
+      ],
+      "footpoint": [
+        36.5,
+        47
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-gold-left",
+      "image": "tool-gold-left.png",
+      "position": [
+        233,
+        392
+      ],
+      "size": [
+        22,
+        20
+      ],
+      "footpoint": [
+        11.0,
+        19
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-gold-right",
+      "image": "tool-gold-right.png",
+      "position": [
+        260,
+        389
+      ],
+      "size": [
+        16,
+        22
+      ],
+      "footpoint": [
+        8.0,
+        22
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-wrench-silver",
+      "image": "tool-wrench-silver.png",
+      "position": [
+        203,
+        374
+      ],
+      "size": [
+        17,
+        59
+      ],
+      "footpoint": [
+        8.5,
+        57
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-driver-left",
+      "image": "tool-driver-left.png",
+      "position": [
+        284,
+        388
+      ],
+      "size": [
+        10,
+        46
+      ],
+      "footpoint": [
+        5.0,
+        45
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-driver-right",
+      "image": "tool-driver-right.png",
+      "position": [
+        308,
+        388
+      ],
+      "size": [
+        12,
+        46
+      ],
+      "footpoint": [
+        6.0,
+        45
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-gold-small",
+      "image": "tool-gold-small.png",
+      "position": [
+        230,
+        416
+      ],
+      "size": [
+        18,
+        19
+      ],
+      "footpoint": [
+        9.0,
+        18
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-wrench-dark",
+      "image": "tool-wrench-dark.png",
+      "position": [
+        169,
+        374
+      ],
+      "size": [
+        16,
+        65
+      ],
+      "footpoint": [
+        8.0,
+        64
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-chip",
+      "image": "tool-chip.png",
+      "position": [
+        253,
+        417
+      ],
+      "size": [
+        26,
+        25
+      ],
+      "footpoint": [
+        13.0,
+        22
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-vial-light",
+      "image": "tool-vial-light.png",
+      "position": [
+        221,
+        449
+      ],
+      "size": [
+        5,
+        32
+      ],
+      "footpoint": [
+        2.5,
+        31
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-vial-dark",
+      "image": "tool-vial-dark.png",
+      "position": [
+        205,
+        449
+      ],
+      "size": [
+        9,
+        34
+      ],
+      "footpoint": [
+        4.5,
+        33
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "bench-device",
+      "image": "bench-device.png",
+      "position": [
+        160,
+        440
+      ],
+      "size": [
+        41,
+        67
+      ],
+      "footpoint": [
+        20.5,
+        62
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-wrench-right",
+      "image": "tool-wrench-right.png",
+      "position": [
+        308,
+        447
+      ],
+      "size": [
+        15,
+        59
+      ],
+      "footpoint": [
+        7.5,
+        57
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-gear-right",
+      "image": "tool-gear-right.png",
+      "position": [
+        302,
+        502
+      ],
+      "size": [
+        21,
+        30
+      ],
+      "footpoint": [
+        10.5,
+        28
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-pliers",
+      "image": "tool-pliers.png",
+      "position": [
+        206,
+        483
+      ],
+      "size": [
+        12,
+        50
+      ],
+      "footpoint": [
+        6.0,
+        48
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "bench-mat",
+      "image": "bench-mat.png",
+      "position": [
+        237,
+        444
+      ],
+      "size": [
+        60,
+        90
+      ],
+      "footpoint": [
+        30.0,
+        88
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-wrench-lower",
+      "image": "tool-wrench-lower.png",
+      "position": [
+        195,
+        509
+      ],
+      "size": [
+        17,
+        45
+      ],
+      "footpoint": [
+        8.5,
+        43
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-gear-bottom",
+      "image": "tool-gear-bottom.png",
+      "position": [
+        250,
+        536
+      ],
+      "size": [
+        31,
+        19
+      ],
+      "footpoint": [
+        15.5,
+        18
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-copper",
+      "image": "tool-copper.png",
+      "position": [
+        223,
+        537
+      ],
+      "size": [
+        19,
+        17
+      ],
+      "footpoint": [
+        9.5,
+        17
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "tool-cylinder",
+      "image": "tool-cylinder.png",
+      "position": [
+        286,
+        540
+      ],
+      "size": [
+        30,
+        14
+      ],
+      "footpoint": [
+        15.0,
+        16
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "bench-case",
+      "image": "bench-case.png",
+      "position": [
+        158,
+        501
+      ],
+      "size": [
+        31,
+        59
+      ],
+      "footpoint": [
+        15.5,
+        57
+      ],
+      "collision": null,
+      "depth": 660
+    },
+    {
+      "id": "bench-lamp",
+      "image": "bench-lamp.png",
+      "position": [
+        232,
+        305
+      ],
+      "size": [
+        45,
+        103
+      ],
+      "footpoint": [
+        22.5,
+        36
+      ],
+      "collision": null,
+      "depth": 661
+    },
+    {
+      "id": "chair-desk",
+      "image": "chair-desk.png",
+      "position": [
+        1175,
+        526
+      ],
+      "size": [
+        78,
+        148
+      ],
+      "footpoint": [
+        39.0,
+        148
+      ],
+      "collision": null,
+      "depth": 674
+    },
+    {
+      "id": "desk",
+      "image": "desk.png",
+      "position": [
+        1230,
+        474
+      ],
+      "size": [
+        141,
+        215
+      ],
+      "footpoint": [
+        70.5,
+        215
+      ],
+      "collision": null,
+      "depth": 689
+    },
+    {
+      "id": "desk-picture",
+      "image": "desk-picture.png",
+      "position": [
+        1226,
+        433
+      ],
+      "size": [
+        60,
+        38
+      ],
+      "footpoint": [
+        30.0,
+        46
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-lamp",
+      "image": "desk-lamp.png",
+      "position": [
+        1248,
+        449
+      ],
+      "size": [
+        41,
+        56
+      ],
+      "footpoint": [
+        20.5,
+        52
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-ink",
+      "image": "desk-ink.png",
+      "position": [
+        1284,
+        495
+      ],
+      "size": [
+        32,
+        57
+      ],
+      "footpoint": [
+        16.0,
+        61
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-book",
+      "image": "desk-book.png",
+      "position": [
+        1241,
+        518
+      ],
+      "size": [
+        58,
+        55
+      ],
+      "footpoint": [
+        29.0,
+        57
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-books",
+      "image": "desk-books.png",
+      "position": [
+        1300,
+        560
+      ],
+      "size": [
+        49,
+        55
+      ],
+      "footpoint": [
+        24.5,
+        57
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-shelf",
+      "image": "desk-shelf.png",
+      "position": [
+        1340,
+        451
+      ],
+      "size": [
+        43,
+        189
+      ],
+      "footpoint": [
+        21.5,
+        186
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-shelf-books",
+      "image": "desk-shelf-books.png",
+      "position": [
+        1340,
+        474
+      ],
+      "size": [
+        40,
+        55
+      ],
+      "footpoint": [
+        20.0,
+        60
+      ],
+      "collision": null,
+      "depth": 691
+    },
+    {
+      "id": "desk-vine",
+      "image": "desk-vine.png",
+      "position": [
+        1334,
+        411
+      ],
+      "size": [
+        66,
+        147
+      ],
+      "footpoint": [
+        33.0,
+        73
+      ],
+      "collision": null,
+      "depth": 692
+    },
+    {
+      "id": "bench-side-case",
+      "image": "bench-side-case.png",
+      "position": [
+        158,
+        568
+      ],
+      "size": [
+        40,
+        135
+      ],
+      "footpoint": [
+        20.0,
+        135
+      ],
+      "collision": null,
+      "depth": 703
+    },
+    {
+      "id": "southwest-panel",
+      "image": "southwest-panel.png",
+      "position": [
+        206,
+        680
+      ],
+      "size": [
+        53,
+        119
+      ],
+      "footpoint": [
+        26.5,
+        119
+      ],
+      "collision": null,
+      "depth": 788
+    },
+    {
+      "id": "southwest-device",
+      "image": "southwest-device.png",
+      "position": [
+        155,
+        718
+      ],
+      "size": [
+        88,
+        71
+      ],
+      "footpoint": [
+        44.0,
+        71
+      ],
+      "collision": null,
+      "depth": 789
+    },
+    {
+      "id": "southwest-planter",
+      "image": "southwest-planter.png",
+      "position": [
+        152,
+        663
+      ],
+      "size": [
+        84,
+        95
+      ],
+      "footpoint": [
+        42.0,
+        90
+      ],
+      "collision": null,
+      "depth": 790
+    },
+    {
+      "id": "southeast-chest",
+      "image": "southeast-chest.png",
+      "position": [
+        1256,
+        704
+      ],
+      "size": [
+        124,
+        86
+      ],
+      "footpoint": [
+        62.0,
+        86
+      ],
+      "collision": null,
+      "depth": 790
+    },
+    {
+      "id": "southeast-planter",
+      "image": "southeast-planter.png",
+      "position": [
+        1301,
+        632
+      ],
+      "size": [
+        89,
+        122
+      ],
+      "footpoint": [
+        44.5,
+        116
+      ],
+      "collision": null,
+      "depth": 791
+    },
+    {
+      "id": "southeast-box",
+      "image": "southeast-box.png",
+      "position": [
+        1267,
+        698
+      ],
+      "size": [
+        42,
+        48
+      ],
+      "footpoint": [
+        21.0,
+        52
+      ],
+      "collision": null,
+      "depth": 791
+    },
+    {
+      "id": "entrance-planter-right",
+      "image": "entrance-planter-right.png",
+      "position": [
+        903,
+        775
+      ],
+      "size": [
+        62,
+        112
+      ],
+      "footpoint": [
+        31.0,
+        112
+      ],
+      "collision": null,
+      "depth": 887
+    },
+    {
+      "id": "entrance-planter-left",
+      "image": "entrance-planter-left.png",
+      "position": [
+        568,
+        772
+      ],
+      "size": [
+        60,
+        117
+      ],
+      "footpoint": [
+        30.0,
+        117
+      ],
+      "collision": null,
+      "depth": 889
+    }
+  ],
+  "contentVersion": "room-world-1-rhea-furnished-original-1",
+  "collisionIds": [
+    "solid-0",
+    "solid-1",
+    "solid-2",
+    "solid-3",
+    "solid-4",
+    "solid-5",
+    "solid-6",
+    "solid-7",
+    "solid-8",
+    "solid-9",
+    "solid-10",
+    "solid-11",
+    "solid-12",
+    "solid-13",
+    "furnished-bench-cabinet",
+    "furnished-bench-side-case",
+    "furnished-entrance-planter-left",
+    "furnished-entrance-planter-right"
+  ]
+}

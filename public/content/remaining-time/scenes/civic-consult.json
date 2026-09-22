@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "civic-consult",
+  "name": "合约咨询室",
+  "map": {
+    "source": "maps/civic-consult.json"
+  },
+  "anchors": {
+    "start": [11, 16],
+    "from-return": [11, 16]
+  },
+  "entities": [
+    {
+      "id": "civic-consult.return",
+      "name": "返回",
+      "position": [7, 16],
+      "portalTiles": [[7, 16]],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "civic-office",
+        "anchor": "from-to-consult"
+      }
+    }
+  ]
+}

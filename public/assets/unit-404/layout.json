@@ -1,0 +1,643 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down; object footpoint is local",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "unit-404",
+    "name": "404 号舱",
+    "english": "Unit 404",
+    "district": "个人空间",
+    "kind": "interior",
+    "parent": "low-deck",
+    "level": 0,
+    "description": "Mira 留下的住所。继承柜、家务终端 N-07、机械钟和记忆晶体等待查看。",
+    "characterScale": 3.2,
+    "width": 1254,
+    "height": 1254,
+    "image": "assets/maps/unit-404.png",
+    "spawn": [
+      620,
+      825
+    ],
+    "walkable": [
+      [
+        [
+          105,
+          345
+        ],
+        [
+          1155,
+          345
+        ],
+        [
+          1155,
+          915
+        ],
+        [
+          105,
+          915
+        ]
+      ],
+      [
+        [
+          558,
+          885
+        ],
+        [
+          693,
+          885
+        ],
+        [
+          693,
+          1140
+        ],
+        [
+          558,
+          1140
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          416,
+          330,
+          425,
+          40
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          923,
+          324,
+          85,
+          32
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          1074,
+          320,
+          64,
+          46
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          108,
+          478,
+          126,
+          270
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          105,
+          755,
+          52,
+          68
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          805,
+          565,
+          70,
+          94
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          947,
+          592,
+          200,
+          161
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          985,
+          651,
+          87,
+          127
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          1095,
+          862,
+          64,
+          51
+        ]
+      }
+    ],
+    "items": [
+      {
+        "id": "mira-relic",
+        "name": "Mira 的记忆晶体",
+        "at": [
+          840,
+          705
+        ],
+        "description": "晶体保存着一段尚未播放的回声。"
+      }
+    ],
+    "occlusions": [
+      {
+        "id": "south-lintel",
+        "polygon": [
+          [
+            510,
+            917
+          ],
+          [
+            738,
+            917
+          ],
+          [
+            738,
+            969
+          ],
+          [
+            510,
+            969
+          ]
+        ],
+        "baseline": 1138
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          625,
+          1080
+        ],
+        "target": "low-deck",
+        "targetExit": "enter-404",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          625,
+          855
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "U1",
+        "name": "继承柜与 N-07",
+        "at": [
+          650,
+          414
+        ],
+        "events": [
+          "06c",
+          "25c",
+          "26c",
+          "29c",
+          "30c",
+          "09c",
+          "13c",
+          "31c"
+        ],
+        "npcs": [
+          "N-07",
+          "数字生命"
+        ],
+        "note": "隐私告知、三权登记卡、回声四、00:00 启动、终局三步选择",
+        "radius": 70
+      },
+      {
+        "id": "U2",
+        "name": "Mira 的桌、机械钟与窗台",
+        "at": [
+          922,
+          743
+        ],
+        "events": [
+          "26a"
+        ],
+        "npcs": [],
+        "note": "序幕读刻字；每章末桌面新增物件",
+        "radius": 70
+      },
+      {
+        "id": "U3",
+        "name": "天顶投影膜",
+        "at": [
+          781,
+          671
+        ],
+        "events": [
+          "13a"
+        ],
+        "npcs": [
+          "N-07"
+        ],
+        "note": "翻面后显示旧洗衣管道入口",
+        "radius": 70
+      },
+      {
+        "id": "U4",
+        "name": "议会地面（第五章态）",
+        "at": [
+          620,
+          651
+        ],
+        "events": [
+          "03c",
+          "16c",
+          "19c",
+          "20c",
+          "23c",
+          "28c"
+        ],
+        "npcs": [
+          "全体核心 NPC"
+        ],
+        "note": "午夜听证",
+        "radius": 70
+      }
+    ]
+  },
+  "objects": [
+    {
+      "id": "bed-rug",
+      "image": "bed-rug.png",
+      "source": "art/props/unit-404/bed-rug.aseprite",
+      "position": [
+        105,
+        518
+      ],
+      "size": [
+        179,
+        294
+      ],
+      "footpoint": [
+        89.5,
+        294
+      ],
+      "collision": null
+    },
+    {
+      "id": "doormat",
+      "image": "doormat.png",
+      "source": "art/props/unit-404/doormat.aseprite",
+      "position": [
+        503,
+        1135
+      ],
+      "size": [
+        250,
+        95
+      ],
+      "footpoint": [
+        125.0,
+        95
+      ],
+      "collision": null
+    },
+    {
+      "id": "cabinet",
+      "image": "cabinet.png",
+      "source": "art/props/unit-404/cabinet.aseprite",
+      "position": [
+        413,
+        145
+      ],
+      "size": [
+        430,
+        227
+      ],
+      "footpoint": [
+        215.0,
+        227
+      ],
+      "collision": null
+    },
+    {
+      "id": "terminal",
+      "image": "terminal.png",
+      "source": "art/props/unit-404/terminal.aseprite",
+      "position": [
+        922,
+        130
+      ],
+      "size": [
+        90,
+        230
+      ],
+      "footpoint": [
+        45.0,
+        230
+      ],
+      "collision": null
+    },
+    {
+      "id": "north-planter",
+      "image": "north-planter.png",
+      "source": "art/props/unit-404/north-planter.aseprite",
+      "position": [
+        1067,
+        229
+      ],
+      "size": [
+        78,
+        140
+      ],
+      "footpoint": [
+        39.0,
+        140
+      ],
+      "collision": null
+    },
+    {
+      "id": "bed",
+      "image": "bed.png",
+      "source": "art/props/unit-404/bed.aseprite",
+      "position": [
+        104,
+        476
+      ],
+      "size": [
+        129,
+        277
+      ],
+      "footpoint": [
+        64.5,
+        277
+      ],
+      "collision": null
+    },
+    {
+      "id": "bedside-planter",
+      "image": "bedside-planter.png",
+      "source": "art/props/unit-404/bedside-planter.aseprite",
+      "position": [
+        100,
+        716
+      ],
+      "size": [
+        77,
+        107
+      ],
+      "footpoint": [
+        38.5,
+        107
+      ],
+      "collision": null
+    },
+    {
+      "id": "crystal-pedestal",
+      "image": "crystal-pedestal.png",
+      "source": "art/props/unit-404/crystal-pedestal.aseprite",
+      "position": [
+        798,
+        509
+      ],
+      "size": [
+        85,
+        157
+      ],
+      "footpoint": [
+        42.5,
+        157
+      ],
+      "collision": null
+    },
+    {
+      "id": "desk",
+      "image": "desk.png",
+      "source": "art/props/unit-404/desk.aseprite",
+      "position": [
+        942,
+        593
+      ],
+      "size": [
+        218,
+        161
+      ],
+      "footpoint": [
+        109.0,
+        161
+      ],
+      "collision": null
+    },
+    {
+      "id": "chair",
+      "image": "chair.png",
+      "source": "art/props/unit-404/chair.aseprite",
+      "position": [
+        978,
+        642
+      ],
+      "size": [
+        95,
+        141
+      ],
+      "footpoint": [
+        47.5,
+        141
+      ],
+      "collision": null
+    },
+    {
+      "id": "cabinet-planter",
+      "image": "cabinet-planter.png",
+      "source": "art/props/unit-404/cabinet-planter.aseprite",
+      "position": [
+        407,
+        106
+      ],
+      "size": [
+        142,
+        218
+      ],
+      "footpoint": [
+        68,
+        61
+      ],
+      "collision": null
+    },
+    {
+      "id": "cabinet-books",
+      "image": "cabinet-books.png",
+      "source": "art/props/unit-404/cabinet-books.aseprite",
+      "position": [
+        565,
+        124
+      ],
+      "size": [
+        52,
+        37
+      ],
+      "footpoint": [
+        26.0,
+        37
+      ],
+      "collision": null
+    },
+    {
+      "id": "cabinet-chest",
+      "image": "cabinet-chest.png",
+      "source": "art/props/unit-404/cabinet-chest.aseprite",
+      "position": [
+        700,
+        114
+      ],
+      "size": [
+        60,
+        47
+      ],
+      "footpoint": [
+        30.0,
+        47
+      ],
+      "collision": null
+    },
+    {
+      "id": "desk-books",
+      "image": "desk-books.png",
+      "source": "art/props/unit-404/desk-books.aseprite",
+      "position": [
+        956,
+        563
+      ],
+      "size": [
+        56,
+        49
+      ],
+      "footpoint": [
+        28.0,
+        49
+      ],
+      "collision": null
+    },
+    {
+      "id": "desk-papers",
+      "image": "desk-papers.png",
+      "source": "art/props/unit-404/desk-papers.aseprite",
+      "position": [
+        1018,
+        597
+      ],
+      "size": [
+        61,
+        39
+      ],
+      "footpoint": [
+        30.5,
+        39
+      ],
+      "collision": null
+    },
+    {
+      "id": "inkwell-quill",
+      "image": "inkwell-quill.png",
+      "source": "art/props/unit-404/inkwell-quill.aseprite",
+      "position": [
+        1048,
+        542
+      ],
+      "size": [
+        35,
+        63
+      ],
+      "footpoint": [
+        17.5,
+        63
+      ],
+      "collision": null
+    },
+    {
+      "id": "desk-clock",
+      "image": "desk-clock.png",
+      "source": "art/props/unit-404/desk-clock.aseprite",
+      "position": [
+        1082,
+        516
+      ],
+      "size": [
+        63,
+        88
+      ],
+      "footpoint": [
+        31.5,
+        88
+      ],
+      "collision": null
+    },
+    {
+      "id": "south-planter",
+      "image": "south-planter.png",
+      "source": "art/props/unit-404/south-planter.aseprite",
+      "position": [
+        1083,
+        789
+      ],
+      "size": [
+        87,
+        131
+      ],
+      "footpoint": [
+        43.5,
+        131
+      ],
+      "collision": null
+    },
+    {
+      "id": "entrance-left-planter",
+      "image": "entrance-left-planter.png",
+      "source": "art/props/unit-404/entrance-left-planter.aseprite",
+      "position": [
+        399,
+        1023
+      ],
+      "size": [
+        75,
+        175
+      ],
+      "footpoint": [
+        37.5,
+        175
+      ],
+      "collision": null
+    },
+    {
+      "id": "entrance-right-planter",
+      "image": "entrance-right-planter.png",
+      "source": "art/props/unit-404/entrance-right-planter.aseprite",
+      "position": [
+        780,
+        1023
+      ],
+      "size": [
+        77,
+        175
+      ],
+      "footpoint": [
+        38.5,
+        175
+      ],
+      "collision": null
+    }
+  ]
+}

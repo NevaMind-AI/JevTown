@@ -1,0 +1,303 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "one-day-garden",
+    "name": "屋顶一天花园",
+    "english": "One-Day Garden",
+    "district": "高层天井",
+    "kind": "interior",
+    "parent": "solarium",
+    "level": 3,
+    "description": "枯萎苗床与机械鸟工作台之间，北侧楼梯通往花园维护层。",
+    "characterScale": 1.6,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/one-day-garden.png",
+    "spawn": [
+      762,
+      755
+    ],
+    "walkable": [
+      [
+        [
+          146,
+          153
+        ],
+        [
+          1389,
+          153
+        ],
+        [
+          1477,
+          673
+        ],
+        [
+          1373,
+          697
+        ],
+        [
+          1373,
+          936
+        ],
+        [
+          1174,
+          936
+        ],
+        [
+          1142,
+          838
+        ],
+        [
+          965,
+          838
+        ],
+        [
+          965,
+          914
+        ],
+        [
+          604,
+          914
+        ],
+        [
+          604,
+          838
+        ],
+        [
+          345,
+          838
+        ],
+        [
+          345,
+          704
+        ],
+        [
+          90,
+          704
+        ],
+        [
+          106,
+          484
+        ]
+      ],
+      [
+        [
+          218,
+          685
+        ],
+        [
+          298,
+          685
+        ],
+        [
+          298,
+          926
+        ],
+        [
+          218,
+          926
+        ]
+      ],
+      [
+        [
+          1198,
+          679
+        ],
+        [
+          1331,
+          679
+        ],
+        [
+          1331,
+          928
+        ],
+        [
+          1198,
+          928
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          186,
+          315,
+          357,
+          116
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          167,
+          502,
+          366,
+          126
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          996,
+          316,
+          351,
+          115
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1004,
+          502,
+          363,
+          126
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1098,
+          196,
+          211,
+          54
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          1158,
+          233,
+          40,
+          47
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          632,
+          170,
+          48,
+          44
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          857,
+          170,
+          50,
+          44
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          297,
+          196,
+          103,
+          43
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          576,
+          106,
+          35,
+          51
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "bridge-entry",
+        "name": "栈桥入口",
+        "at": [
+          256,
+          809
+        ],
+        "target": "solarium",
+        "targetExit": "bridge-tower",
+        "kind": "stairs",
+        "edge": null,
+        "facade": null,
+        "levelDelta": -1,
+        "transition": "stairs",
+        "arrival": [
+          256,
+          691
+        ],
+        "facing": "n",
+        "radius": 34
+      },
+      {
+        "id": "lift-entry",
+        "name": "服务电梯入口",
+        "at": [
+          1265,
+          895
+        ],
+        "target": "solarium",
+        "targetExit": "service-lift",
+        "kind": "lift",
+        "edge": null,
+        "facade": null,
+        "levelDelta": -1,
+        "transition": "lift",
+        "arrival": [
+          1265,
+          651
+        ],
+        "facing": "n",
+        "radius": 34
+      },
+      {
+        "id": "to-vault",
+        "name": "维护层密室",
+        "at": [
+          769,
+          210
+        ],
+        "target": "garden-vault",
+        "targetExit": "return",
+        "kind": "stairs",
+        "edge": null,
+        "facade": null,
+        "levelDelta": -1,
+        "transition": "stairs",
+        "arrival": [
+          769,
+          290
+        ],
+        "facing": "s",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "S6",
+        "name": "屋顶一天花园",
+        "at": [
+          1182,
+          303
+        ],
+        "events": [
+          "14b",
+          "17b",
+          "27b",
+          "28b"
+        ],
+        "npcs": [
+          "Iris"
+        ],
+        "note": "种子膜苗床、机械鸟工作台、创始章程",
+        "radius": 70
+      }
+    ]
+  }
+}

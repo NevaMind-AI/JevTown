@@ -1,0 +1,651 @@
+{
+  "format": "low-clinic-assets-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "low-clinic",
+    "name": "基础诊所",
+    "english": "Basic Clinic",
+    "district": "下层回廊",
+    "kind": "interior",
+    "parent": "low-deck",
+    "level": 0,
+    "description": "诊疗床、药柜与登记桌组成下层回廊的基础诊所。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/low-clinic.png",
+    "spawn": [
+      770,
+      743
+    ],
+    "walkable": [
+      [
+        [
+          207,
+          267
+        ],
+        [
+          1397,
+          267
+        ],
+        [
+          1397,
+          775
+        ],
+        [
+          207,
+          775
+        ]
+      ],
+      [
+        [
+          686,
+          743
+        ],
+        [
+          854,
+          743
+        ],
+        [
+          854,
+          983
+        ],
+        [
+          686,
+          983
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          295,
+          260,
+          314,
+          42
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          644,
+          259,
+          148,
+          36
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          823,
+          244,
+          169,
+          50
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1073,
+          246,
+          135,
+          39
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          181,
+          439,
+          90,
+          115
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          181,
+          582,
+          90,
+          132
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          1105,
+          526,
+          280,
+          162
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          1183,
+          609,
+          109,
+          111
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          883,
+          539,
+          70,
+          82
+        ]
+      },
+      {
+        "id": "furnished-southwest-planter",
+        "rect": [
+          137,
+          729,
+          61,
+          47
+        ]
+      },
+      {
+        "id": "furnished-southeast-planter",
+        "rect": [
+          1351,
+          735,
+          57,
+          43
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          769,
+          919
+        ],
+        "target": "low-deck",
+        "targetExit": "enter-clinic",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          769,
+          763
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "L13",
+        "name": "基础诊所",
+        "at": [
+          1042,
+          598
+        ],
+        "events": [],
+        "npcs": [
+          "值班护士"
+        ],
+        "note": "取药委托目标；临时床位",
+        "radius": 70
+      }
+    ]
+  },
+  "objects": [
+    {
+      "id": "northwest-planter",
+      "image": "northwest-planter.png",
+      "position": [
+        137,
+        102
+      ],
+      "size": [
+        79,
+        145
+      ],
+      "footpoint": [
+        39.5,
+        82
+      ],
+      "collision": null,
+      "depth": 184
+    },
+    {
+      "id": "bin",
+      "image": "bin.png",
+      "position": [
+        951,
+        187
+      ],
+      "size": [
+        46,
+        89
+      ],
+      "footpoint": [
+        23.0,
+        89
+      ],
+      "collision": null,
+      "depth": 276
+    },
+    {
+      "id": "medical-rack",
+      "image": "medical-rack.png",
+      "position": [
+        1073,
+        124
+      ],
+      "size": [
+        126,
+        158
+      ],
+      "footpoint": [
+        63.0,
+        158
+      ],
+      "collision": null,
+      "depth": 282
+    },
+    {
+      "id": "rack-bottle",
+      "image": "rack-bottle.png",
+      "position": [
+        1104,
+        108
+      ],
+      "size": [
+        28,
+        50
+      ],
+      "footpoint": [
+        14.0,
+        46
+      ],
+      "collision": null,
+      "depth": 283
+    },
+    {
+      "id": "rack-planter",
+      "image": "rack-planter.png",
+      "position": [
+        1137,
+        87
+      ],
+      "size": [
+        86,
+        125
+      ],
+      "footpoint": [
+        43.0,
+        68
+      ],
+      "collision": null,
+      "depth": 283
+    },
+    {
+      "id": "exam-bed",
+      "image": "exam-bed.png",
+      "position": [
+        294,
+        128
+      ],
+      "size": [
+        322,
+        156
+      ],
+      "footpoint": [
+        161.0,
+        156
+      ],
+      "collision": null,
+      "depth": 284
+    },
+    {
+      "id": "medicine-cabinet",
+      "image": "medicine-cabinet.png",
+      "position": [
+        644,
+        61
+      ],
+      "size": [
+        154,
+        232
+      ],
+      "footpoint": [
+        77.0,
+        232
+      ],
+      "collision": null,
+      "depth": 293
+    },
+    {
+      "id": "sink-cabinet",
+      "image": "sink-cabinet.png",
+      "position": [
+        822,
+        141
+      ],
+      "size": [
+        134,
+        157
+      ],
+      "footpoint": [
+        67.0,
+        157
+      ],
+      "collision": null,
+      "depth": 298
+    },
+    {
+      "id": "soap-bottle",
+      "image": "soap-bottle.png",
+      "position": [
+        916,
+        139
+      ],
+      "size": [
+        27,
+        58
+      ],
+      "footpoint": [
+        13.5,
+        45
+      ],
+      "collision": null,
+      "depth": 299
+    },
+    {
+      "id": "bed-step",
+      "image": "bed-step.png",
+      "position": [
+        397,
+        251
+      ],
+      "size": [
+        81,
+        57
+      ],
+      "footpoint": [
+        40.5,
+        57
+      ],
+      "collision": null,
+      "depth": 308
+    },
+    {
+      "id": "chair-wait-upper",
+      "image": "chair-wait-upper.png",
+      "position": [
+        181,
+        410
+      ],
+      "size": [
+        98,
+        153
+      ],
+      "footpoint": [
+        49.0,
+        153
+      ],
+      "collision": null,
+      "depth": 563
+    },
+    {
+      "id": "medical-pedestal",
+      "image": "medical-pedestal.png",
+      "position": [
+        852,
+        489
+      ],
+      "size": [
+        123,
+        148
+      ],
+      "footpoint": [
+        61.5,
+        148
+      ],
+      "collision": null,
+      "depth": 637
+    },
+    {
+      "id": "desk",
+      "image": "desk.png",
+      "position": [
+        1099,
+        513
+      ],
+      "size": [
+        288,
+        176
+      ],
+      "footpoint": [
+        144.0,
+        176
+      ],
+      "collision": null,
+      "depth": 689
+    },
+    {
+      "id": "desk-planter",
+      "image": "desk-planter.png",
+      "position": [
+        1318,
+        466
+      ],
+      "size": [
+        59,
+        59
+      ],
+      "footpoint": [
+        29.5,
+        64
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-lamp",
+      "image": "desk-lamp.png",
+      "position": [
+        1123,
+        471
+      ],
+      "size": [
+        60,
+        72
+      ],
+      "footpoint": [
+        30.0,
+        66
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-monitor",
+      "image": "desk-monitor.png",
+      "position": [
+        1190,
+        446
+      ],
+      "size": [
+        80,
+        112
+      ],
+      "footpoint": [
+        40.0,
+        94
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-pens",
+      "image": "desk-pens.png",
+      "position": [
+        1290,
+        491
+      ],
+      "size": [
+        38,
+        58
+      ],
+      "footpoint": [
+        19.0,
+        50
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-keyboard",
+      "image": "desk-keyboard.png",
+      "position": [
+        1180,
+        526
+      ],
+      "size": [
+        72,
+        40
+      ],
+      "footpoint": [
+        36.0,
+        43
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-books",
+      "image": "desk-books.png",
+      "position": [
+        1323,
+        531
+      ],
+      "size": [
+        49,
+        44
+      ],
+      "footpoint": [
+        24.5,
+        46
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "desk-paper",
+      "image": "desk-paper.png",
+      "position": [
+        1279,
+        537
+      ],
+      "size": [
+        43,
+        50
+      ],
+      "footpoint": [
+        21.5,
+        41
+      ],
+      "collision": null,
+      "depth": 690
+    },
+    {
+      "id": "chair-wait-lower",
+      "image": "chair-wait-lower.png",
+      "position": [
+        180,
+        561
+      ],
+      "size": [
+        98,
+        158
+      ],
+      "footpoint": [
+        49.0,
+        158
+      ],
+      "collision": null,
+      "depth": 719
+    },
+    {
+      "id": "chair-desk",
+      "image": "chair-desk.png",
+      "position": [
+        1174,
+        573
+      ],
+      "size": [
+        117,
+        153
+      ],
+      "footpoint": [
+        58.5,
+        153
+      ],
+      "collision": null,
+      "depth": 726
+    },
+    {
+      "id": "southeast-planter",
+      "image": "southeast-planter.png",
+      "position": [
+        1339,
+        665
+      ],
+      "size": [
+        78,
+        109
+      ],
+      "footpoint": [
+        39.0,
+        109
+      ],
+      "collision": null,
+      "depth": 774
+    },
+    {
+      "id": "southwest-planter",
+      "image": "southwest-planter.png",
+      "position": [
+        117,
+        628
+      ],
+      "size": [
+        93,
+        153
+      ],
+      "footpoint": [
+        46.5,
+        153
+      ],
+      "collision": null,
+      "depth": 781
+    }
+  ],
+  "contentVersion": "room-world-1-clinic-furnished-original-1",
+  "collisionIds": [
+    "solid-0",
+    "solid-1",
+    "solid-2",
+    "solid-3",
+    "solid-4",
+    "solid-5",
+    "solid-6",
+    "solid-7",
+    "solid-8",
+    "furnished-southwest-planter",
+    "furnished-southeast-planter"
+  ]
+}

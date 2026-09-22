@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "embers-floor",
+  "name": "余烬公开赌桌大厅",
+  "map": {
+    "source": "maps/embers-floor.json"
+  },
+  "anchors": {
+    "start": [5, 22],
+    "from-return": [5, 22],
+    "from-to-backstage": [34, 8],
+    "from-to-office": [41, 12],
+    "from-to-lounge": [5, 12]
+  },
+  "entities": [
+    {
+      "id": "embers-floor.return",
+      "name": "返回",
+      "position": [1, 22],
+      "portalTiles": [
+        [1, 22],
+        [1, 21]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "transit-hall",
+        "anchor": "from-to-embers"
+      }
+    },
+    {
+      "id": "embers-floor.to-backstage",
+      "name": "后台",
+      "position": [34, 5],
+      "portalTiles": [
+        [34, 5],
+        [33, 5]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "embers-backstage",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "embers-floor.to-office",
+      "name": "概念密码门 → Rook 的账房",
+      "position": [46, 12],
+      "portalTiles": [
+        [46, 12],
+        [46, 11]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "embers-back-office",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "embers-floor.to-lounge",
+      "name": "休息间",
+      "position": [1, 12],
+      "portalTiles": [
+        [1, 12],
+        [1, 11]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "embers-lounge",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "rook",
+      "name": "Rook",
+      "position": [22, 17],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/rook-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "lyra",
+      "name": "Lyra",
+      "position": [24, 7],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/lyra-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "flint",
+      "name": "Flint",
+      "position": [7, 20],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/flint-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "gambler",
+      "name": "赌客",
+      "position": [34, 14],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/gambler-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "cashier",
+      "name": "兑时员",
+      "position": [21, 25],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/cashier-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "gambler-dispute",
+      "name": "争议筹码持有人",
+      "position": [10, 20],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/gambler-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

@@ -1,0 +1,241 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "embers-lounge",
+    "name": "休息间",
+    "english": "Embers Lounge",
+    "district": "余烬",
+    "kind": "interior",
+    "parent": "embers-floor",
+    "level": 1,
+    "description": "赌客圆桌、吧台和沙发，为余烬的喧闹留出一处歇脚地。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/embers-lounge.png",
+    "spawn": [
+      1214,
+      523
+    ],
+    "walkable": [
+      [
+        [
+          149,
+          204
+        ],
+        [
+          1385,
+          204
+        ],
+        [
+          1385,
+          924
+        ],
+        [
+          149,
+          924
+        ]
+      ],
+      [
+        [
+          1333,
+          455
+        ],
+        [
+          1420,
+          455
+        ],
+        [
+          1420,
+          571
+        ],
+        [
+          1333,
+          571
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          622,
+          198,
+          292,
+          41
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          882,
+          211,
+          57,
+          51
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          556,
+          164,
+          43,
+          42
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          938,
+          164,
+          43,
+          42
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1337,
+          208,
+          38,
+          38
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          242,
+          175,
+          142,
+          121
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          211,
+          239,
+          81,
+          76
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          343,
+          251,
+          80,
+          63
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          158,
+          386,
+          117,
+          297
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          284,
+          437,
+          48,
+          44
+        ]
+      },
+      {
+        "id": "solid-10",
+        "rect": [
+          284,
+          520,
+          48,
+          44
+        ]
+      },
+      {
+        "id": "solid-11",
+        "rect": [
+          284,
+          601,
+          48,
+          44
+        ]
+      },
+      {
+        "id": "solid-12",
+        "rect": [
+          231,
+          808,
+          205,
+          101
+        ]
+      },
+      {
+        "id": "solid-13",
+        "rect": [
+          181,
+          846,
+          47,
+          51
+        ]
+      },
+      {
+        "id": "solid-14",
+        "rect": [
+          1330,
+          865,
+          49,
+          50
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          1376,
+          521
+        ],
+        "target": "embers-floor",
+        "targetExit": "to-lounge",
+        "kind": "door",
+        "edge": "e",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1226,
+          521
+        ],
+        "facing": "w",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "E5",
+        "name": "休息间",
+        "at": [
+          770,
+          302
+        ],
+        "events": [
+          "02c"
+        ],
+        "npcs": [
+          "Rook"
+        ],
+        "note": "圆桌 / 侧桌 / 隔音单间",
+        "radius": 70
+      }
+    ]
+  }
+}

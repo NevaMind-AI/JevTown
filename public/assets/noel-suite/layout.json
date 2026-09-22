@@ -1,0 +1,180 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "noel-suite",
+    "name": "Noel 的私人厅",
+    "english": "Noel's Suite",
+    "district": "高层天井",
+    "kind": "interior",
+    "parent": "solarium",
+    "level": 2,
+    "description": "声音终端、床与会客区，构成 Noel 的私人生活空间。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/noel-suite.png",
+    "spawn": [
+      768,
+      765
+    ],
+    "walkable": [
+      [
+        [
+          109,
+          226
+        ],
+        [
+          1435,
+          226
+        ],
+        [
+          1435,
+          835
+        ],
+        [
+          109,
+          835
+        ]
+      ],
+      [
+        [
+          703,
+          806
+        ],
+        [
+          831,
+          806
+        ],
+        [
+          831,
+          941
+        ],
+        [
+          703,
+          941
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          156,
+          231,
+          213,
+          122
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          148,
+          483,
+          258,
+          95
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          199,
+          516,
+          80,
+          83
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1153,
+          488,
+          202,
+          63
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1174,
+          591,
+          161,
+          41
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          1334,
+          774,
+          92,
+          66
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          110,
+          770,
+          85,
+          70
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          1400,
+          321,
+          44,
+          65
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          768,
+          906
+        ],
+        "target": "solarium",
+        "targetExit": "enter-noel",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          768,
+          765
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "S10",
+        "name": "Noel 的私人厅",
+        "at": [
+          766,
+          287
+        ],
+        "events": [
+          "15b",
+          "21c",
+          "31b"
+        ],
+        "npcs": [
+          "Noel"
+        ],
+        "note": "",
+        "radius": 70
+      }
+    ]
+  }
+}

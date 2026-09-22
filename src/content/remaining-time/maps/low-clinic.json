@@ -1,0 +1,190 @@
+{
+  "width": 48,
+  "height": 30,
+  "floorTile": 271,
+  "wallTile": 732,
+  "collision": [
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "####.....##########.#####....................###",
+    "####.........................................###",
+    "####.........................................###",
+    "####.........................................###",
+    "####.####....................................###",
+    "####.####....................................###",
+    "####.####....................................###",
+    "####.####.........................##########.###",
+    "####.####..................###....##########.###",
+    "####.####..................###....##########.###",
+    "####.####..................###....##########.###",
+    "####.####.........................##########.###",
+    "####.####.........................##########.###",
+    "#########............................####....###",
+    "######....................................##.###",
+    "######....................................##.###",
+    "#####################......#####################",
+    "#####################......#####################",
+    "#####################......#####################",
+    "#####################......#####################",
+    "#####################......#####################"
+  ],
+  "playerScale": 2.5,
+  "art": [
+    {
+      "image": "assets/low-clinic/background-box.png",
+      "position": [0, 0],
+      "depth": -1
+    },
+    {
+      "image": "assets/low-clinic/northwest-planter.png",
+      "position": [137, 102],
+      "size": [79, 145],
+      "depth": 184
+    },
+    {
+      "image": "assets/low-clinic/bin.png",
+      "position": [951, 187],
+      "size": [46, 89],
+      "depth": 276
+    },
+    {
+      "image": "assets/low-clinic/medical-rack.png",
+      "position": [1073, 124],
+      "size": [126, 158],
+      "depth": 282
+    },
+    {
+      "image": "assets/low-clinic/rack-bottle.png",
+      "position": [1104, 108],
+      "size": [28, 50],
+      "depth": 283
+    },
+    {
+      "image": "assets/low-clinic/rack-planter.png",
+      "position": [1137, 87],
+      "size": [86, 125],
+      "depth": 283
+    },
+    {
+      "image": "assets/low-clinic/exam-bed.png",
+      "position": [294, 128],
+      "size": [322, 156],
+      "depth": 284
+    },
+    {
+      "image": "assets/low-clinic/medicine-cabinet.png",
+      "position": [644, 61],
+      "size": [154, 232],
+      "depth": 293
+    },
+    {
+      "image": "assets/low-clinic/sink-cabinet.png",
+      "position": [822, 141],
+      "size": [134, 157],
+      "depth": 298
+    },
+    {
+      "image": "assets/low-clinic/soap-bottle.png",
+      "position": [916, 139],
+      "size": [27, 58],
+      "depth": 299
+    },
+    {
+      "image": "assets/low-clinic/bed-step.png",
+      "position": [397, 251],
+      "size": [81, 57],
+      "depth": 308
+    },
+    {
+      "image": "assets/low-clinic/chair-wait-upper.png",
+      "position": [181, 410],
+      "size": [98, 153],
+      "depth": 563
+    },
+    {
+      "image": "assets/low-clinic/medical-pedestal.png",
+      "position": [852, 489],
+      "size": [123, 148],
+      "depth": 637
+    },
+    {
+      "image": "assets/low-clinic/desk.png",
+      "position": [1099, 513],
+      "size": [288, 176],
+      "depth": 689
+    },
+    {
+      "image": "assets/low-clinic/desk-planter.png",
+      "position": [1318, 466],
+      "size": [59, 59],
+      "depth": 690
+    },
+    {
+      "image": "assets/low-clinic/desk-lamp.png",
+      "position": [1123, 471],
+      "size": [60, 72],
+      "depth": 690
+    },
+    {
+      "image": "assets/low-clinic/desk-monitor.png",
+      "position": [1190, 446],
+      "size": [80, 112],
+      "depth": 690
+    },
+    {
+      "image": "assets/low-clinic/desk-pens.png",
+      "position": [1290, 491],
+      "size": [38, 58],
+      "depth": 690
+    },
+    {
+      "image": "assets/low-clinic/desk-keyboard.png",
+      "position": [1180, 526],
+      "size": [72, 40],
+      "depth": 690
+    },
+    {
+      "image": "assets/low-clinic/desk-books.png",
+      "position": [1323, 531],
+      "size": [49, 44],
+      "depth": 690
+    },
+    {
+      "image": "assets/low-clinic/desk-paper.png",
+      "position": [1279, 537],
+      "size": [43, 50],
+      "depth": 690
+    },
+    {
+      "image": "assets/low-clinic/chair-wait-lower.png",
+      "position": [180, 561],
+      "size": [98, 158],
+      "depth": 719
+    },
+    {
+      "image": "assets/low-clinic/chair-desk.png",
+      "position": [1174, 573],
+      "size": [117, 153],
+      "depth": 726
+    },
+    {
+      "image": "assets/low-clinic/southeast-planter.png",
+      "position": [1339, 665],
+      "size": [78, 109],
+      "depth": 774
+    },
+    {
+      "image": "assets/low-clinic/southwest-planter.png",
+      "position": [117, 628],
+      "size": [93, 153],
+      "depth": 781
+    }
+  ]
+}

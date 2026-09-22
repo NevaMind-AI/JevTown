@@ -1,0 +1,140 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "garden-vault",
+    "name": "花园维护层密室",
+    "english": "Garden Vault",
+    "district": "高层天井",
+    "kind": "interior",
+    "parent": "one-day-garden",
+    "level": 2,
+    "description": "种子膜、储物架与灌溉设备，保存着 Mira 给花园留下的东西。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/garden-vault.png",
+    "spawn": [
+      768,
+      676
+    ],
+    "walkable": [
+      [
+        [
+          328,
+          280
+        ],
+        [
+          1323,
+          280
+        ],
+        [
+          1323,
+          755
+        ],
+        [
+          328,
+          755
+        ]
+      ],
+      [
+        [
+          704,
+          721
+        ],
+        [
+          837,
+          721
+        ],
+        [
+          837,
+          965
+        ],
+        [
+          704,
+          965
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          589,
+          230,
+          361,
+          51
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          706,
+          478,
+          122,
+          84
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          1340,
+          327,
+          107,
+          340
+        ]
+      }
+    ],
+    "items": [
+      {
+        "id": "seed-film",
+        "name": "Mira 的种子膜",
+        "at": [
+          890,
+          585
+        ],
+        "description": "她留给花园的最后一份种子膜。"
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          769,
+          879
+        ],
+        "target": "one-day-garden",
+        "targetExit": "to-vault",
+        "kind": "stairs",
+        "edge": null,
+        "facade": null,
+        "levelDelta": 1,
+        "transition": "stairs",
+        "arrival": [
+          769,
+          678
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "S7",
+        "name": "花园维护层密室",
+        "at": [
+          769,
+          612
+        ],
+        "events": [],
+        "npcs": [],
+        "note": "",
+        "radius": 70
+      }
+    ]
+  }
+}

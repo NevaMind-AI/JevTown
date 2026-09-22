@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-1-box-celeste-gallery",
+  "id": "celeste-gallery",
+  "name": "展厅与估值台",
+  "map": {
+    "source": "maps/celeste-gallery.json"
+  },
+  "anchors": {
+    "start": [23, 24],
+    "from-return": [23, 24]
+  },
+  "entities": [
+    {
+      "id": "celeste-gallery.return",
+      "name": "返回",
+      "position": [21, 29],
+      "portalTiles": [
+        [21, 29],
+        [22, 29],
+        [23, 29],
+        [24, 29],
+        [25, 29]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/celeste-gallery/portal-box.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "solarium",
+        "anchor": "from-enter-gallery"
+      }
+    },
+    {
+      "id": "appraiser",
+      "name": "估值员",
+      "position": [23, 9],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/appraiser-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

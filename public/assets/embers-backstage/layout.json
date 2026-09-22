@@ -1,0 +1,178 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "embers-backstage",
+    "name": "后台 / Lyra 化妆间",
+    "english": "Backstage",
+    "district": "余烬",
+    "kind": "interior",
+    "parent": "embers-floor",
+    "level": 1,
+    "description": "戏服、化妆镜和沙发之间，Lyra 准备下一场演出。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/embers-backstage.png",
+    "spawn": [
+      769,
+      771
+    ],
+    "walkable": [
+      [
+        [
+          150,
+          259
+        ],
+        [
+          1386,
+          259
+        ],
+        [
+          1386,
+          840
+        ],
+        [
+          150,
+          840
+        ]
+      ],
+      [
+        [
+          703,
+          814
+        ],
+        [
+          831,
+          814
+        ],
+        [
+          831,
+          961
+        ],
+        [
+          703,
+          961
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          166,
+          282,
+          122,
+          166
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          462,
+          231,
+          233,
+          45
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          550,
+          250,
+          63,
+          53
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          840,
+          231,
+          233,
+          45
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          930,
+          250,
+          58,
+          53
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          751,
+          218,
+          44,
+          51
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          1259,
+          344,
+          122,
+          241
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          1296,
+          576,
+          87,
+          62
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          769,
+          921
+        ],
+        "target": "embers-floor",
+        "targetExit": "to-backstage",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          769,
+          773
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "E6",
+        "name": "后台 / Lyra 化妆间",
+        "at": [
+          789,
+          352
+        ],
+        "events": [
+          "09b"
+        ],
+        "npcs": [
+          "Lyra"
+        ],
+        "note": "20:40 约定会面地点",
+        "radius": 70
+      }
+    ]
+  }
+}

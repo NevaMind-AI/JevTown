@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "room-npcs",
+  "vars": {},
+  "interactions": {
+    "milo": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "mara": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "bio-swift": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "resident-door": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "rowan": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "resident": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "nurse": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "rhea": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "silas": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "adrian": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "meridian": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "elder": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "clerk": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "guard": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "resident-queue": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "volunteer": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "resident-zeroing": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "receptionist": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "celeste": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "waiter": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "collector": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "appraiser": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "noel": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "iris": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "rook": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "lyra": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "flint": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "gambler": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "cashier": {
+      "text": "请选择一项操作。",
+      "choices": []
+    },
+    "gambler-dispute": {
+      "text": "请选择一项操作。",
+      "choices": []
+    }
+  }
+}

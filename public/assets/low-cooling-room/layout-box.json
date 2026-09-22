@@ -1,0 +1,526 @@
+{
+  "format": "low-cooling-room-assets-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background-box.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "low-cooling-room",
+    "name": "冷却柱机房（隐藏房间）",
+    "english": "Cooling Room",
+    "district": "下层回廊",
+    "kind": "interior",
+    "parent": "low-service-duct",
+    "level": -1,
+    "description": "冷却机组与维修台包围着控制终端，隐藏的账线在这里汇合。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 928,
+    "image": "assets/maps/low-cooling-room.png",
+    "spawn": [
+      752,
+      681
+    ],
+    "walkable": [
+      [
+        [
+          224,
+          352
+        ],
+        [
+          1440,
+          352
+        ],
+        [
+          1440,
+          720
+        ],
+        [
+          224,
+          720
+        ]
+      ],
+      [
+        [
+          704,
+          720
+        ],
+        [
+          800,
+          720
+        ],
+        [
+          800,
+          928
+        ],
+        [
+          704,
+          928
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          436,
+          314,
+          219,
+          57
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          890,
+          314,
+          222,
+          57
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          724,
+          303,
+          83,
+          43
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1241,
+          303,
+          58,
+          169
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1278,
+          482,
+          158,
+          101
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          752,
+          878
+        ],
+        "target": "low-service-duct",
+        "targetExit": "to-cooling",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          752,
+          681
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "L16",
+        "name": "隐藏房间",
+        "at": [
+          768,
+          407
+        ],
+        "events": [],
+        "npcs": [],
+        "note": "非法账线设备",
+        "radius": 70
+      }
+    ],
+    "occlusions": []
+  },
+  "variantOf": "layout.json",
+  "contentVersion": "room-world-1-cooling-furnished-box-1",
+  "portalPlacement": {
+    "anchors": {
+      "start": [
+        23,
+        21
+      ],
+      "from-return": [
+        23,
+        21
+      ]
+    },
+    "portals": [
+      {
+        "id": "return",
+        "name": "返回",
+        "tiles": [
+          [
+            22,
+            27
+          ],
+          [
+            23,
+            27
+          ],
+          [
+            24,
+            27
+          ]
+        ],
+        "destination": {
+          "scene": "low-service-duct",
+          "anchor": "from-to-cooling"
+        },
+        "sprite": {
+          "image": "assets/low-cooling-room/portal-box.png",
+          "size": [
+            32,
+            32
+          ]
+        }
+      }
+    ]
+  },
+  "collisionIds": [
+    "solid-0",
+    "solid-1",
+    "solid-2",
+    "solid-3",
+    "solid-4"
+  ],
+  "objects": [
+    {
+      "id": "control-terminal",
+      "image": "control-terminal.png",
+      "position": [
+        724,
+        181
+      ],
+      "size": [
+        84,
+        168
+      ],
+      "footpoint": [
+        42.0,
+        168
+      ],
+      "collision": null,
+      "depth": 349
+    },
+    {
+      "id": "cooler-left",
+      "image": "cooler-left.png",
+      "position": [
+        425,
+        118
+      ],
+      "size": [
+        211,
+        260
+      ],
+      "footpoint": [
+        105.5,
+        260
+      ],
+      "collision": null,
+      "depth": 378
+    },
+    {
+      "id": "cooler-right",
+      "image": "cooler-right.png",
+      "position": [
+        878,
+        120
+      ],
+      "size": [
+        237,
+        264
+      ],
+      "footpoint": [
+        118.5,
+        264
+      ],
+      "collision": null,
+      "depth": 384
+    },
+    {
+      "id": "tool-board",
+      "image": "tool-board.png",
+      "position": [
+        1310,
+        374
+      ],
+      "size": [
+        120,
+        68
+      ],
+      "footpoint": [
+        60.0,
+        68
+      ],
+      "collision": null,
+      "depth": 442
+    },
+    {
+      "id": "tool-board-driver",
+      "image": "tool-board-driver.png",
+      "position": [
+        1356,
+        390
+      ],
+      "size": [
+        15,
+        48
+      ],
+      "footpoint": [
+        7.5,
+        47
+      ],
+      "collision": null,
+      "depth": 443
+    },
+    {
+      "id": "tool-board-pliers",
+      "image": "tool-board-pliers.png",
+      "position": [
+        1382,
+        382
+      ],
+      "size": [
+        26,
+        55
+      ],
+      "footpoint": [
+        13.0,
+        55
+      ],
+      "collision": null,
+      "depth": 443
+    },
+    {
+      "id": "tool-board-wrench",
+      "image": "tool-board-wrench.png",
+      "position": [
+        1321,
+        383
+      ],
+      "size": [
+        19,
+        57
+      ],
+      "footpoint": [
+        9.5,
+        57
+      ],
+      "collision": null,
+      "depth": 443
+    },
+    {
+      "id": "supply-rack",
+      "image": "supply-rack.png",
+      "position": [
+        1236,
+        270
+      ],
+      "size": [
+        68,
+        209
+      ],
+      "footpoint": [
+        34.0,
+        209
+      ],
+      "collision": null,
+      "depth": 479
+    },
+    {
+      "id": "rack-planter",
+      "image": "rack-planter.png",
+      "position": [
+        1205,
+        212
+      ],
+      "size": [
+        71,
+        255
+      ],
+      "footpoint": [
+        35.5,
+        65
+      ],
+      "collision": null,
+      "depth": 480
+    },
+    {
+      "id": "rack-bottle",
+      "image": "rack-bottle.png",
+      "position": [
+        1264,
+        302
+      ],
+      "size": [
+        19,
+        37
+      ],
+      "footpoint": [
+        9.5,
+        38
+      ],
+      "collision": null,
+      "depth": 480
+    },
+    {
+      "id": "rack-gray-case",
+      "image": "rack-gray-case.png",
+      "position": [
+        1251,
+        350
+      ],
+      "size": [
+        48,
+        40
+      ],
+      "footpoint": [
+        24.0,
+        43
+      ],
+      "collision": null,
+      "depth": 480
+    },
+    {
+      "id": "rack-olive-case",
+      "image": "rack-olive-case.png",
+      "position": [
+        1248,
+        407
+      ],
+      "size": [
+        51,
+        49
+      ],
+      "footpoint": [
+        25.5,
+        46
+      ],
+      "collision": null,
+      "depth": 480
+    },
+    {
+      "id": "floor-gray-chest",
+      "image": "floor-gray-chest.png",
+      "position": [
+        1305,
+        520
+      ],
+      "size": [
+        73,
+        49
+      ],
+      "footpoint": [
+        36.5,
+        49
+      ],
+      "collision": null,
+      "depth": 569
+    },
+    {
+      "id": "floor-brown-case",
+      "image": "floor-brown-case.png",
+      "position": [
+        1377,
+        518
+      ],
+      "size": [
+        45,
+        58
+      ],
+      "footpoint": [
+        22.5,
+        58
+      ],
+      "collision": null,
+      "depth": 576
+    },
+    {
+      "id": "workbench",
+      "image": "workbench.png",
+      "position": [
+        1274,
+        461
+      ],
+      "size": [
+        164,
+        124
+      ],
+      "footpoint": [
+        82.0,
+        124
+      ],
+      "collision": null,
+      "depth": 585
+    },
+    {
+      "id": "bench-toolbox",
+      "image": "bench-toolbox.png",
+      "position": [
+        1376,
+        442
+      ],
+      "size": [
+        54,
+        45
+      ],
+      "footpoint": [
+        27.0,
+        51
+      ],
+      "collision": null,
+      "depth": 586
+    },
+    {
+      "id": "bench-wrench",
+      "image": "bench-wrench.png",
+      "position": [
+        1298,
+        457
+      ],
+      "size": [
+        54,
+        54
+      ],
+      "footpoint": [
+        27.0,
+        50
+      ],
+      "collision": null,
+      "depth": 586
+    },
+    {
+      "id": "bench-note",
+      "image": "bench-note.png",
+      "position": [
+        1350,
+        469
+      ],
+      "size": [
+        40,
+        36
+      ],
+      "footpoint": [
+        20.0,
+        39
+      ],
+      "collision": null,
+      "depth": 586
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0",
+  "content_version": "demo-1",
+  "vars": {
+    "has_pass": false,
+    "met_again": false
+  },
+  "interactions": {
+    "n07": {
+      "text": "我是老黑，编号 N-07。通行证给你，我去隔壁共居走廊等你。拿好以后，过来找我。",
+      "choices": [
+        {
+          "id": "permit",
+          "text": "接过通行证：好，我随后就到。",
+          "when": {
+            "var": "has_pass",
+            "equals": false
+          },
+          "effects": [
+            {
+              "op": "set",
+              "var": "has_pass",
+              "value": true
+            },
+            {
+              "op": "move_entity",
+              "entity": "n07",
+              "path": [
+                [6, 5],
+                [7, 5],
+                [8, 5],
+                [9, 5]
+              ],
+              "via": "room.exit",
+              "arrival": "n07_wait"
+            }
+          ]
+        },
+        {
+          "id": "reunion",
+          "text": "老黑，我过来了。",
+          "when": {
+            "var": "has_pass",
+            "equals": true
+          },
+          "effects": [
+            {
+              "op": "set",
+              "var": "met_again",
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    "room.exit": {
+      "text": "这扇门通向共居走廊。需要通行许可。",
+      "choices": [
+        {
+          "id": "enter",
+          "text": "进入走廊",
+          "when": {
+            "var": "has_pass",
+            "equals": true
+          },
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "corridor.return": {
+      "text": "返回你的房间？",
+      "choices": [
+        {
+          "id": "return",
+          "text": "返回404",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "room.book": {
+      "text": "纸页边缘卷起，夹着一张褪色的酒馆收据。\n“初来时，我也一直盯着手上的余额。后来才发现，这里最值得记住的，往往是不收钱的小事。”\n落款已经被划掉了。",
+      "choices": [
+        {
+          "id": "close",
+          "text": "合上手记",
+          "effects": []
+        }
+      ]
+    }
+  },
+  "id": "arrival"
+}

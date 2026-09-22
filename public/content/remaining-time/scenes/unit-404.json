@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0",
+  "content_version": "unit-404-s01-guided-2",
+  "id": "unit-404",
+  "name": "404 号舱",
+  "map": {
+    "source": "maps/unit-404.json"
+  },
+  "anchors": {
+    "start": [19, 25],
+    "from-return": [19, 28]
+  },
+  "entities": [
+    {
+      "id": "unit-404.return",
+      "name": "返回",
+      "position": [19, 31],
+      "portalTiles": [
+        [19, 31],
+        [17, 31],
+        [18, 31],
+        [20, 31],
+        [21, 31]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/unit-404/portal-box.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-deck",
+        "anchor": "from-enter-404"
+      }
+    },
+    {
+      "id": "unit-404.cabinet",
+      "name": "暂存柜",
+      "position": [19, 11],
+      "interactionOffsets": [
+        [-3, -1],
+        [-2, -1],
+        [-1, -1],
+        [0, -1],
+        [1, -1],
+        [2, -1],
+        [3, -1],
+        [-3, 1],
+        [-2, 1],
+        [-1, 1],
+        [0, 1],
+        [1, 1],
+        [2, 1],
+        [3, 1],
+        [-4, 0],
+        [4, 0]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/unit-404/cabinet.png",
+        "size": [430, 227],
+        "offset": [-195, -207]
+      }
+    },
+    {
+      "id": "unit-404.bed",
+      "name": "床",
+      "position": [7, 23],
+      "interactionOffsets": [
+        [1, -3],
+        [1, -2],
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+        [-2, 1]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/unit-404/bed.png",
+        "size": [129, 277],
+        "offset": [-120, -260]
+      }
+    },
+    {
+      "id": "unit-404.old-record",
+      "name": "旧住户记录",
+      "position": [33, 23],
+      "interactionOffsets": [
+        [0, -2],
+        [0, -1],
+        [1, -1],
+        [2, -1],
+        [-1, -1],
+        [1, 1],
+        [2, 1],
+        [-1, 1],
+        [-2, 1],
+        [0, 2],
+        [2, 0],
+        [-2, 0]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/unit-404/desk-papers.png",
+        "size": [61, 39],
+        "offset": [-38, -139]
+      }
+    },
+    {
+      "id": "n07",
+      "name": "N-07",
+      "position": [30, 13],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/n07-idle.png",
+        "size": [192, 192],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

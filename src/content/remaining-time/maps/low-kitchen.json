@@ -1,0 +1,323 @@
+{
+  "width": 48,
+  "height": 31,
+  "floorTile": 271,
+  "wallTile": 732,
+  "collision": [
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "#########......#####################.#######..##",
+    "###...........................................##",
+    "###########..............................####.##",
+    "###########..............................####.##",
+    "###########..............................####.##",
+    "###########..............................####.##",
+    "###########..............................####.##",
+    "###########..............................####.##",
+    "###..###.................................####.##",
+    "###......................................####.##",
+    "###########...............................###.##",
+    "###########...............................###.##",
+    "###########...............................###.##",
+    "###########...............................###.##",
+    "###########...................................##",
+    "###########..............................####.##",
+    "###..###.................................####.##",
+    "###......................................####.##",
+    "#####################......#####################",
+    "#####################......#####################",
+    "#####################......#####################",
+    "#####################......#####################"
+  ],
+  "playerScale": 2.5,
+  "art": [
+    {
+      "image": "assets/low-kitchen/background-box.png",
+      "position": [0, 0],
+      "depth": -1
+    },
+    {
+      "image": "assets/low-kitchen/pantry-left.png",
+      "position": [118, 100],
+      "size": [165, 202],
+      "depth": 302
+    },
+    {
+      "image": "assets/low-kitchen/pantry-left-chest.png",
+      "position": [171, 60],
+      "size": [66, 53],
+      "depth": 304
+    },
+    {
+      "image": "assets/low-kitchen/pantry-left-vine.png",
+      "position": [99, 61],
+      "size": [70, 179],
+      "depth": 304
+    },
+    {
+      "image": "assets/low-kitchen/pantry-floor-planter.png",
+      "position": [278, 182],
+      "size": [59, 100],
+      "depth": 282
+    },
+    {
+      "image": "assets/low-kitchen/stove.png",
+      "position": [477, 204],
+      "size": [193, 111],
+      "depth": 315
+    },
+    {
+      "image": "assets/low-kitchen/stove-pot.png",
+      "position": [493, 189],
+      "size": [58, 44],
+      "depth": 317
+    },
+    {
+      "image": "assets/low-kitchen/stove-pan.png",
+      "position": [580, 196],
+      "size": [69, 43],
+      "depth": 317
+    },
+    {
+      "image": "assets/low-kitchen/sink-counter.png",
+      "position": [678, 183],
+      "size": [465, 129],
+      "depth": 312
+    },
+    {
+      "image": "assets/low-kitchen/wall-shelf.png",
+      "position": [737, 129],
+      "size": [315, 65],
+      "depth": 202
+    },
+    {
+      "image": "assets/low-kitchen/shelf-plates-left.png",
+      "position": [751, 122],
+      "size": [34, 29],
+      "depth": 204
+    },
+    {
+      "image": "assets/low-kitchen/shelf-plates-right.png",
+      "position": [790, 120],
+      "size": [36, 35],
+      "depth": 204
+    },
+    {
+      "image": "assets/low-kitchen/shelf-mug.png",
+      "position": [858, 124],
+      "size": [25, 23],
+      "depth": 204
+    },
+    {
+      "image": "assets/low-kitchen/shelf-cups.png",
+      "position": [885, 123],
+      "size": [32, 36],
+      "depth": 204
+    },
+    {
+      "image": "assets/low-kitchen/shelf-planter.png",
+      "position": [928, 94],
+      "size": [112, 103],
+      "depth": 204
+    },
+    {
+      "image": "assets/low-kitchen/counter-planter.png",
+      "position": [675, 170],
+      "size": [50, 66],
+      "depth": 314
+    },
+    {
+      "image": "assets/low-kitchen/cutting-board.png",
+      "position": [719, 217],
+      "size": [60, 38],
+      "depth": 313
+    },
+    {
+      "image": "assets/low-kitchen/recipe-note.png",
+      "position": [791, 218],
+      "size": [42, 36],
+      "depth": 313
+    },
+    {
+      "image": "assets/low-kitchen/knife-block.png",
+      "position": [999, 188],
+      "size": [67, 63],
+      "depth": 314
+    },
+    {
+      "image": "assets/low-kitchen/utensil-holder.png",
+      "position": [1064, 187],
+      "size": [46, 58],
+      "depth": 314
+    },
+    {
+      "image": "assets/low-kitchen/pantry-right.png",
+      "position": [1184, 101],
+      "size": [218, 206],
+      "depth": 307
+    },
+    {
+      "image": "assets/low-kitchen/pantry-tray.png",
+      "position": [1262, 89],
+      "size": [64, 40],
+      "depth": 309
+    },
+    {
+      "image": "assets/low-kitchen/pantry-pot.png",
+      "position": [1334, 77],
+      "size": [59, 45],
+      "depth": 309
+    },
+    {
+      "image": "assets/low-kitchen/table-north.png",
+      "position": [148, 366],
+      "size": [151, 157],
+      "depth": 523
+    },
+    {
+      "image": "assets/low-kitchen/chair-north-back.png",
+      "position": [186, 332],
+      "size": [62, 114],
+      "depth": 446
+    },
+    {
+      "image": "assets/low-kitchen/chair-north-left.png",
+      "position": [109, 393],
+      "size": [55, 124],
+      "depth": 517
+    },
+    {
+      "image": "assets/low-kitchen/chair-north-right.png",
+      "position": [280, 349],
+      "size": [71, 143],
+      "depth": 492
+    },
+    {
+      "image": "assets/low-kitchen/chair-north-front.png",
+      "position": [170, 496],
+      "size": [71, 86],
+      "depth": 582
+    },
+    {
+      "image": "assets/low-kitchen/table-north-planter.png",
+      "position": [163, 385],
+      "size": [55, 57],
+      "depth": 525
+    },
+    {
+      "image": "assets/low-kitchen/table-north-mug.png",
+      "position": [226, 410],
+      "size": [32, 34],
+      "depth": 525
+    },
+    {
+      "image": "assets/low-kitchen/table-north-cloth.png",
+      "position": [232, 427],
+      "size": [57, 49],
+      "depth": 524
+    },
+    {
+      "image": "assets/low-kitchen/table-south.png",
+      "position": [148, 622],
+      "size": [150, 172],
+      "depth": 794
+    },
+    {
+      "image": "assets/low-kitchen/chair-south-back.png",
+      "position": [196, 589],
+      "size": [64, 112],
+      "depth": 701
+    },
+    {
+      "image": "assets/low-kitchen/chair-south-left.png",
+      "position": [109, 644],
+      "size": [64, 132],
+      "depth": 776
+    },
+    {
+      "image": "assets/low-kitchen/chair-south-right.png",
+      "position": [273, 614],
+      "size": [79, 145],
+      "depth": 759
+    },
+    {
+      "image": "assets/low-kitchen/chair-south-front.png",
+      "position": [170, 750],
+      "size": [69, 89],
+      "depth": 839
+    },
+    {
+      "image": "assets/low-kitchen/table-south-planter.png",
+      "position": [167, 647],
+      "size": [53, 65],
+      "depth": 796
+    },
+    {
+      "image": "assets/low-kitchen/table-south-mug.png",
+      "position": [220, 652],
+      "size": [34, 38],
+      "depth": 796
+    },
+    {
+      "image": "assets/low-kitchen/table-south-bowl.png",
+      "position": [237, 683],
+      "size": [47, 40],
+      "depth": 796
+    },
+    {
+      "image": "assets/low-kitchen/fridge.png",
+      "position": [1314, 337],
+      "size": [111, 265],
+      "depth": 602
+    },
+    {
+      "image": "assets/low-kitchen/fridge-top-planter.png",
+      "position": [1370, 319],
+      "size": [85, 184],
+      "depth": 604
+    },
+    {
+      "image": "assets/low-kitchen/terminal.png",
+      "position": [1344, 549],
+      "size": [83, 206],
+      "depth": 755
+    },
+    {
+      "image": "assets/low-kitchen/terminal-planter.png",
+      "position": [1311, 675],
+      "size": [65, 96],
+      "depth": 771
+    },
+    {
+      "image": "assets/low-kitchen/southwest-planter.png",
+      "position": [91, 764],
+      "size": [88, 106],
+      "depth": 870
+    },
+    {
+      "image": "assets/low-kitchen/southeast-crate.png",
+      "position": [1315, 787],
+      "size": [70, 77],
+      "depth": 864
+    },
+    {
+      "image": "assets/low-kitchen/southeast-tall-crate.png",
+      "position": [1380, 768],
+      "size": [44, 115],
+      "depth": 850
+    },
+    {
+      "image": "assets/low-kitchen/southeast-planter.png",
+      "position": [1375, 791],
+      "size": [68, 87],
+      "depth": 878
+    }
+  ]
+}

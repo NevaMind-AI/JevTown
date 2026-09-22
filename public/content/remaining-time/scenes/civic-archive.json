@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-1-box-civic-archive",
+  "id": "civic-archive",
+  "name": "封存区",
+  "map": {
+    "source": "maps/civic-archive.json"
+  },
+  "anchors": {
+    "start": [31, 24],
+    "from-return": [23, 25]
+  },
+  "entities": [
+    {
+      "id": "civic-archive.return",
+      "name": "返回",
+      "position": [22, 29],
+      "portalTiles": [
+        [22, 29],
+        [23, 29],
+        [24, 29],
+        [25, 29]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/civic-archive/portal-box.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "civic-office",
+        "anchor": "from-to-archive"
+      }
+    }
+  ]
+}

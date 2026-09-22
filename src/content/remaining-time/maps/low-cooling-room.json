@@ -1,0 +1,153 @@
+{
+  "width": 48,
+  "height": 29,
+  "floorTile": 271,
+  "wallTile": 732,
+  "collision": [
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "#######......########.......#######...###....###",
+    "#######...............................###....###",
+    "#######...............................###....###",
+    "#######...............................###....###",
+    "#######.................................########",
+    "#######.................................########",
+    "#######.................................########",
+    "#######.................................########",
+    "#######......................................###",
+    "#######......................................###",
+    "#######......................................###",
+    "######################...#######################",
+    "######################...#######################",
+    "######################...#######################",
+    "######################...#######################",
+    "######################...#######################",
+    "######################...#######################",
+    "######################...#######################"
+  ],
+  "playerScale": 2.5,
+  "art": [
+    {
+      "image": "assets/low-cooling-room/background-box.png",
+      "position": [0, 0],
+      "depth": -1
+    },
+    {
+      "image": "assets/low-cooling-room/control-terminal.png",
+      "position": [724, 181],
+      "size": [84, 168],
+      "depth": 349
+    },
+    {
+      "image": "assets/low-cooling-room/cooler-left.png",
+      "position": [425, 118],
+      "size": [211, 260],
+      "depth": 378
+    },
+    {
+      "image": "assets/low-cooling-room/cooler-right.png",
+      "position": [878, 120],
+      "size": [237, 264],
+      "depth": 384
+    },
+    {
+      "image": "assets/low-cooling-room/tool-board.png",
+      "position": [1310, 374],
+      "size": [120, 68],
+      "depth": 442
+    },
+    {
+      "image": "assets/low-cooling-room/tool-board-driver.png",
+      "position": [1356, 390],
+      "size": [15, 48],
+      "depth": 443
+    },
+    {
+      "image": "assets/low-cooling-room/tool-board-pliers.png",
+      "position": [1382, 382],
+      "size": [26, 55],
+      "depth": 443
+    },
+    {
+      "image": "assets/low-cooling-room/tool-board-wrench.png",
+      "position": [1321, 383],
+      "size": [19, 57],
+      "depth": 443
+    },
+    {
+      "image": "assets/low-cooling-room/supply-rack.png",
+      "position": [1236, 270],
+      "size": [68, 209],
+      "depth": 479
+    },
+    {
+      "image": "assets/low-cooling-room/rack-planter.png",
+      "position": [1205, 212],
+      "size": [71, 255],
+      "depth": 480
+    },
+    {
+      "image": "assets/low-cooling-room/rack-bottle.png",
+      "position": [1264, 302],
+      "size": [19, 37],
+      "depth": 480
+    },
+    {
+      "image": "assets/low-cooling-room/rack-gray-case.png",
+      "position": [1251, 350],
+      "size": [48, 40],
+      "depth": 480
+    },
+    {
+      "image": "assets/low-cooling-room/rack-olive-case.png",
+      "position": [1248, 407],
+      "size": [51, 49],
+      "depth": 480
+    },
+    {
+      "image": "assets/low-cooling-room/floor-gray-chest.png",
+      "position": [1305, 520],
+      "size": [73, 49],
+      "depth": 569
+    },
+    {
+      "image": "assets/low-cooling-room/floor-brown-case.png",
+      "position": [1377, 518],
+      "size": [45, 58],
+      "depth": 576
+    },
+    {
+      "image": "assets/low-cooling-room/workbench.png",
+      "position": [1274, 461],
+      "size": [164, 124],
+      "depth": 585
+    },
+    {
+      "image": "assets/low-cooling-room/bench-toolbox.png",
+      "position": [1376, 442],
+      "size": [54, 45],
+      "depth": 586
+    },
+    {
+      "image": "assets/low-cooling-room/bench-wrench.png",
+      "position": [1298, 457],
+      "size": [54, 54],
+      "depth": 586
+    },
+    {
+      "image": "assets/low-cooling-room/bench-note.png",
+      "position": [1350, 469],
+      "size": [40, 36],
+      "depth": 586
+    }
+  ]
+}

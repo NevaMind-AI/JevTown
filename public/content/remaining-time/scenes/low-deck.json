@@ -1,0 +1,239 @@
+{
+  "schema_version": "1.0",
+  "content_version": "low-deck-s01-guided-1",
+  "id": "low-deck",
+  "name": "下层回廊",
+  "map": {
+    "source": "maps/low-deck.json"
+  },
+  "anchors": {
+    "start": [8, 12],
+    "from-to-transit": [28, 10],
+    "from-enter-404": [7, 11],
+    "from-enter-kitchen": [39, 12],
+    "from-enter-rhea": [14, 12],
+    "from-enter-clinic": [20, 12],
+    "from-laundry-a": [5, 21],
+    "from-laundry-b": [42, 21],
+    "from-duct-b": [16, 30]
+  },
+  "entities": [
+    {
+      "id": "low-deck.to-transit",
+      "name": "货运梯 → 转运厅",
+      "position": [28, 7],
+      "portalTiles": [
+        [28, 7],
+        [27, 7],
+        [29, 7]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "transit-hall",
+        "anchor": "from-to-low"
+      }
+    },
+    {
+      "id": "low-deck.enter-404",
+      "name": "404 号舱",
+      "position": [7, 8],
+      "portalTiles": [[7, 8]],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "unit-404",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "low-deck.enter-kitchen",
+      "name": "公共厨房",
+      "position": [39, 8],
+      "portalTiles": [
+        [39, 8],
+        [38, 8]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-kitchen",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "low-deck.enter-rhea",
+      "name": "Rhea 的补时铺",
+      "position": [14, 8],
+      "portalTiles": [[14, 8]],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "rhea-den",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "low-deck.enter-clinic",
+      "name": "基础诊所",
+      "position": [20, 8],
+      "portalTiles": [
+        [20, 8],
+        [19, 8]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-clinic",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "low-deck.laundry-a",
+      "name": "旧洗衣管道（舱房层端）",
+      "position": [5, 17],
+      "portalTiles": [
+        [5, 17],
+        [4, 17],
+        [6, 17]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-laundry-duct",
+        "anchor": "from-west"
+      }
+    },
+    {
+      "id": "low-deck.laundry-b",
+      "name": "旧洗衣管道（广场端）",
+      "position": [42, 17],
+      "portalTiles": [
+        [42, 17],
+        [43, 17]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-laundry-duct",
+        "anchor": "from-east"
+      }
+    },
+    {
+      "id": "low-deck.duct-b",
+      "name": "南侧检修井",
+      "position": [16, 28],
+      "portalTiles": [
+        [16, 28],
+        [17, 28],
+        [16, 29],
+        [17, 29]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-service-duct",
+        "anchor": "from-east"
+      }
+    },
+    {
+      "id": "low-deck.door-tag-317",
+      "name": "317 消磁门牌",
+      "position": [8, 10],
+      "interactionOffsets": [
+        [-1, 1],
+        [1, 1]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/low-deck/door-tag-317.png",
+        "size": [32, 12],
+        "offset": [6, -109]
+      }
+    },
+    {
+      "id": "ash",
+      "name": "Ash",
+      "position": [10, 12],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/ash-idle.png",
+        "size": [102, 102],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "milo",
+      "name": "Milo",
+      "position": [32, 12],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/milo-idle.png",
+        "size": [102, 102],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "mara",
+      "name": "Mara",
+      "position": [36, 26],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/mara-idle.png",
+        "size": [102, 102],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "bio-swift",
+      "name": "仿生雨燕",
+      "position": [18, 29],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/bio-swift-idle.png",
+        "size": [102, 102],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "resident-door",
+      "name": "陌生住户",
+      "position": [13, 12],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/resident-idle.png",
+        "size": [102, 102],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

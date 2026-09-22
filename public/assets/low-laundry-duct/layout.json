@@ -1,0 +1,170 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "low-laundry-duct",
+    "name": "旧洗衣管道",
+    "english": "Old Laundry Duct",
+    "district": "下层回廊",
+    "kind": "interior",
+    "parent": "low-deck",
+    "level": -1,
+    "description": "旧洗衣房重新开放。穿过中央过道，可以从另一端楼梯回到街区。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/low-laundry-duct.png",
+    "spawn": [
+      182,
+      466
+    ],
+    "walkable": [
+      [
+        [
+          63,
+          391
+        ],
+        [
+          1478,
+          391
+        ],
+        [
+          1478,
+          785
+        ],
+        [
+          63,
+          785
+        ]
+      ],
+      [
+        [
+          104,
+          310
+        ],
+        [
+          208,
+          310
+        ],
+        [
+          208,
+          432
+        ],
+        [
+          104,
+          432
+        ]
+      ],
+      [
+        [
+          1322,
+          310
+        ],
+        [
+          1430,
+          310
+        ],
+        [
+          1430,
+          432
+        ],
+        [
+          1322,
+          432
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          346,
+          722,
+          246,
+          61
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          934,
+          723,
+          247,
+          59
+        ]
+      }
+    ],
+    "items": [
+      {
+        "id": "laundry-note",
+        "name": "洗衣房记录",
+        "at": [
+          600,
+          420
+        ],
+        "description": "这条旧管道与主街一样连通两端。"
+      }
+    ],
+    "exits": [
+      {
+        "id": "west",
+        "name": "舱房层端",
+        "at": [
+          155,
+          362
+        ],
+        "target": "low-deck",
+        "targetExit": "laundry-a",
+        "kind": "stairs",
+        "edge": "w",
+        "facade": null,
+        "levelDelta": 1,
+        "transition": "stairs",
+        "arrival": [
+          194,
+          464
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "east",
+        "name": "广场端",
+        "at": [
+          1372,
+          362
+        ],
+        "target": "low-deck",
+        "targetExit": "laundry-b",
+        "kind": "stairs",
+        "edge": "e",
+        "facade": null,
+        "levelDelta": 1,
+        "transition": "stairs",
+        "arrival": [
+          1337,
+          464
+        ],
+        "facing": "s",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "L15",
+        "name": "旧洗衣管道内",
+        "at": [
+          604,
+          450
+        ],
+        "events": [],
+        "npcs": [],
+        "note": "16a 结果路径",
+        "radius": 70
+      }
+    ]
+  }
+}

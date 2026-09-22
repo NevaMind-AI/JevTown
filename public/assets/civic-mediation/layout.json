@@ -1,0 +1,189 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "civic-mediation",
+    "name": "争议调解室",
+    "english": "Mediation Room",
+    "district": "计时所",
+    "kind": "interior",
+    "parent": "civic-office",
+    "level": 1,
+    "description": "圆桌、材料桌与档案柜，为多方争议留出共同讨论的空间。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/civic-mediation.png",
+    "spawn": [
+      1322,
+      536
+    ],
+    "walkable": [
+      [
+        [
+          146,
+          280
+        ],
+        [
+          1387,
+          280
+        ],
+        [
+          1387,
+          905
+        ],
+        [
+          146,
+          905
+        ]
+      ],
+      [
+        [
+          1345,
+          465
+        ],
+        [
+          1535,
+          465
+        ],
+        [
+          1535,
+          620
+        ],
+        [
+          1345,
+          620
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          623,
+          229,
+          215,
+          61
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          175,
+          492,
+          176,
+          138
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          183,
+          432,
+          72,
+          55
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          354,
+          552,
+          65,
+          70
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          175,
+          627,
+          81,
+          83
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          607,
+          799,
+          268,
+          104
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          147,
+          848,
+          55,
+          54
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          879,
+          849,
+          65,
+          52
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          1324,
+          849,
+          63,
+          52
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          1475,
+          534
+        ],
+        "target": "civic-office",
+        "targetExit": "to-mediation",
+        "kind": "door",
+        "edge": "e",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1306,
+          534
+        ],
+        "facing": "w",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "C6",
+        "name": "争议调解室",
+        "at": [
+          748,
+          347
+        ],
+        "events": [
+          "22b"
+        ],
+        "npcs": [
+          "Adrian",
+          "Rhea",
+          "Silas"
+        ],
+        "note": "Silas 的终止执行方案",
+        "radius": 70
+      }
+    ]
+  }
+}

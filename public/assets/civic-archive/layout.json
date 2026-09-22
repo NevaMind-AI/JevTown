@@ -1,0 +1,200 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "civic-archive",
+    "name": "封存区",
+    "english": "Sealed Archive",
+    "district": "计时所",
+    "kind": "interior",
+    "parent": "civic-office",
+    "level": 1,
+    "description": "档案架、修复台和投影装置保存着暂未公开的记录。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/civic-archive.png",
+    "spawn": [
+      1000,
+      799
+    ],
+    "walkable": [
+      [
+        [
+          83,
+          259
+        ],
+        [
+          1453,
+          259
+        ],
+        [
+          1453,
+          886
+        ],
+        [
+          83,
+          886
+        ]
+      ],
+      [
+        [
+          728,
+          858
+        ],
+        [
+          812,
+          858
+        ],
+        [
+          812,
+          991
+        ],
+        [
+          728,
+          991
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          80,
+          308,
+          125,
+          203
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          81,
+          627,
+          129,
+          118
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          458,
+          357,
+          164,
+          90
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          911,
+          357,
+          167,
+          90
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          717,
+          472,
+          100,
+          84
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          636,
+          655,
+          263,
+          105
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          730,
+          700,
+          65,
+          74
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          1292,
+          409,
+          65,
+          118
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          1361,
+          397,
+          92,
+          343
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          1309,
+          548,
+          44,
+          70
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          769,
+          960
+        ],
+        "target": "civic-office",
+        "targetExit": "to-archive",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          768,
+          829
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "C8",
+        "name": "封存区",
+        "at": [
+          891,
+          548
+        ],
+        "events": [
+          "12b",
+          "13b",
+          "28a",
+          "29a"
+        ],
+        "npcs": [
+          "Adrian",
+          "Meridian"
+        ],
+        "note": "Mira 第二段回声；N-07 空白档案；候选人格",
+        "radius": 70
+      }
+    ]
+  }
+}

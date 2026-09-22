@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0",
+  "content_version": "demo-1",
+  "start": {
+    "scene": "room",
+    "anchor": "start"
+  },
+  "vars": {
+    "has_pass": false
+  },
+  "interactions": {
+    "n07": {
+      "text": "欢迎来到404。领取通行许可后，就可以去走廊看看。",
+      "choices": [
+        {
+          "id": "permit",
+          "text": "领取通行许可",
+          "effects": [
+            {
+              "op": "set",
+              "var": "has_pass",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "service",
+          "text": "房间服务（支付0:30:00，允许透支）",
+          "effects": [
+            {
+              "op": "pay_time",
+              "seconds": 1800
+            }
+          ]
+        }
+      ]
+    },
+    "room.exit": {
+      "text": "这扇门通向共居走廊。需要通行许可。",
+      "choices": [
+        {
+          "id": "enter",
+          "text": "进入走廊",
+          "when": {
+            "var": "has_pass",
+            "equals": true
+          },
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    },
+    "corridor.return": {
+      "text": "返回你的房间？",
+      "choices": [
+        {
+          "id": "return",
+          "text": "返回404",
+          "effects": [
+            {
+              "op": "travel"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "tasks": [
+    {
+      "id": "welcome",
+      "title": "熟悉小镇",
+      "description": "先熟悉行动方式，再与附近的 N-07 打个招呼。你可以自由探索小镇。",
+      "steps": [
+        {
+          "id": "walk",
+          "text": "使用 WASD / 方向键向四个方向移动",
+          "condition": {
+            "event": "movement.completed",
+            "collect": "direction",
+            "count": 4,
+            "items": [
+              {
+                "value": "up",
+                "label": "↑ W / ↑"
+              },
+              {
+                "value": "left",
+                "label": "← A / ←"
+              },
+              {
+                "value": "down",
+                "label": "↓ S / ↓"
+              },
+              {
+                "value": "right",
+                "label": "→ D / →"
+              }
+            ]
+          }
+        },
+        {
+          "id": "talk",
+          "text": "靠近 N-07，按 E 交谈",
+          "condition": {
+            "event": "interaction.started",
+            "where": {
+              "entityId": "n07"
+            },
+            "count": 1
+          }
+        }
+      ]
+    }
+  ]
+}

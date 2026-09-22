@@ -1,0 +1,91 @@
+.gain-notifications {
+  pointer-events: none;
+  width: min(320px, calc(100vw - 32px));
+  color: #fff7df;
+  font-family: 'Microsoft YaHei', system-ui, sans-serif;
+  text-shadow: 0 1px 3px #000;
+}
+.gain-title {
+  margin: 0 0 8px;
+  padding-left: 66px;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+.gain-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: min(40dvh, 360px);
+  overflow: hidden;
+}
+.gain-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 3px 14px 3px 6px;
+  border-block: 1px solid #d4d9b78c;
+  border-left: 2px solid #e2dca2;
+  background: linear-gradient(90deg, #526455e8, #263131d9 70%, #26313122);
+  animation: gain-receipt 3.35s linear both;
+}
+.gain-row img,
+.gain-clock {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.gain-clock {
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  color: #ead9a5;
+  line-height: 1;
+}
+.gain-row > span:last-child {
+  min-width: 0;
+  font-size: 16px;
+  font-weight: bold;
+  overflow-wrap: anywhere;
+}
+.gain-row strong {
+  color: #ffe140;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.goods-panel .gain-notifications {
+  position: fixed;
+  left: 16px;
+  bottom: 24px;
+  z-index: 1;
+}
+@keyframes gain-receipt {
+  0% {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  5%,
+  89.55% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes gain-receipt {
+    0%,
+    89.55% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}

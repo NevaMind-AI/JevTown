@@ -1,0 +1,305 @@
+{
+  "version": "player-workwear-generated-v2.1",
+  "image": "player.png",
+  "frameSize": [40, 48],
+  "anchor": [20, 46],
+  "footprint": {
+    "width": 8,
+    "height": 6,
+    "offsetY": -3
+  },
+  "directions": ["s", "w", "e", "n"],
+  "frames": {
+    "s-idle": {
+      "x": 0,
+      "y": 0,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "s-walk-0": {
+      "x": 40,
+      "y": 0,
+      "w": 40,
+      "h": 48,
+      "anchor": [17.5, 46]
+    },
+    "s-walk-1": {
+      "x": 80,
+      "y": 0,
+      "w": 40,
+      "h": 48,
+      "anchor": [21.5, 47]
+    },
+    "s-walk-2": {
+      "x": 120,
+      "y": 0,
+      "w": 40,
+      "h": 48,
+      "anchor": [18.5, 46]
+    },
+    "s-walk-3": {
+      "x": 160,
+      "y": 0,
+      "w": 40,
+      "h": 48,
+      "anchor": [22.0, 47]
+    },
+    "s-watch": {
+      "x": 200,
+      "y": 0,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "s-reach": {
+      "x": 240,
+      "y": 0,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "w-idle": {
+      "x": 0,
+      "y": 48,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "w-walk-0": {
+      "x": 40,
+      "y": 48,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "w-walk-1": {
+      "x": 80,
+      "y": 48,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "w-walk-2": {
+      "x": 120,
+      "y": 48,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "w-walk-3": {
+      "x": 160,
+      "y": 48,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "w-watch": {
+      "x": 200,
+      "y": 48,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "w-reach": {
+      "x": 240,
+      "y": 48,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "e-idle": {
+      "x": 0,
+      "y": 96,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "e-walk-0": {
+      "x": 40,
+      "y": 96,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "e-walk-1": {
+      "x": 80,
+      "y": 96,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "e-walk-2": {
+      "x": 120,
+      "y": 96,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "e-walk-3": {
+      "x": 160,
+      "y": 96,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "e-watch": {
+      "x": 200,
+      "y": 96,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "e-reach": {
+      "x": 240,
+      "y": 96,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "n-idle": {
+      "x": 0,
+      "y": 144,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "n-walk-0": {
+      "x": 40,
+      "y": 144,
+      "w": 40,
+      "h": 48,
+      "anchor": [22.0, 46]
+    },
+    "n-walk-1": {
+      "x": 80,
+      "y": 144,
+      "w": 40,
+      "h": 48,
+      "anchor": [19.0, 46]
+    },
+    "n-walk-2": {
+      "x": 120,
+      "y": 144,
+      "w": 40,
+      "h": 48,
+      "anchor": [19.5, 46]
+    },
+    "n-walk-3": {
+      "x": 160,
+      "y": 144,
+      "w": 40,
+      "h": 48,
+      "anchor": [19.5, 46]
+    },
+    "n-watch": {
+      "x": 200,
+      "y": 144,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    },
+    "n-reach": {
+      "x": 240,
+      "y": 144,
+      "w": 40,
+      "h": 48,
+      "anchor": [20, 46]
+    }
+  },
+  "animations": {
+    "s": {
+      "idle": {
+        "frames": ["s-idle"],
+        "duration": 1000,
+        "loop": true
+      },
+      "walk": {
+        "frames": ["s-walk-0", "s-walk-1", "s-walk-2", "s-walk-3"],
+        "duration": 90,
+        "loop": true
+      },
+      "watch": {
+        "frames": ["s-watch"],
+        "duration": 900,
+        "loop": false
+      },
+      "reach": {
+        "frames": ["s-reach"],
+        "duration": 420,
+        "loop": false
+      }
+    },
+    "w": {
+      "idle": {
+        "frames": ["w-idle"],
+        "duration": 1000,
+        "loop": true
+      },
+      "walk": {
+        "frames": ["w-walk-0", "w-walk-1", "w-walk-2", "w-walk-3"],
+        "duration": 90,
+        "loop": true
+      },
+      "watch": {
+        "frames": ["w-watch"],
+        "duration": 900,
+        "loop": false
+      },
+      "reach": {
+        "frames": ["w-reach"],
+        "duration": 420,
+        "loop": false
+      }
+    },
+    "e": {
+      "idle": {
+        "frames": ["e-idle"],
+        "duration": 1000,
+        "loop": true
+      },
+      "walk": {
+        "frames": ["e-walk-0", "e-walk-1", "e-walk-2", "e-walk-3"],
+        "duration": 90,
+        "loop": true
+      },
+      "watch": {
+        "frames": ["e-watch"],
+        "duration": 900,
+        "loop": false
+      },
+      "reach": {
+        "frames": ["e-reach"],
+        "duration": 420,
+        "loop": false
+      }
+    },
+    "n": {
+      "idle": {
+        "frames": ["n-idle"],
+        "duration": 1000,
+        "loop": true
+      },
+      "walk": {
+        "frames": ["n-walk-0", "n-walk-1", "n-walk-2", "n-walk-3"],
+        "duration": 90,
+        "loop": true
+      },
+      "watch": {
+        "frames": ["n-watch"],
+        "duration": 900,
+        "loop": false
+      },
+      "reach": {
+        "frames": ["n-reach"],
+        "duration": 420,
+        "loop": false
+      }
+    }
+  },
+  "source": "../image25-v2/player-generated-sheet.png",
+  "processor": "../process_generated.py",
+  "watch": "anatomical-left",
+  "satchel": "anatomical-right",
+  "registration": "Vertical walk frames use per-frame head registration against their idle pose; image pixels are unchanged."
+}

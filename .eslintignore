@@ -1,0 +1,8 @@
+webpack*
+.eslintrc.cjs
+next.config.js
+tailwind.config.js
+postcss.config.js
+data/*.js
+src/editor/*
+dist/*

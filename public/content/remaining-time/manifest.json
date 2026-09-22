@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-7-s01-guided-2",
+  "start": {
+    "scene": "unit-404",
+    "anchor": "start"
+  },
+  "scenes": [
+    "scenes/unit-404.json",
+    "scenes/low-deck.json",
+    "scenes/low-kitchen.json",
+    "scenes/low-clinic.json",
+    "scenes/rhea-den.json",
+    "scenes/low-service-duct.json",
+    "scenes/low-laundry-duct.json",
+    "scenes/low-cooling-room.json",
+    "scenes/transit-hall.json",
+    "scenes/civic-office.json",
+    "scenes/civic-mediation.json",
+    "scenes/civic-consult.json",
+    "scenes/civic-zeroing-lounge.json",
+    "scenes/civic-archive.json",
+    "scenes/solarium.json",
+    "scenes/sky-lobby.json",
+    "scenes/celeste-reception.json",
+    "scenes/celeste-gallery.json",
+    "scenes/celeste-archive.json",
+    "scenes/noel-suite.json",
+    "scenes/one-day-garden.json",
+    "scenes/garden-vault.json",
+    "scenes/embers-floor.json",
+    "scenes/embers-lounge.json",
+    "scenes/embers-backstage.json",
+    "scenes/embers-back-office.json"
+  ],
+  "stories": [
+    "stories/travel.json",
+    "stories/npcs.json",
+    "stories/unit-404.json",
+    "stories/s01-door-tag.json"
+  ]
+}

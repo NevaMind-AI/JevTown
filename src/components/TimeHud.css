@@ -1,0 +1,204 @@
+.time-hud {
+  width: max-content;
+  max-width: 100%;
+  padding: 9px 14px;
+  border: 1px solid rgb(224 208 170 / 35%);
+  border-radius: 3px;
+  background: rgb(20 23 28 / 88%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+  color: #f7f4ea;
+  font-family: system-ui, sans-serif;
+}
+.time-hud__date {
+  margin-top: 3px;
+  font-size: 15px;
+  color: #dedbd0;
+  letter-spacing: 0.03em;
+}
+:fullscreen .time-hud__date {
+  font-size: clamp(16px, 1.4vw, 22px);
+}
+.time-hud__label {
+  display: block;
+  font-size: 14px;
+  color: #c9c7bd;
+  letter-spacing: 0.12em;
+}
+.time-hud__clock {
+  display: block;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+}
+.time-hud__balance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #ffffff26;
+  font-size: 14px;
+  align-items: center;
+}
+.time-hud__balance output {
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 600;
+  font-family: ui-monospace, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  color: #f2d192;
+  overflow-wrap: anywhere;
+}
+.time-hud__balance[data-overdrawn='true'] {
+  color: #ffbaac;
+}
+.time-hud__balance[data-overdrawn='true'] output {
+  color: inherit;
+}
+
+:fullscreen .time-hud__clock {
+  font-size: clamp(36px, 4vw, 64px);
+}
+:fullscreen .time-hud__balance output {
+  font-size: clamp(26px, 3vw, 42px);
+}
+.task-board {
+  margin-top: 12px;
+  max-width: 320px;
+  padding: 10px 14px;
+  background: linear-gradient(90deg, rgb(20 23 28 / 82%), rgb(20 23 28 / 55%) 70%, transparent);
+  border-left: 2px solid #e8dfbd99;
+  border-radius: 8px 0 0 8px;
+  color: #f7f4ea;
+  text-shadow: 0 1px 2px #000;
+  font:
+    16px/1.6 system-ui,
+    sans-serif;
+}
+.task-board h2 {
+  font-weight: 700;
+  color: #f2d192;
+}
+.task-board ul {
+  margin-top: 5px;
+}
+:fullscreen .task-board {
+  font-size: clamp(14px, 1.2vw, 18px);
+}
+
+.task-board__guide {
+  max-height: 32vh;
+  overflow-y: auto;
+  pointer-events: auto;
+  font-size: 13px;
+}
+.task-board__guide p {
+  margin-top: 8px;
+}
+.task-board__legend {
+  color: #ffd45c;
+}
+.task-board__trigger {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.task-board kbd {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #b8b9c480;
+  border-radius: 3px;
+  background: #131b2fcc;
+  font:
+    18px ui-monospace,
+    monospace;
+  text-shadow: none;
+}
+.task-board__trigger:focus-visible {
+  outline: 2px solid #f2d192;
+  outline-offset: 3px;
+}
+.task-panel {
+  pointer-events: auto;
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(1000px, 94vw);
+  max-width: 94vw;
+  height: min(650px, 85dvh);
+  max-height: 85dvh;
+  padding: 0;
+  border: 2px solid #b7a47e;
+  background: #303441;
+  color: #f7f4ea;
+  font:
+    17px/1.7 system-ui,
+    sans-serif;
+}
+.task-panel::backdrop {
+  background: #10131bc9;
+}
+.task-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 2px solid #b7a47e;
+  background: #1d2029;
+}
+.task-panel header h2 {
+  font-size: 26px;
+  font-weight: 700;
+}
+.task-panel button {
+  padding: 8px 12px;
+  border: 1px solid #b7a47e;
+}
+.task-panel button:focus-visible {
+  outline: 3px solid #f2d192;
+  outline-offset: 2px;
+}
+.task-panel__body {
+  display: grid;
+  grid-template-columns: minmax(160px, 28%) 1fr;
+  gap: 24px;
+  padding: 24px;
+}
+.task-panel nav {
+  border-right: 1px solid #ffffff33;
+  padding-right: 16px;
+}
+.task-panel nav button {
+  width: 100%;
+  margin-top: 12px;
+  text-align: left;
+  background: #665838;
+  color: #ffe3a0;
+}
+.task-panel article h3 {
+  font-size: 26px;
+  margin-bottom: 20px;
+}
+.task-panel article ul {
+  margin: 24px 0;
+}
+.task-panel__status {
+  border-top: 1px solid #ffffff33;
+  padding-top: 16px;
+  color: #f2d192;
+}
+@media (max-width: 600px) {
+  .task-panel__body {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .task-panel nav {
+    border-right: 0;
+  }
+}

@@ -1,0 +1,443 @@
+{
+  "width": 48,
+  "height": 31,
+  "floorTile": 271,
+  "wallTile": 732,
+  "collision": [
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "################################################",
+    "#####......######################.#######...####",
+    "#####............######..............####...####",
+    "########.........######.....................####",
+    "###########.............................##..####",
+    "###########.............................##..####",
+    "###########.............................##..####",
+    "###########.............................##..####",
+    "###########...........................#####.####",
+    "############..........................#####.####",
+    "############.........................######.####",
+    "############.........................######.####",
+    "###########..........................######.####",
+    "#######..............................######.####",
+    "#######...............................#####.####",
+    "########...............................####.####",
+    "########...............................####.####",
+    "########...............................####.####",
+    "#####.......................................####",
+    "#####.............##........##..............####",
+    "#####.............##........##..............####",
+    "#####################......#####################",
+    "#####################......#####################",
+    "#####################......#####################"
+  ],
+  "playerScale": 2.5,
+  "art": [
+    {
+      "image": "assets/rhea-den/background-box.png",
+      "position": [0, 0],
+      "depth": -1
+    },
+    {
+      "image": "assets/rhea-den/bed-rug.png",
+      "position": [518, 256],
+      "size": [269, 144],
+      "depth": 0
+    },
+    {
+      "image": "assets/rhea-den/entrance-rug.png",
+      "position": [660, 778],
+      "size": [215, 111],
+      "depth": 0
+    },
+    {
+      "image": "assets/rhea-den/bedside-cabinet.png",
+      "position": [512, 158],
+      "size": [45, 93],
+      "depth": 251
+    },
+    {
+      "image": "assets/rhea-den/bedside-planter.png",
+      "position": [514, 112],
+      "size": [45, 71],
+      "depth": 252
+    },
+    {
+      "image": "assets/rhea-den/bookshelf-right.png",
+      "position": [837, 106],
+      "size": [207, 157],
+      "depth": 263
+    },
+    {
+      "image": "assets/rhea-den/bookshelf-right-planter.png",
+      "position": [900, 86],
+      "size": [45, 50],
+      "depth": 264
+    },
+    {
+      "image": "assets/rhea-den/bookshelf-right-chest.png",
+      "position": [953, 91],
+      "size": [55, 46],
+      "depth": 264
+    },
+    {
+      "image": "assets/rhea-den/bookshelf-right-vine.png",
+      "position": [997, 78],
+      "size": [67, 193],
+      "depth": 264
+    },
+    {
+      "image": "assets/rhea-den/nightstand.png",
+      "position": [741, 194],
+      "size": [78, 75],
+      "depth": 269
+    },
+    {
+      "image": "assets/rhea-den/bookshelf-floor-box.png",
+      "position": [966, 210],
+      "size": [65, 59],
+      "depth": 269
+    },
+    {
+      "image": "assets/rhea-den/nightstand-planter.png",
+      "position": [744, 168],
+      "size": [41, 48],
+      "depth": 270
+    },
+    {
+      "image": "assets/rhea-den/nightstand-crystal.png",
+      "position": [773, 195],
+      "size": [36, 42],
+      "depth": 270
+    },
+    {
+      "image": "assets/rhea-den/large-planter.png",
+      "position": [1070, 105],
+      "size": [122, 168],
+      "depth": 273
+    },
+    {
+      "image": "assets/rhea-den/bookshelf-left.png",
+      "position": [361, 98],
+      "size": [146, 178],
+      "depth": 276
+    },
+    {
+      "image": "assets/rhea-den/bookshelf-left-planter.png",
+      "position": [334, 65],
+      "size": [113, 188],
+      "depth": 277
+    },
+    {
+      "image": "assets/rhea-den/bookshelf-left-chest.png",
+      "position": [450, 83],
+      "size": [45, 42],
+      "depth": 277
+    },
+    {
+      "image": "assets/rhea-den/locker.png",
+      "position": [1190, 101],
+      "size": [120, 203],
+      "depth": 304
+    },
+    {
+      "image": "assets/rhea-den/locker-chest.png",
+      "position": [1203, 86],
+      "size": [50, 50],
+      "depth": 305
+    },
+    {
+      "image": "assets/rhea-den/bed.png",
+      "position": [564, 153],
+      "size": [165, 197],
+      "depth": 350
+    },
+    {
+      "image": "assets/rhea-den/bench-cabinet.png",
+      "position": [162, 295],
+      "size": [76, 91],
+      "depth": 386
+    },
+    {
+      "image": "assets/rhea-den/bench-planter.png",
+      "position": [160, 300],
+      "size": [52, 54],
+      "depth": 387
+    },
+    {
+      "image": "assets/rhea-den/desk-terminal.png",
+      "position": [1284, 293],
+      "size": [80, 210],
+      "depth": 503
+    },
+    {
+      "image": "assets/rhea-den/stool.png",
+      "position": [329, 510],
+      "size": [61, 89],
+      "depth": 599
+    },
+    {
+      "image": "assets/rhea-den/bench-toolbox.png",
+      "position": [221, 592],
+      "size": [84, 40],
+      "depth": 632
+    },
+    {
+      "image": "assets/rhea-den/workbench.png",
+      "position": [161, 371],
+      "size": [172, 288],
+      "depth": 659
+    },
+    {
+      "image": "assets/rhea-den/bench-picture.png",
+      "position": [236, 331],
+      "size": [73, 45],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-gold-left.png",
+      "position": [233, 392],
+      "size": [22, 20],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-gold-right.png",
+      "position": [260, 389],
+      "size": [16, 22],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-wrench-silver.png",
+      "position": [203, 374],
+      "size": [17, 59],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-driver-left.png",
+      "position": [284, 388],
+      "size": [10, 46],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-driver-right.png",
+      "position": [308, 388],
+      "size": [12, 46],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-gold-small.png",
+      "position": [230, 416],
+      "size": [18, 19],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-wrench-dark.png",
+      "position": [169, 374],
+      "size": [16, 65],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-chip.png",
+      "position": [253, 417],
+      "size": [26, 25],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-vial-light.png",
+      "position": [221, 449],
+      "size": [5, 32],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-vial-dark.png",
+      "position": [205, 449],
+      "size": [9, 34],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/bench-device.png",
+      "position": [160, 440],
+      "size": [41, 67],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-wrench-right.png",
+      "position": [308, 447],
+      "size": [15, 59],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-gear-right.png",
+      "position": [302, 502],
+      "size": [21, 30],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-pliers.png",
+      "position": [206, 483],
+      "size": [12, 50],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/bench-mat.png",
+      "position": [237, 444],
+      "size": [60, 90],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-wrench-lower.png",
+      "position": [195, 509],
+      "size": [17, 45],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-gear-bottom.png",
+      "position": [250, 536],
+      "size": [31, 19],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-copper.png",
+      "position": [223, 537],
+      "size": [19, 17],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/tool-cylinder.png",
+      "position": [286, 540],
+      "size": [30, 14],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/bench-case.png",
+      "position": [158, 501],
+      "size": [31, 59],
+      "depth": 660
+    },
+    {
+      "image": "assets/rhea-den/bench-lamp.png",
+      "position": [232, 305],
+      "size": [45, 103],
+      "depth": 661
+    },
+    {
+      "image": "assets/rhea-den/chair-desk.png",
+      "position": [1175, 526],
+      "size": [78, 148],
+      "depth": 674
+    },
+    {
+      "image": "assets/rhea-den/desk.png",
+      "position": [1230, 474],
+      "size": [141, 215],
+      "depth": 689
+    },
+    {
+      "image": "assets/rhea-den/desk-picture.png",
+      "position": [1226, 433],
+      "size": [60, 38],
+      "depth": 690
+    },
+    {
+      "image": "assets/rhea-den/desk-lamp.png",
+      "position": [1248, 449],
+      "size": [41, 56],
+      "depth": 690
+    },
+    {
+      "image": "assets/rhea-den/desk-ink.png",
+      "position": [1284, 495],
+      "size": [32, 57],
+      "depth": 690
+    },
+    {
+      "image": "assets/rhea-den/desk-book.png",
+      "position": [1241, 518],
+      "size": [58, 55],
+      "depth": 690
+    },
+    {
+      "image": "assets/rhea-den/desk-books.png",
+      "position": [1300, 560],
+      "size": [49, 55],
+      "depth": 690
+    },
+    {
+      "image": "assets/rhea-den/desk-shelf.png",
+      "position": [1340, 451],
+      "size": [43, 189],
+      "depth": 690
+    },
+    {
+      "image": "assets/rhea-den/desk-shelf-books.png",
+      "position": [1340, 474],
+      "size": [40, 55],
+      "depth": 691
+    },
+    {
+      "image": "assets/rhea-den/desk-vine.png",
+      "position": [1334, 411],
+      "size": [66, 147],
+      "depth": 692
+    },
+    {
+      "image": "assets/rhea-den/bench-side-case.png",
+      "position": [158, 568],
+      "size": [40, 135],
+      "depth": 703
+    },
+    {
+      "image": "assets/rhea-den/southwest-panel.png",
+      "position": [206, 680],
+      "size": [53, 119],
+      "depth": 788
+    },
+    {
+      "image": "assets/rhea-den/southwest-device.png",
+      "position": [155, 718],
+      "size": [88, 71],
+      "depth": 789
+    },
+    {
+      "image": "assets/rhea-den/southwest-planter.png",
+      "position": [152, 663],
+      "size": [84, 95],
+      "depth": 790
+    },
+    {
+      "image": "assets/rhea-den/southeast-chest.png",
+      "position": [1256, 704],
+      "size": [124, 86],
+      "depth": 790
+    },
+    {
+      "image": "assets/rhea-den/southeast-planter.png",
+      "position": [1301, 632],
+      "size": [89, 122],
+      "depth": 791
+    },
+    {
+      "image": "assets/rhea-den/southeast-box.png",
+      "position": [1267, 698],
+      "size": [42, 48],
+      "depth": 791
+    },
+    {
+      "image": "assets/rhea-den/entrance-planter-right.png",
+      "position": [903, 775],
+      "size": [62, 112],
+      "depth": 887
+    },
+    {
+      "image": "assets/rhea-den/entrance-planter-left.png",
+      "position": [568, 772],
+      "size": [60, 117],
+      "depth": 889
+    }
+  ]
+}

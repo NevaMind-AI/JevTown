@@ -1,0 +1,225 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "low-service-duct",
+    "name": "检修捷径",
+    "english": "Service Duct",
+    "district": "下层回廊",
+    "kind": "interior",
+    "parent": "low-deck",
+    "level": -1,
+    "description": "两端楼梯连回主街，北侧检修门通向冷却柱机房。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/low-service-duct.png",
+    "spawn": [
+      180,
+      470
+    ],
+    "walkable": [
+      [
+        [
+          66,
+          360
+        ],
+        [
+          1473,
+          360
+        ],
+        [
+          1473,
+          718
+        ],
+        [
+          66,
+          718
+        ]
+      ],
+      [
+        [
+          104,
+          313
+        ],
+        [
+          211,
+          313
+        ],
+        [
+          211,
+          441
+        ],
+        [
+          104,
+          441
+        ]
+      ],
+      [
+        [
+          1326,
+          313
+        ],
+        [
+          1433,
+          313
+        ],
+        [
+          1433,
+          441
+        ],
+        [
+          1326,
+          441
+        ]
+      ],
+      [
+        [
+          861,
+          307
+        ],
+        [
+          951,
+          307
+        ],
+        [
+          951,
+          412
+        ],
+        [
+          861,
+          412
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          351,
+          332,
+          118,
+          32
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          551,
+          332,
+          109,
+          30
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          714,
+          330,
+          72,
+          30
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1046,
+          294,
+          48,
+          69
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1102,
+          282,
+          76,
+          98
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "west",
+        "name": "广场端出口",
+        "at": [
+          157,
+          370
+        ],
+        "target": "low-deck",
+        "targetExit": "duct-a",
+        "kind": "hatch",
+        "edge": null,
+        "facade": null,
+        "levelDelta": 1,
+        "transition": "hatch",
+        "arrival": [
+          188,
+          458
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "east",
+        "name": "旧物街端出口",
+        "at": [
+          1379,
+          370
+        ],
+        "target": "low-deck",
+        "targetExit": "duct-b",
+        "kind": "hatch",
+        "edge": null,
+        "facade": null,
+        "levelDelta": 1,
+        "transition": "hatch",
+        "arrival": [
+          1347,
+          458
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "to-cooling",
+        "name": "隐藏房间（冷却柱机房）",
+        "at": [
+          906,
+          341
+        ],
+        "target": "low-cooling-room",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          906,
+          419
+        ],
+        "facing": "s",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "L14",
+        "name": "检修捷径内",
+        "at": [
+          750,
+          402
+        ],
+        "events": [],
+        "npcs": [],
+        "note": "05a 结果路径；隐藏房间橱窗",
+        "radius": 70
+      }
+    ]
+  }
+}

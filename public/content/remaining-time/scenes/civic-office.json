@@ -1,0 +1,181 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "civic-office",
+  "name": "计时所大厅",
+  "map": {
+    "source": "maps/civic-office.json"
+  },
+  "anchors": {
+    "start": [40, 22],
+    "from-return": [40, 22],
+    "from-to-archive": [41, 10],
+    "from-to-mediation": [6, 15],
+    "from-to-zeroing": [6, 21],
+    "from-to-consult": [41, 15]
+  },
+  "entities": [
+    {
+      "id": "civic-office.return",
+      "name": "返回",
+      "position": [46, 22],
+      "portalTiles": [
+        [46, 22],
+        [46, 21]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "transit-hall",
+        "anchor": "from-to-civic"
+      }
+    },
+    {
+      "id": "civic-office.to-archive",
+      "name": "封存区",
+      "position": [41, 7],
+      "portalTiles": [
+        [41, 7],
+        [40, 7]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "civic-archive",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "civic-office.to-mediation",
+      "name": "争议调解室",
+      "position": [1, 15],
+      "portalTiles": [
+        [1, 15],
+        [1, 14]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "civic-mediation",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "civic-office.to-zeroing",
+      "name": "归零等候区",
+      "position": [1, 21],
+      "portalTiles": [
+        [1, 21],
+        [1, 22]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "civic-zeroing-lounge",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "civic-office.to-consult",
+      "name": "合约咨询室",
+      "position": [46, 15],
+      "portalTiles": [
+        [46, 15],
+        [46, 14]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "civic-consult",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "adrian",
+      "name": "Adrian",
+      "position": [21, 10],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/adrian-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "meridian",
+      "name": "Meridian",
+      "position": [36, 24],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/meridian-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "elder",
+      "name": "陌生老人",
+      "position": [40, 20],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/elder-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "clerk",
+      "name": "实习柜员",
+      "position": [14, 10],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/clerk-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "guard",
+      "name": "安检保安",
+      "position": [42, 10],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/guard-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    },
+    {
+      "id": "resident-queue",
+      "name": "排队居民",
+      "position": [29, 17],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/resident-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

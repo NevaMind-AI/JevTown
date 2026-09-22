@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "solarium",
+  "name": "高层天井",
+  "map": {
+    "source": "maps/solarium.json"
+  },
+  "anchors": {
+    "start": [25, 29],
+    "from-enter-lobby": [24, 29],
+    "from-enter-reception": [6, 11],
+    "from-enter-gallery": [18, 12],
+    "from-enter-archive": [6, 20],
+    "from-enter-noel": [39, 11],
+    "from-bridge-tower": [28, 9],
+    "from-service-lift": [42, 20]
+  },
+  "entities": [
+    {
+      "id": "solarium.enter-lobby",
+      "name": "私人电梯厅",
+      "position": [24, 25],
+      "portalTiles": [
+        [24, 25],
+        [25, 25]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "sky-lobby",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "solarium.enter-reception",
+      "name": "Celeste 宅接待会厅",
+      "position": [6, 9],
+      "portalTiles": [
+        [6, 9],
+        [7, 9]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "celeste-reception",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "solarium.enter-gallery",
+      "name": "展厅与估值台",
+      "position": [18, 9],
+      "portalTiles": [[18, 9]],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "celeste-gallery",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "solarium.enter-archive",
+      "name": "档案室",
+      "position": [6, 17],
+      "portalTiles": [[6, 17]],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "celeste-archive",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "solarium.enter-noel",
+      "name": "Noel 的私人厅",
+      "position": [39, 8],
+      "portalTiles": [
+        [39, 8],
+        [40, 8]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "noel-suite",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "solarium.bridge-tower",
+      "name": "栈桥 → 屋顶花园",
+      "position": [28, 5],
+      "portalTiles": [
+        [28, 5],
+        [27, 5],
+        [29, 5]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "one-day-garden",
+        "anchor": "from-bridge-entry"
+      }
+    },
+    {
+      "id": "solarium.service-lift",
+      "name": "服务电梯 → 屋顶花园",
+      "position": [42, 17],
+      "portalTiles": [
+        [42, 17],
+        [41, 17]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "one-day-garden",
+        "anchor": "from-lift-entry"
+      }
+    }
+  ]
+}

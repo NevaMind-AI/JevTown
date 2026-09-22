@@ -1,0 +1,1046 @@
+{
+  "format": "low-kitchen-assets-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down; object footpoint is local",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "low-kitchen",
+    "name": "公共厨房",
+    "english": "Public Kitchen",
+    "district": "下层回廊",
+    "kind": "interior",
+    "parent": "low-deck",
+    "level": 0,
+    "description": "共享灶台、餐桌和洗涤区，邻居们在这里准备一日三餐。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/low-kitchen.png",
+    "spawn": [
+      773,
+      795
+    ],
+    "walkable": [
+      [
+        [
+          111,
+          282
+        ],
+        [
+          1428,
+          282
+        ],
+        [
+          1428,
+          854
+        ],
+        [
+          111,
+          854
+        ]
+      ],
+      [
+        [
+          673,
+          825
+        ],
+        [
+          863,
+          825
+        ],
+        [
+          863,
+          1005
+        ],
+        [
+          673,
+          1005
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          117,
+          280,
+          166,
+          28
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          475,
+          280,
+          670,
+          42
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          1180,
+          278,
+          213,
+          29
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1315,
+          349,
+          106,
+          247
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1346,
+          574,
+          78,
+          166
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          118,
+          365,
+          230,
+          174
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          179,
+          503,
+          64,
+          76
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          114,
+          624,
+          234,
+          172
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          177,
+          759,
+          68,
+          78
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          1317,
+          791,
+          110,
+          62
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          773,
+          946
+        ],
+        "target": "low-deck",
+        "targetExit": "enter-kitchen",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          773,
+          812
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "L11",
+        "name": "公共厨房内",
+        "at": [
+          829,
+          369
+        ],
+        "events": [
+          "02a",
+          "03a",
+          "12a",
+          "06a",
+          "22a",
+          "23a"
+        ],
+        "npcs": [
+          "Rowan",
+          "Milo",
+          "居民"
+        ],
+        "note": "长桌 / 外带窗；爆裂点；断电冷餐；署名板",
+        "radius": 70
+      }
+    ]
+  },
+  "objects": [
+    {
+      "id": "pantry-left",
+      "image": "pantry-left.png",
+      "position": [
+        118,
+        100
+      ],
+      "size": [
+        165,
+        202
+      ],
+      "footpoint": [
+        82.5,
+        202
+      ],
+      "collision": null,
+      "depth": 302
+    },
+    {
+      "id": "pantry-left-chest",
+      "image": "pantry-left-chest.png",
+      "position": [
+        171,
+        60
+      ],
+      "size": [
+        66,
+        53
+      ],
+      "footpoint": [
+        33.0,
+        56
+      ],
+      "collision": null,
+      "depth": 304
+    },
+    {
+      "id": "pantry-left-vine",
+      "image": "pantry-left-vine.png",
+      "position": [
+        99,
+        61
+      ],
+      "size": [
+        70,
+        179
+      ],
+      "footpoint": [
+        35.0,
+        44
+      ],
+      "collision": null,
+      "depth": 304
+    },
+    {
+      "id": "pantry-floor-planter",
+      "image": "pantry-floor-planter.png",
+      "position": [
+        278,
+        182
+      ],
+      "size": [
+        59,
+        100
+      ],
+      "footpoint": [
+        29.5,
+        100
+      ],
+      "collision": null,
+      "depth": 282
+    },
+    {
+      "id": "stove",
+      "image": "stove.png",
+      "position": [
+        477,
+        204
+      ],
+      "size": [
+        193,
+        111
+      ],
+      "footpoint": [
+        96.5,
+        111
+      ],
+      "collision": null,
+      "depth": 315
+    },
+    {
+      "id": "stove-pot",
+      "image": "stove-pot.png",
+      "position": [
+        493,
+        189
+      ],
+      "size": [
+        58,
+        44
+      ],
+      "footpoint": [
+        29.0,
+        55
+      ],
+      "collision": null,
+      "depth": 317
+    },
+    {
+      "id": "stove-pan",
+      "image": "stove-pan.png",
+      "position": [
+        580,
+        196
+      ],
+      "size": [
+        69,
+        43
+      ],
+      "footpoint": [
+        34.5,
+        45
+      ],
+      "collision": null,
+      "depth": 317
+    },
+    {
+      "id": "sink-counter",
+      "image": "sink-counter.png",
+      "position": [
+        678,
+        183
+      ],
+      "size": [
+        465,
+        129
+      ],
+      "footpoint": [
+        232.5,
+        129
+      ],
+      "collision": null,
+      "depth": 312
+    },
+    {
+      "id": "wall-shelf",
+      "image": "wall-shelf.png",
+      "position": [
+        737,
+        129
+      ],
+      "size": [
+        315,
+        65
+      ],
+      "footpoint": [
+        157.5,
+        73
+      ],
+      "collision": null,
+      "depth": 202
+    },
+    {
+      "id": "shelf-plates-left",
+      "image": "shelf-plates-left.png",
+      "position": [
+        751,
+        122
+      ],
+      "size": [
+        34,
+        29
+      ],
+      "footpoint": [
+        17.0,
+        36
+      ],
+      "collision": null,
+      "depth": 204
+    },
+    {
+      "id": "shelf-plates-right",
+      "image": "shelf-plates-right.png",
+      "position": [
+        790,
+        120
+      ],
+      "size": [
+        36,
+        35
+      ],
+      "footpoint": [
+        18.0,
+        38
+      ],
+      "collision": null,
+      "depth": 204
+    },
+    {
+      "id": "shelf-mug",
+      "image": "shelf-mug.png",
+      "position": [
+        858,
+        124
+      ],
+      "size": [
+        25,
+        23
+      ],
+      "footpoint": [
+        12.5,
+        32
+      ],
+      "collision": null,
+      "depth": 204
+    },
+    {
+      "id": "shelf-cups",
+      "image": "shelf-cups.png",
+      "position": [
+        885,
+        123
+      ],
+      "size": [
+        32,
+        36
+      ],
+      "footpoint": [
+        16.0,
+        33
+      ],
+      "collision": null,
+      "depth": 204
+    },
+    {
+      "id": "shelf-planter",
+      "image": "shelf-planter.png",
+      "position": [
+        928,
+        94
+      ],
+      "size": [
+        112,
+        103
+      ],
+      "footpoint": [
+        56.0,
+        62
+      ],
+      "collision": null,
+      "depth": 204
+    },
+    {
+      "id": "counter-planter",
+      "image": "counter-planter.png",
+      "position": [
+        675,
+        170
+      ],
+      "size": [
+        50,
+        66
+      ],
+      "footpoint": [
+        25.0,
+        59
+      ],
+      "collision": null,
+      "depth": 314
+    },
+    {
+      "id": "cutting-board",
+      "image": "cutting-board.png",
+      "position": [
+        719,
+        217
+      ],
+      "size": [
+        60,
+        38
+      ],
+      "footpoint": [
+        30.0,
+        39
+      ],
+      "collision": null,
+      "depth": 313
+    },
+    {
+      "id": "recipe-note",
+      "image": "recipe-note.png",
+      "position": [
+        791,
+        218
+      ],
+      "size": [
+        42,
+        36
+      ],
+      "footpoint": [
+        21.0,
+        40
+      ],
+      "collision": null,
+      "depth": 313
+    },
+    {
+      "id": "knife-block",
+      "image": "knife-block.png",
+      "position": [
+        999,
+        188
+      ],
+      "size": [
+        67,
+        63
+      ],
+      "footpoint": [
+        33.5,
+        62
+      ],
+      "collision": null,
+      "depth": 314
+    },
+    {
+      "id": "utensil-holder",
+      "image": "utensil-holder.png",
+      "position": [
+        1064,
+        187
+      ],
+      "size": [
+        46,
+        58
+      ],
+      "footpoint": [
+        23.0,
+        61
+      ],
+      "collision": null,
+      "depth": 314
+    },
+    {
+      "id": "pantry-right",
+      "image": "pantry-right.png",
+      "position": [
+        1184,
+        101
+      ],
+      "size": [
+        218,
+        206
+      ],
+      "footpoint": [
+        109.0,
+        206
+      ],
+      "collision": null,
+      "depth": 307
+    },
+    {
+      "id": "pantry-tray",
+      "image": "pantry-tray.png",
+      "position": [
+        1262,
+        89
+      ],
+      "size": [
+        64,
+        40
+      ],
+      "footpoint": [
+        32.0,
+        40
+      ],
+      "collision": null,
+      "depth": 309
+    },
+    {
+      "id": "pantry-pot",
+      "image": "pantry-pot.png",
+      "position": [
+        1334,
+        77
+      ],
+      "size": [
+        59,
+        45
+      ],
+      "footpoint": [
+        29.5,
+        56
+      ],
+      "collision": null,
+      "depth": 309
+    },
+    {
+      "id": "table-north",
+      "image": "table-north.png",
+      "position": [
+        148,
+        366
+      ],
+      "size": [
+        151,
+        157
+      ],
+      "footpoint": [
+        75.5,
+        157
+      ],
+      "collision": null,
+      "depth": 523
+    },
+    {
+      "id": "chair-north-back",
+      "image": "chair-north-back.png",
+      "position": [
+        186,
+        332
+      ],
+      "size": [
+        62,
+        114
+      ],
+      "footpoint": [
+        31.0,
+        114
+      ],
+      "collision": null,
+      "depth": 446
+    },
+    {
+      "id": "chair-north-left",
+      "image": "chair-north-left.png",
+      "position": [
+        109,
+        393
+      ],
+      "size": [
+        55,
+        124
+      ],
+      "footpoint": [
+        27.5,
+        124
+      ],
+      "collision": null,
+      "depth": 517
+    },
+    {
+      "id": "chair-north-right",
+      "image": "chair-north-right.png",
+      "position": [
+        280,
+        349
+      ],
+      "size": [
+        71,
+        143
+      ],
+      "footpoint": [
+        35.5,
+        143
+      ],
+      "collision": null,
+      "depth": 492
+    },
+    {
+      "id": "chair-north-front",
+      "image": "chair-north-front.png",
+      "position": [
+        170,
+        496
+      ],
+      "size": [
+        71,
+        86
+      ],
+      "footpoint": [
+        35.5,
+        86
+      ],
+      "collision": null,
+      "depth": 582
+    },
+    {
+      "id": "table-north-planter",
+      "image": "table-north-planter.png",
+      "position": [
+        163,
+        385
+      ],
+      "size": [
+        55,
+        57
+      ],
+      "footpoint": [
+        27.5,
+        61
+      ],
+      "collision": null,
+      "depth": 525
+    },
+    {
+      "id": "table-north-mug",
+      "image": "table-north-mug.png",
+      "position": [
+        226,
+        410
+      ],
+      "size": [
+        32,
+        34
+      ],
+      "footpoint": [
+        16.0,
+        35
+      ],
+      "collision": null,
+      "depth": 525
+    },
+    {
+      "id": "table-north-cloth",
+      "image": "table-north-cloth.png",
+      "position": [
+        232,
+        427
+      ],
+      "size": [
+        57,
+        49
+      ],
+      "footpoint": [
+        28.5,
+        42
+      ],
+      "collision": null,
+      "depth": 524
+    },
+    {
+      "id": "table-south",
+      "image": "table-south.png",
+      "position": [
+        148,
+        622
+      ],
+      "size": [
+        150,
+        172
+      ],
+      "footpoint": [
+        75.0,
+        172
+      ],
+      "collision": null,
+      "depth": 794
+    },
+    {
+      "id": "chair-south-back",
+      "image": "chair-south-back.png",
+      "position": [
+        196,
+        589
+      ],
+      "size": [
+        64,
+        112
+      ],
+      "footpoint": [
+        32.0,
+        112
+      ],
+      "collision": null,
+      "depth": 701
+    },
+    {
+      "id": "chair-south-left",
+      "image": "chair-south-left.png",
+      "position": [
+        109,
+        644
+      ],
+      "size": [
+        64,
+        132
+      ],
+      "footpoint": [
+        32.0,
+        132
+      ],
+      "collision": null,
+      "depth": 776
+    },
+    {
+      "id": "chair-south-right",
+      "image": "chair-south-right.png",
+      "position": [
+        273,
+        614
+      ],
+      "size": [
+        79,
+        145
+      ],
+      "footpoint": [
+        39.5,
+        145
+      ],
+      "collision": null,
+      "depth": 759
+    },
+    {
+      "id": "chair-south-front",
+      "image": "chair-south-front.png",
+      "position": [
+        170,
+        750
+      ],
+      "size": [
+        69,
+        89
+      ],
+      "footpoint": [
+        34.5,
+        89
+      ],
+      "collision": null,
+      "depth": 839
+    },
+    {
+      "id": "table-south-planter",
+      "image": "table-south-planter.png",
+      "position": [
+        167,
+        647
+      ],
+      "size": [
+        53,
+        65
+      ],
+      "footpoint": [
+        26.5,
+        59
+      ],
+      "collision": null,
+      "depth": 796
+    },
+    {
+      "id": "table-south-mug",
+      "image": "table-south-mug.png",
+      "position": [
+        220,
+        652
+      ],
+      "size": [
+        34,
+        38
+      ],
+      "footpoint": [
+        17.0,
+        34
+      ],
+      "collision": null,
+      "depth": 796
+    },
+    {
+      "id": "table-south-bowl",
+      "image": "table-south-bowl.png",
+      "position": [
+        237,
+        683
+      ],
+      "size": [
+        47,
+        40
+      ],
+      "footpoint": [
+        23.5,
+        40
+      ],
+      "collision": null,
+      "depth": 796
+    },
+    {
+      "id": "fridge",
+      "image": "fridge.png",
+      "position": [
+        1314,
+        337
+      ],
+      "size": [
+        111,
+        265
+      ],
+      "footpoint": [
+        55.5,
+        265
+      ],
+      "collision": null,
+      "depth": 602
+    },
+    {
+      "id": "fridge-top-planter",
+      "image": "fridge-top-planter.png",
+      "position": [
+        1370,
+        319
+      ],
+      "size": [
+        85,
+        184
+      ],
+      "footpoint": [
+        42.5,
+        71
+      ],
+      "collision": null,
+      "depth": 604
+    },
+    {
+      "id": "terminal",
+      "image": "terminal.png",
+      "position": [
+        1344,
+        549
+      ],
+      "size": [
+        83,
+        206
+      ],
+      "footpoint": [
+        41.5,
+        206
+      ],
+      "collision": null,
+      "depth": 755
+    },
+    {
+      "id": "terminal-planter",
+      "image": "terminal-planter.png",
+      "position": [
+        1311,
+        675
+      ],
+      "size": [
+        65,
+        96
+      ],
+      "footpoint": [
+        32.5,
+        96
+      ],
+      "collision": null,
+      "depth": 771
+    },
+    {
+      "id": "southwest-planter",
+      "image": "southwest-planter.png",
+      "position": [
+        91,
+        764
+      ],
+      "size": [
+        88,
+        106
+      ],
+      "footpoint": [
+        44.0,
+        106
+      ],
+      "collision": null,
+      "depth": 870
+    },
+    {
+      "id": "southeast-crate",
+      "image": "southeast-crate.png",
+      "position": [
+        1315,
+        787
+      ],
+      "size": [
+        70,
+        77
+      ],
+      "footpoint": [
+        35.0,
+        77
+      ],
+      "collision": null,
+      "depth": 864
+    },
+    {
+      "id": "southeast-tall-crate",
+      "image": "southeast-tall-crate.png",
+      "position": [
+        1380,
+        768
+      ],
+      "size": [
+        44,
+        115
+      ],
+      "footpoint": [
+        22.0,
+        115
+      ],
+      "collision": null,
+      "depth": 850
+    },
+    {
+      "id": "southeast-planter",
+      "image": "southeast-planter.png",
+      "position": [
+        1375,
+        791
+      ],
+      "size": [
+        68,
+        87
+      ],
+      "footpoint": [
+        34.0,
+        87
+      ],
+      "collision": null,
+      "depth": 878
+    }
+  ],
+  "contentVersion": "room-world-1-kitchen-furnished-original-1",
+  "collisionIds": [
+    "solid-0",
+    "solid-1",
+    "solid-2",
+    "solid-3",
+    "solid-4",
+    "solid-5",
+    "solid-6",
+    "solid-7",
+    "solid-8",
+    "solid-9"
+  ]
+}

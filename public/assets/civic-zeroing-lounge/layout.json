@@ -1,0 +1,187 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "civic-zeroing-lounge",
+    "name": "归零等候区",
+    "english": "Zeroing Lounge",
+    "district": "计时所",
+    "kind": "interior",
+    "parent": "civic-office",
+    "level": 1,
+    "description": "窗下座椅与机械钟之间，是一段安静的等待。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/civic-zeroing-lounge.png",
+    "spawn": [
+      1276,
+      556
+    ],
+    "walkable": [
+      [
+        [
+          163,
+          288
+        ],
+        [
+          1378,
+          288
+        ],
+        [
+          1378,
+          854
+        ],
+        [
+          163,
+          854
+        ]
+      ],
+      [
+        [
+          1354,
+          482
+        ],
+        [
+          1450,
+          482
+        ],
+        [
+          1450,
+          606
+        ],
+        [
+          1354,
+          606
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          192,
+          286,
+          52,
+          72
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          163,
+          414,
+          84,
+          77
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          162,
+          563,
+          85,
+          78
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          161,
+          720,
+          85,
+          79
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          486,
+          267,
+          211,
+          32
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          720,
+          257,
+          93,
+          40
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          840,
+          267,
+          210,
+          32
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          1303,
+          312,
+          71,
+          54
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          1306,
+          785,
+          69,
+          55
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          1420,
+          548
+        ],
+        "target": "civic-office",
+        "targetExit": "to-zeroing",
+        "kind": "door",
+        "edge": "e",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1276,
+          548
+        ],
+        "facing": "w",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "C5",
+        "name": "归零等候区",
+        "at": [
+          774,
+          364
+        ],
+        "events": [
+          "21b"
+        ],
+        "npcs": [
+          "即将归零的居民"
+        ],
+        "note": "陪完最后五分钟则错过当前窗口",
+        "radius": 70
+      }
+    ]
+  }
+}

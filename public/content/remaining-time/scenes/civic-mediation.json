@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "civic-mediation",
+  "name": "争议调解室",
+  "map": {
+    "source": "maps/civic-mediation.json"
+  },
+  "anchors": {
+    "start": [41, 16],
+    "from-return": [40, 16]
+  },
+  "entities": [
+    {
+      "id": "civic-mediation.return",
+      "name": "返回",
+      "position": [46, 16],
+      "portalTiles": [
+        [46, 16],
+        [46, 17]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "civic-office",
+        "anchor": "from-to-mediation"
+      }
+    }
+  ]
+}

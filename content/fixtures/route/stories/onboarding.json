@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "content_version": "demo-1",
+  "id": "onboarding",
+  "vars": {},
+  "interactions": {},
+  "tasks": [
+    {
+      "id": "learn_movement",
+      "title": "熟悉移动",
+      "description": "使用 WASD 或方向键探索四个方向。",
+      "steps": [
+        {
+          "id": "walk",
+          "text": "使用 WASD / 方向键向四个方向移动",
+          "condition": {
+            "event": "movement.completed",
+            "collect": "direction",
+            "count": 4,
+            "items": [
+              {
+                "value": "up",
+                "label": "↑ W / ↑"
+              },
+              {
+                "value": "left",
+                "label": "← A / ←"
+              },
+              {
+                "value": "down",
+                "label": "↓ S / ↓"
+              },
+              {
+                "value": "right",
+                "label": "→ D / →"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "learn_interaction",
+      "title": "打个招呼",
+      "description": "靠近老黑 N-07，按 E 与他交谈。",
+      "steps": [
+        {
+          "id": "talk",
+          "text": "靠近 N-07，按 E 交谈",
+          "condition": {
+            "event": "interaction.started",
+            "where": {
+              "entityId": "n07"
+            },
+            "count": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "follow_black",
+      "title": "隔壁见",
+      "description": "接过老黑的通行证，跟到共居走廊找他。",
+      "steps": [
+        {
+          "id": "permit",
+          "text": "与老黑交谈，接过通行证。",
+          "condition": {
+            "event": "choice.confirmed",
+            "where": {
+              "entityId": "n07",
+              "choiceId": "permit"
+            },
+            "count": 1
+          }
+        },
+        {
+          "id": "follow",
+          "text": "向右出门，在共居走廊找到老黑。",
+          "condition": {
+            "event": "choice.confirmed",
+            "where": {
+              "entityId": "n07",
+              "choiceId": "reunion"
+            },
+            "count": 1
+          }
+        }
+      ]
+    }
+  ]
+}

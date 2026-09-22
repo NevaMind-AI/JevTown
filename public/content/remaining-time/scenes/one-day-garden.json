@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "one-day-garden",
+  "name": "屋顶一天花园",
+  "map": {
+    "source": "maps/one-day-garden.json"
+  },
+  "anchors": {
+    "start": [23, 23],
+    "from-bridge-entry": [7, 21],
+    "from-lift-entry": [39, 20],
+    "from-to-vault": [24, 9]
+  },
+  "entities": [
+    {
+      "id": "one-day-garden.bridge-entry",
+      "name": "栈桥入口",
+      "position": [7, 25],
+      "portalTiles": [
+        [7, 25],
+        [8, 25]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "solarium",
+        "anchor": "from-bridge-tower"
+      }
+    },
+    {
+      "id": "one-day-garden.lift-entry",
+      "name": "服务电梯入口",
+      "position": [39, 27],
+      "portalTiles": [[39, 27]],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "solarium",
+        "anchor": "from-service-lift"
+      }
+    },
+    {
+      "id": "one-day-garden.to-vault",
+      "name": "维护层密室",
+      "position": [24, 6],
+      "portalTiles": [
+        [24, 6],
+        [23, 6]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "garden-vault",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "iris",
+      "name": "Iris",
+      "position": [36, 9],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/iris-idle.png",
+        "size": [102, 102],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

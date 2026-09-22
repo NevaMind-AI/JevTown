@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "low-service-duct",
+  "name": "检修捷径",
+  "map": {
+    "source": "maps/low-service-duct.json"
+  },
+  "anchors": {
+    "start": [5, 14],
+    "from-east": [42, 14],
+    "from-to-cooling": [28, 13]
+  },
+  "entities": [
+    {
+      "id": "low-service-duct.east",
+      "name": "南侧检修井出口",
+      "position": [43, 11],
+      "portalTiles": [
+        [43, 11],
+        [42, 11]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-deck",
+        "anchor": "from-duct-b"
+      }
+    },
+    {
+      "id": "low-service-duct.to-cooling",
+      "name": "隐藏房间（冷却柱机房）",
+      "position": [28, 10],
+      "portalTiles": [
+        [28, 10],
+        [27, 10]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-cooling-room",
+        "anchor": "from-return"
+      }
+    }
+  ]
+}

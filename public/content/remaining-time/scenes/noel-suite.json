@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-1-box-noel-suite",
+  "id": "noel-suite",
+  "name": "Noel 的私人厅",
+  "map": {
+    "source": "maps/noel-suite.json"
+  },
+  "anchors": {
+    "start": [23, 23],
+    "from-return": [23, 23]
+  },
+  "entities": [
+    {
+      "id": "noel-suite.return",
+      "name": "返回",
+      "position": [21, 28],
+      "portalTiles": [
+        [21, 28],
+        [22, 28],
+        [23, 28],
+        [24, 28],
+        [25, 28]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/noel-suite/portal-box.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "solarium",
+        "anchor": "from-enter-noel"
+      }
+    },
+    {
+      "id": "noel",
+      "name": "Noel",
+      "position": [24, 10],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/noel-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "sky-lobby",
+    "name": "私人电梯厅",
+    "english": "Sky Lobby",
+    "district": "高层天井",
+    "kind": "interior",
+    "parent": "solarium",
+    "level": 2,
+    "description": "私人电梯连接转运厅。接待台、展品与长椅围绕明亮的通行轴。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/sky-lobby.png",
+    "spawn": [
+      768,
+      815
+    ],
+    "walkable": [
+      [
+        [
+          87,
+          245
+        ],
+        [
+          1439,
+          245
+        ],
+        [
+          1439,
+          871
+        ],
+        [
+          87,
+          871
+        ]
+      ],
+      [
+        [
+          706,
+          838
+        ],
+        [
+          827,
+          838
+        ],
+        [
+          827,
+          981
+        ],
+        [
+          706,
+          981
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          150,
+          453,
+          315,
+          109
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          349,
+          259,
+          103,
+          62
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          602,
+          245,
+          55,
+          50
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          880,
+          245,
+          55,
+          50
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1098,
+          261,
+          82,
+          62
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          1181,
+          266,
+          56,
+          54
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          1107,
+          583,
+          219,
+          49
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          1107,
+          760,
+          219,
+          51
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          1350,
+          592,
+          64,
+          58
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          1350,
+          773,
+          64,
+          53
+        ]
+      },
+      {
+        "id": "solid-10",
+        "rect": [
+          1189,
+          663,
+          59,
+          42
+        ]
+      },
+      {
+        "id": "solid-11",
+        "rect": [
+          179,
+          746,
+          220,
+          74
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          769,
+          934
+        ],
+        "target": "solarium",
+        "targetExit": "enter-lobby",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          769,
+          796
+        ],
+        "facing": "n",
+        "radius": 34
+      },
+      {
+        "id": "lift",
+        "name": "电梯 → 转运厅",
+        "at": [
+          769,
+          274
+        ],
+        "target": "transit-hall",
+        "targetExit": "to-solarium",
+        "kind": "lift",
+        "edge": null,
+        "facade": null,
+        "levelDelta": -1,
+        "transition": "lift",
+        "arrival": [
+          769,
+          352
+        ],
+        "facing": "s",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "S1",
+        "name": "私人电梯厅 / 通行证生成",
+        "at": [
+          501,
+          546
+        ],
+        "events": [
+          "04b"
+        ],
+        "npcs": [
+          "接待员"
+        ],
+        "note": "三分钟等待：展品、询价、灌溉器、长椅",
+        "radius": 70
+      }
+    ]
+  }
+}

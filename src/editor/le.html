@@ -1,0 +1,119 @@
+<html>
+  <head>
+    <style>
+      table,
+      th,
+      td {
+        border: 1px solid black;
+        border-radius: 10px;
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script src="le.js" type="module"></script>
+
+    <div class="tab">
+      <button class="tablinks" onclick="onTab(event, 'edit')">edit</button>
+      <button class="tablinks" onclick="onTab(event, 'map')">map</button>
+      <button class="tablinks" onclick="onTab(event, 'config')">config</button>
+    </div>
+
+    <div id="edit" class="tabcontent">
+      <table width="100%">
+        <tr>
+          <td align="center">
+            <!-- first layer of map tiles -->
+            <div id="layer0pane" style="max-height: 480px; max-width: 640px; overflow: scroll">
+              <canvas id="level0" height="1600px" width="1600px"></canvas>
+            </div>
+          </td>
+          <td align="center">
+            <!-- tile set-->
+            <div id="tilesetpane" style="max-height: 600; max-width: 800; overflow: scroll">
+              <canvas
+                id="tileset"
+                width="5632px"
+                height="8672px"
+                style="border: 1px dotted white"
+              ></canvas>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center">
+            <!-- second layer of map tiles -->
+            <div id="layer1pane" style="max-height: 480px; max-width: 640px; overflow: scroll">
+              <canvas id="level1" height="1600px" width="1600px"></canvas>
+            </div>
+          </td>
+          <td align="center">
+            <!-- aggregate map view -->
+            <div id="compositepane" style="max-height: 600; max-width: 800; overflow: scroll">
+              <canvas id="composite" height="1600px" width="1600px"></canvas>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center">
+            <!-- object layer of map -->
+            <div id="layer2pane" style="max-height: 480px; max-width: 640px; overflow: scroll">
+              <canvas id="level3" height="1600px" width="1600px"></canvas>
+            </div>
+          </td>
+          <td align="center">
+            <!-- object layer of map -->
+            <div id="layer3pane" style="max-height: 480px; max-width: 640px; overflow: scroll">
+              <canvas id="level4" height="1600px" width="1600px"></canvas>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div id="map" class="tabcontent">
+      <canvas id="mapcanvas" height="1600px" width="1600px"></canvas>
+    </div>
+
+    <div id="config" class="tabcontent">
+      <table>
+        <tr>
+          <td>Composite to png</td>
+          <td>Load level</td>
+          <td>Load png to Composite</td>
+          <td>Load Sprite</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>
+            <button onclick="saveCompositeAsImage()">Save Composite</button>
+          </td>
+          <td>
+            <input type="file" multiple id="levelfile" />
+          </td>
+          <td>
+            <input type="file" multiple id="compositepng" />
+          </td>
+          <td>
+            <input type="file" multiple id="spritesheet" />
+          </td>
+          <td>
+            <form name="myForm">
+              16 <input type="radio" name="radioTiledim" value="16" /> 32
+              <input type="radio" name="radioTiledim" value="32" checked />
+            </form>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Load Tileset</td>
+        </tr>
+        <tr>
+          <td><input type="file" multiple id="tilesetfile" /></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

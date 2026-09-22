@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "transit-hall",
+  "name": "转运厅",
+  "map": {
+    "source": "maps/transit-hall.json"
+  },
+  "anchors": {
+    "start": [24, 21],
+    "from-to-solarium": [24, 9],
+    "from-to-low": [23, 21],
+    "from-to-civic": [6, 16],
+    "from-to-embers": [40, 16]
+  },
+  "entities": [
+    {
+      "id": "transit-hall.to-solarium",
+      "name": "私人电梯 → 高层天井",
+      "position": [24, 7],
+      "portalTiles": [
+        [24, 7],
+        [23, 7]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "sky-lobby",
+        "anchor": "from-lift"
+      }
+    },
+    {
+      "id": "transit-hall.to-low",
+      "name": "货运梯 → 下层回廊",
+      "position": [23, 29],
+      "portalTiles": [
+        [23, 29],
+        [24, 29]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-deck",
+        "anchor": "from-to-transit"
+      }
+    },
+    {
+      "id": "transit-hall.to-civic",
+      "name": "计时所",
+      "position": [2, 16],
+      "portalTiles": [
+        [2, 16],
+        [2, 17]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "civic-office",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "transit-hall.to-embers",
+      "name": "余烬",
+      "position": [45, 16],
+      "portalTiles": [
+        [45, 16],
+        [45, 17]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "embers-floor",
+        "anchor": "from-return"
+      }
+    },
+    {
+      "id": "silas",
+      "name": "Silas",
+      "position": [29, 17],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/silas-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

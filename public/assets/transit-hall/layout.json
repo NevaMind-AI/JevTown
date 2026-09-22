@@ -1,0 +1,336 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "transit-hall",
+    "name": "转运厅",
+    "english": "Transit Hall",
+    "district": "转运厅",
+    "kind": "interior",
+    "parent": null,
+    "level": 1,
+    "description": "西接计时所，东接余烬。北侧私人电梯通往高层，南侧货运梯返回下层。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/transit-hall.png",
+    "spawn": [
+      770,
+      677
+    ],
+    "walkable": [
+      [
+        [
+          173,
+          216
+        ],
+        [
+          1361,
+          216
+        ],
+        [
+          1361,
+          806
+        ],
+        [
+          173,
+          806
+        ]
+      ],
+      [
+        [
+          52,
+          475
+        ],
+        [
+          1420,
+          475
+        ],
+        [
+          1420,
+          573
+        ],
+        [
+          52,
+          573
+        ]
+      ],
+      [
+        [
+          687,
+          770
+        ],
+        [
+          827,
+          770
+        ],
+        [
+          827,
+          983
+        ],
+        [
+          687,
+          983
+        ]
+      ],
+      [
+        [
+          1404,
+          474
+        ],
+        [
+          1478,
+          474
+        ],
+        [
+          1478,
+          571
+        ],
+        [
+          1404,
+          571
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          201,
+          187,
+          56,
+          44
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          269,
+          186,
+          160,
+          48
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          588,
+          181,
+          50,
+          54
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          899,
+          181,
+          45,
+          54
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1104,
+          187,
+          149,
+          47
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          1259,
+          182,
+          80,
+          49
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          737,
+          523,
+          64,
+          45
+        ]
+      }
+    ],
+    "occlusions": [
+      {
+        "id": "status-column",
+        "baseline": 566,
+        "polygon": [
+          [
+            731,
+            414
+          ],
+          [
+            739,
+            401
+          ],
+          [
+            765,
+            390
+          ],
+          [
+            770,
+            373
+          ],
+          [
+            777,
+            373
+          ],
+          [
+            778,
+            394
+          ],
+          [
+            796,
+            414
+          ],
+          [
+            803,
+            565
+          ],
+          [
+            732,
+            565
+          ]
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "to-solarium",
+        "name": "私人电梯 → 高层天井",
+        "at": [
+          770,
+          235
+        ],
+        "target": "sky-lobby",
+        "targetExit": "lift",
+        "kind": "lift",
+        "edge": null,
+        "facade": null,
+        "levelDelta": 1,
+        "transition": "lift",
+        "arrival": [
+          770,
+          304
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "to-low",
+        "name": "货运梯 → 下层回廊",
+        "at": [
+          766,
+          950
+        ],
+        "target": "low-deck",
+        "targetExit": "to-transit",
+        "kind": "lift",
+        "edge": null,
+        "facade": null,
+        "levelDelta": -1,
+        "transition": "lift",
+        "arrival": [
+          766,
+          685
+        ],
+        "facing": "n",
+        "radius": 34
+      },
+      {
+        "id": "to-civic",
+        "name": "计时所",
+        "at": [
+          78,
+          543
+        ],
+        "target": "civic-office",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "w",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          221,
+          526
+        ],
+        "facing": "e",
+        "radius": 34
+      },
+      {
+        "id": "to-embers",
+        "name": "余烬",
+        "at": [
+          1441,
+          542
+        ],
+        "target": "embers-floor",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "e",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1310,
+          526
+        ],
+        "facing": "w",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "T1",
+        "name": "公共状态柱 / 回收倒计时屏",
+        "at": [
+          859,
+          547
+        ],
+        "events": [
+          "10c"
+        ],
+        "npcs": [
+          "Silas"
+        ],
+        "note": "回收通知、候选人格播报、封锁公告、临时听证",
+        "radius": 70
+      },
+      {
+        "id": "T2",
+        "name": "私人电梯",
+        "at": [
+          856,
+          277
+        ],
+        "events": [],
+        "npcs": [],
+        "note": "第三章前显示需通行证",
+        "radius": 70
+      },
+      {
+        "id": "T3",
+        "name": "货运梯",
+        "at": [
+          897,
+          743
+        ],
+        "events": [],
+        "npcs": [],
+        "note": "第五章断电改走楼梯",
+        "radius": 70
+      }
+    ]
+  }
+}

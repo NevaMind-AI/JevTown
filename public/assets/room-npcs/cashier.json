@@ -1,0 +1,229 @@
+{
+  "version": 1,
+  "id": "cashier",
+  "image": "cashier.png",
+  "frameSize": [
+    64,
+    64
+  ],
+  "anchor": [
+    32,
+    60
+  ],
+  "visualHeight": 42,
+  "displayScale": 1,
+  "frames": {
+    "idle-0": {
+      "x": 0,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "idle-1": {
+      "x": 64,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        31.0,
+        60
+      ]
+    },
+    "idle-2": {
+      "x": 128,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        31.0,
+        60
+      ]
+    },
+    "idle-3": {
+      "x": 192,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "talk-0": {
+      "x": 0,
+      "y": 64,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "talk-1": {
+      "x": 64,
+      "y": 64,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        30.5,
+        60
+      ]
+    },
+    "talk-2": {
+      "x": 128,
+      "y": 64,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        31.0,
+        60
+      ]
+    },
+    "talk-3": {
+      "x": 192,
+      "y": 64,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-1-0": {
+      "x": 0,
+      "y": 128,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-1-1": {
+      "x": 64,
+      "y": 128,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-1-2": {
+      "x": 128,
+      "y": 128,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        30.5,
+        60
+      ]
+    },
+    "duty-1-3": {
+      "x": 192,
+      "y": 128,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        30.5,
+        60
+      ]
+    },
+    "duty-2-0": {
+      "x": 0,
+      "y": 192,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-2-1": {
+      "x": 64,
+      "y": 192,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.5,
+        60
+      ]
+    },
+    "duty-2-2": {
+      "x": 128,
+      "y": 192,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-2-3": {
+      "x": 192,
+      "y": 192,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.5,
+        60
+      ]
+    }
+  },
+  "animations": {
+    "idle": {
+      "frames": [
+        "idle-0",
+        "idle-1",
+        "idle-2",
+        "idle-3"
+      ],
+      "duration": 1000,
+      "loop": true,
+      "label": "待命",
+      "actionId": "idle"
+    },
+    "talk": {
+      "frames": [
+        "talk-0",
+        "talk-1",
+        "talk-2",
+        "talk-3"
+      ],
+      "duration": 220,
+      "loop": true,
+      "label": "回应",
+      "actionId": "talk"
+    },
+    "duty-1": {
+      "frames": [
+        "duty-1-0",
+        "duty-1-1",
+        "duty-1-2",
+        "duty-1-3"
+      ],
+      "duration": 240,
+      "loop": true,
+      "label": "点算兑换",
+      "actionId": "count-exchange"
+    },
+    "duty-2": {
+      "frames": [
+        "duty-2-0",
+        "duty-2-1",
+        "duty-2-2",
+        "duty-2-3"
+      ],
+      "duration": 240,
+      "loop": true,
+      "label": "校验兑换单",
+      "actionId": "verify-receipt"
+    }
+  },
+  "source": "../../../../character-assets/npc-assets/source/cashier.png",
+  "registration": "Per-frame head registration; nearest-neighbor extraction of generated raster pixels."
+}

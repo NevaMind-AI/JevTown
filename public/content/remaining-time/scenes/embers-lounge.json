@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "embers-lounge",
+  "name": "休息间",
+  "map": {
+    "source": "maps/embers-lounge.json"
+  },
+  "anchors": {
+    "start": [37, 16],
+    "from-return": [38, 16]
+  },
+  "entities": [
+    {
+      "id": "embers-lounge.return",
+      "name": "返回",
+      "position": [42, 16],
+      "portalTiles": [
+        [42, 16],
+        [42, 15]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "embers-floor",
+        "anchor": "from-to-lounge"
+      }
+    }
+  ]
+}

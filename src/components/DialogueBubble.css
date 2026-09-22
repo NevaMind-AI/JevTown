@@ -1,0 +1,163 @@
+.dialogue-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  color: #211d24;
+  outline: none;
+  font-family: system-ui, sans-serif;
+}
+.dialogue-bubble {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  border: 3px solid #211d24;
+  border-radius: 16px;
+  background: #fffdf7;
+  box-shadow: 0 4px 0 #211d2440;
+  pointer-events: auto;
+}
+.dialogue-name {
+  position: absolute;
+  z-index: 1;
+  top: -17px;
+  left: 18px;
+  max-width: calc(100% - 36px);
+  padding: 3px 13px;
+  border-radius: 5px;
+  background: #211d24;
+  color: #fffdf7;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dialogue-text {
+  min-height: 0;
+  margin: 22px 0 0;
+  padding: 0 22px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 18px;
+  line-height: 1.7;
+}
+.dialogue-tail {
+  position: absolute;
+  bottom: -12px;
+  width: 20px;
+  height: 20px;
+  transform: rotate(45deg);
+  border-right: 3px solid #211d24;
+  border-bottom: 3px solid #211d24;
+  background: #fffdf7;
+}
+.dialogue-tail--top {
+  top: -12px;
+  bottom: auto;
+  transform: rotate(225deg);
+}
+.dialogue-options {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: auto;
+}
+.dialogue-options h3 {
+  align-self: center;
+  padding: 2px 36px;
+  background: linear-gradient(90deg, transparent, #6954d7e8 25%, #6954d7e8 75%, transparent);
+  color: white;
+  font-size: 24px;
+  font-weight: 800;
+  text-shadow: 2px 2px #211d24;
+}
+.dialogue-options-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.dialogue-options fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  margin: 0;
+  padding: 3px;
+  border: 0;
+}
+.dialogue-options button {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 12px 18px;
+  border: 3px solid #211d24;
+  border-radius: 14px;
+  background: #fffdf7;
+  box-shadow: 0 3px 0 #211d2440;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.dialogue-options button:hover:not(:disabled) {
+  background: #f0e9ff;
+}
+.dialogue-options button:focus-visible {
+  background: #f0e9ff;
+}
+.dialogue-keyboard-hint {
+  align-self: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #fffdf7;
+  font-size: 12px;
+  text-align: center;
+}
+.dialogue-options button:focus-visible,
+.dialogue-text:focus-visible {
+  outline: 3px solid #8b70ef;
+  outline-offset: -5px;
+}
+.dialogue-options button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.dialogue-feedback {
+  border-radius: 8px;
+  background: #fffdf7;
+  padding: 8px 12px;
+}
+.dialogue-overlay--compact {
+  inset: 56px 12px 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+.dialogue-overlay--compact .dialogue-bubble,
+.dialogue-overlay--compact .dialogue-options {
+  position: relative;
+  min-height: 0;
+  max-height: 100%;
+}
+.dialogue-overlay--compact .dialogue-options {
+  height: 100%;
+}
+.dialogue-overlay--compact .dialogue-text {
+  padding: 0 12px 12px;
+  font-size: 15px;
+}
+.dialogue-overlay--compact .dialogue-options h3 {
+  font-size: 18px;
+}
+.dialogue-overlay--compact .dialogue-options button {
+  padding: 8px 12px;
+  font-size: 14px;
+}

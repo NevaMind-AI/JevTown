@@ -1,0 +1,10 @@
+# Separate documentation repository
+/website/
+
+# Generated files (Prettier also respects .gitignore)
+/data/gentle.js
+/data/animations/
+/src/editor/maps/
+/src/editor/*.json
+/public/assets/
+/package-lock.json

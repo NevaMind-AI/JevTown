@@ -1,0 +1,885 @@
+{
+  "sprite": {
+    "image": "assets/remaining-time/portal-shadow.png",
+    "size": [32, 32]
+  },
+  "scenes": {
+    "unit-404": {
+      "anchors": {
+        "start": [19, 25],
+        "from-return": [19, 26]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [19, 33],
+            [18, 33],
+            [20, 33]
+          ],
+          "destination": {
+            "scene": "low-deck",
+            "anchor": "from-enter-404"
+          }
+        }
+      ]
+    },
+    "low-deck": {
+      "anchors": {
+        "start": [8, 12],
+        "from-to-transit": [28, 10],
+        "from-enter-404": [7, 11],
+        "from-enter-kitchen": [39, 12],
+        "from-enter-rhea": [14, 12],
+        "from-enter-clinic": [20, 12],
+        "from-laundry-a": [5, 21],
+        "from-laundry-b": [42, 21],
+        "from-duct-b": [16, 30]
+      },
+      "portals": [
+        {
+          "id": "to-transit",
+          "name": "货运梯 → 转运厅",
+          "tiles": [
+            [28, 7],
+            [27, 7],
+            [29, 7]
+          ],
+          "destination": {
+            "scene": "transit-hall",
+            "anchor": "from-to-low"
+          }
+        },
+        {
+          "id": "enter-404",
+          "name": "404 号舱",
+          "tiles": [[7, 8]],
+          "destination": {
+            "scene": "unit-404",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "enter-kitchen",
+          "name": "公共厨房",
+          "tiles": [
+            [39, 8],
+            [38, 8]
+          ],
+          "destination": {
+            "scene": "low-kitchen",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "enter-rhea",
+          "name": "Rhea 的补时铺",
+          "tiles": [[14, 8]],
+          "destination": {
+            "scene": "rhea-den",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "enter-clinic",
+          "name": "基础诊所",
+          "tiles": [
+            [20, 8],
+            [19, 8]
+          ],
+          "destination": {
+            "scene": "low-clinic",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "laundry-a",
+          "name": "旧洗衣管道（舱房层端）",
+          "tiles": [
+            [5, 17],
+            [4, 17],
+            [6, 17]
+          ],
+          "destination": {
+            "scene": "low-laundry-duct",
+            "anchor": "from-west"
+          }
+        },
+        {
+          "id": "laundry-b",
+          "name": "旧洗衣管道（广场端）",
+          "tiles": [
+            [42, 17],
+            [43, 17]
+          ],
+          "destination": {
+            "scene": "low-laundry-duct",
+            "anchor": "from-east"
+          }
+        },
+        {
+          "id": "duct-b",
+          "name": "南侧检修井",
+          "tiles": [
+            [16, 28],
+            [17, 28],
+            [16, 29],
+            [17, 29]
+          ],
+          "destination": {
+            "scene": "low-service-duct",
+            "anchor": "from-east"
+          }
+        }
+      ]
+    },
+    "low-kitchen": {
+      "anchors": {
+        "start": [24, 24],
+        "from-return": [24, 25]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [24, 29],
+            [21, 29],
+            [22, 29],
+            [23, 29],
+            [25, 29],
+            [26, 29]
+          ],
+          "destination": {
+            "scene": "low-deck",
+            "anchor": "from-enter-kitchen"
+          }
+        }
+      ]
+    },
+    "low-clinic": {
+      "anchors": {
+        "start": [24, 23],
+        "from-return": [24, 23]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [24, 28],
+            [23, 28]
+          ],
+          "destination": {
+            "scene": "low-deck",
+            "anchor": "from-enter-clinic"
+          }
+        }
+      ]
+    },
+    "rhea-den": {
+      "anchors": {
+        "start": [24, 23],
+        "from-return": [24, 22]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [24, 27],
+            [23, 27]
+          ],
+          "destination": {
+            "scene": "low-deck",
+            "anchor": "from-enter-rhea"
+          }
+        }
+      ]
+    },
+    "low-service-duct": {
+      "anchors": {
+        "start": [5, 14],
+
+        "from-east": [42, 14],
+        "from-to-cooling": [28, 13]
+      },
+      "portals": [
+        {
+          "id": "east",
+          "name": "南侧检修井出口",
+          "tiles": [
+            [43, 11],
+            [42, 11]
+          ],
+          "destination": {
+            "scene": "low-deck",
+            "anchor": "from-duct-b"
+          }
+        },
+        {
+          "id": "to-cooling",
+          "name": "隐藏房间（冷却柱机房）",
+          "tiles": [
+            [28, 10],
+            [27, 10]
+          ],
+          "destination": {
+            "scene": "low-cooling-room",
+            "anchor": "from-return"
+          }
+        }
+      ]
+    },
+    "low-laundry-duct": {
+      "anchors": {
+        "start": [5, 14],
+        "from-west": [6, 14],
+        "from-east": [41, 14]
+      },
+      "portals": [
+        {
+          "id": "west",
+          "name": "舱房层端",
+          "tiles": [
+            [4, 11],
+            [5, 11]
+          ],
+          "destination": {
+            "scene": "low-deck",
+            "anchor": "from-laundry-a"
+          }
+        },
+        {
+          "id": "east",
+          "name": "广场端",
+          "tiles": [
+            [42, 11],
+            [43, 11]
+          ],
+          "destination": {
+            "scene": "low-deck",
+            "anchor": "from-laundry-b"
+          }
+        }
+      ]
+    },
+    "low-cooling-room": {
+      "anchors": {
+        "start": [23, 21],
+        "from-return": [23, 21]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [[23, 27]],
+          "destination": {
+            "scene": "low-service-duct",
+            "anchor": "from-to-cooling"
+          }
+        }
+      ]
+    },
+    "transit-hall": {
+      "anchors": {
+        "start": [24, 21],
+        "from-to-solarium": [24, 9],
+        "from-to-low": [23, 21],
+        "from-to-civic": [6, 16],
+        "from-to-embers": [40, 16]
+      },
+      "portals": [
+        {
+          "id": "to-solarium",
+          "name": "私人电梯 → 高层天井",
+          "tiles": [
+            [24, 7],
+            [23, 7]
+          ],
+          "destination": {
+            "scene": "sky-lobby",
+            "anchor": "from-lift"
+          }
+        },
+        {
+          "id": "to-low",
+          "name": "货运梯 → 下层回廊",
+          "tiles": [
+            [23, 29],
+            [24, 29]
+          ],
+          "destination": {
+            "scene": "low-deck",
+            "anchor": "from-to-transit"
+          }
+        },
+        {
+          "id": "to-civic",
+          "name": "计时所",
+          "tiles": [
+            [2, 16],
+            [2, 17]
+          ],
+          "destination": {
+            "scene": "civic-office",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "to-embers",
+          "name": "余烬",
+          "tiles": [
+            [45, 16],
+            [45, 17]
+          ],
+          "destination": {
+            "scene": "embers-floor",
+            "anchor": "from-return"
+          }
+        }
+      ]
+    },
+    "civic-office": {
+      "anchors": {
+        "start": [40, 22],
+        "from-return": [40, 22],
+        "from-to-archive": [41, 10],
+        "from-to-mediation": [6, 15],
+        "from-to-zeroing": [6, 21],
+        "from-to-consult": [41, 15]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [46, 22],
+            [46, 21]
+          ],
+          "destination": {
+            "scene": "transit-hall",
+            "anchor": "from-to-civic"
+          }
+        },
+        {
+          "id": "to-archive",
+          "name": "封存区",
+          "tiles": [
+            [41, 7],
+            [40, 7]
+          ],
+          "destination": {
+            "scene": "civic-archive",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "to-mediation",
+          "name": "争议调解室",
+          "tiles": [
+            [1, 15],
+            [1, 14]
+          ],
+          "destination": {
+            "scene": "civic-mediation",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "to-zeroing",
+          "name": "归零等候区",
+          "tiles": [
+            [1, 21],
+            [1, 22]
+          ],
+          "destination": {
+            "scene": "civic-zeroing-lounge",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "to-consult",
+          "name": "合约咨询室",
+          "tiles": [
+            [46, 15],
+            [46, 14]
+          ],
+          "destination": {
+            "scene": "civic-consult",
+            "anchor": "from-return"
+          }
+        }
+      ]
+    },
+    "civic-mediation": {
+      "anchors": {
+        "start": [41, 16],
+        "from-return": [40, 16]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [46, 16],
+            [46, 17]
+          ],
+          "destination": {
+            "scene": "civic-office",
+            "anchor": "from-to-mediation"
+          }
+        }
+      ]
+    },
+    "civic-consult": {
+      "anchors": {
+        "start": [11, 16],
+        "from-return": [11, 16]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [[7, 16]],
+          "destination": {
+            "scene": "civic-office",
+            "anchor": "from-to-consult"
+          }
+        }
+      ]
+    },
+    "civic-zeroing-lounge": {
+      "anchors": {
+        "start": [39, 17],
+        "from-return": [39, 17]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [44, 17],
+            [44, 16]
+          ],
+          "destination": {
+            "scene": "civic-office",
+            "anchor": "from-to-zeroing"
+          }
+        }
+      ]
+    },
+    "civic-archive": {
+      "anchors": {
+        "start": [31, 24],
+        "from-return": [23, 25]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [24, 29],
+            [23, 29]
+          ],
+          "destination": {
+            "scene": "civic-office",
+            "anchor": "from-to-archive"
+          }
+        }
+      ]
+    },
+    "solarium": {
+      "anchors": {
+        "start": [25, 29],
+        "from-enter-lobby": [24, 29],
+        "from-enter-reception": [6, 11],
+        "from-enter-gallery": [18, 12],
+        "from-enter-archive": [6, 20],
+        "from-enter-noel": [39, 11],
+        "from-bridge-tower": [28, 9],
+        "from-service-lift": [42, 20]
+      },
+      "portals": [
+        {
+          "id": "enter-lobby",
+          "name": "私人电梯厅",
+          "tiles": [
+            [24, 25],
+            [25, 25]
+          ],
+          "destination": {
+            "scene": "sky-lobby",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "enter-reception",
+          "name": "Celeste 宅接待会厅",
+          "tiles": [
+            [6, 9],
+            [7, 9]
+          ],
+          "destination": {
+            "scene": "celeste-reception",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "enter-gallery",
+          "name": "展厅与估值台",
+          "tiles": [[18, 9]],
+          "destination": {
+            "scene": "celeste-gallery",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "enter-archive",
+          "name": "档案室",
+          "tiles": [[6, 17]],
+          "destination": {
+            "scene": "celeste-archive",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "enter-noel",
+          "name": "Noel 的私人厅",
+          "tiles": [
+            [39, 8],
+            [40, 8]
+          ],
+          "destination": {
+            "scene": "noel-suite",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "bridge-tower",
+          "name": "栈桥 → 屋顶花园",
+          "tiles": [
+            [28, 5],
+            [27, 5],
+            [29, 5]
+          ],
+          "destination": {
+            "scene": "one-day-garden",
+            "anchor": "from-bridge-entry"
+          }
+        },
+        {
+          "id": "service-lift",
+          "name": "服务电梯 → 屋顶花园",
+          "tiles": [
+            [42, 17],
+            [41, 17]
+          ],
+          "destination": {
+            "scene": "one-day-garden",
+            "anchor": "from-lift-entry"
+          }
+        }
+      ]
+    },
+    "sky-lobby": {
+      "anchors": {
+        "start": [23, 25],
+        "from-return": [24, 24],
+        "from-lift": [24, 10]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [24, 29],
+            [23, 29]
+          ],
+          "destination": {
+            "scene": "solarium",
+            "anchor": "from-enter-lobby"
+          }
+        },
+        {
+          "id": "lift",
+          "name": "电梯 → 转运厅",
+          "tiles": [
+            [24, 8],
+            [23, 8]
+          ],
+          "destination": {
+            "scene": "transit-hall",
+            "anchor": "from-to-solarium"
+          }
+        }
+      ]
+    },
+    "celeste-reception": {
+      "anchors": {
+        "start": [23, 24],
+        "from-return": [23, 24]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [23, 29],
+            [22, 29],
+            [24, 29]
+          ],
+          "destination": {
+            "scene": "solarium",
+            "anchor": "from-enter-reception"
+          }
+        }
+      ]
+    },
+    "celeste-gallery": {
+      "anchors": {
+        "start": [23, 24],
+        "from-return": [23, 24]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [23, 29],
+            [22, 29],
+            [24, 29]
+          ],
+          "destination": {
+            "scene": "solarium",
+            "anchor": "from-enter-gallery"
+          }
+        }
+      ]
+    },
+    "celeste-archive": {
+      "anchors": {
+        "start": [23, 24],
+        "from-return": [23, 24]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [23, 29],
+            [22, 29],
+            [24, 29]
+          ],
+          "destination": {
+            "scene": "solarium",
+            "anchor": "from-enter-archive"
+          }
+        }
+      ]
+    },
+    "noel-suite": {
+      "anchors": {
+        "start": [23, 23],
+        "from-return": [23, 23]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [23, 28],
+            [24, 28]
+          ],
+          "destination": {
+            "scene": "solarium",
+            "anchor": "from-enter-noel"
+          }
+        }
+      ]
+    },
+    "one-day-garden": {
+      "anchors": {
+        "start": [23, 23],
+        "from-bridge-entry": [7, 21],
+        "from-lift-entry": [39, 20],
+        "from-to-vault": [24, 9]
+      },
+      "portals": [
+        {
+          "id": "bridge-entry",
+          "name": "栈桥入口",
+          "tiles": [
+            [7, 25],
+            [8, 25]
+          ],
+          "destination": {
+            "scene": "solarium",
+            "anchor": "from-bridge-tower"
+          }
+        },
+        {
+          "id": "lift-entry",
+          "name": "服务电梯入口",
+          "tiles": [[39, 27]],
+          "destination": {
+            "scene": "solarium",
+            "anchor": "from-service-lift"
+          }
+        },
+        {
+          "id": "to-vault",
+          "name": "维护层密室",
+          "tiles": [
+            [24, 6],
+            [23, 6]
+          ],
+          "destination": {
+            "scene": "garden-vault",
+            "anchor": "from-return"
+          }
+        }
+      ]
+    },
+    "garden-vault": {
+      "anchors": {
+        "start": [23, 21],
+        "from-return": [24, 21]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [24, 27],
+            [23, 27]
+          ],
+          "destination": {
+            "scene": "one-day-garden",
+            "anchor": "from-to-vault"
+          }
+        }
+      ]
+    },
+    "embers-floor": {
+      "anchors": {
+        "start": [5, 22],
+        "from-return": [5, 22],
+        "from-to-backstage": [34, 8],
+        "from-to-office": [41, 12],
+        "from-to-lounge": [5, 12]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [1, 22],
+            [1, 21]
+          ],
+          "destination": {
+            "scene": "transit-hall",
+            "anchor": "from-to-embers"
+          }
+        },
+        {
+          "id": "to-backstage",
+          "name": "后台",
+          "tiles": [
+            [34, 5],
+            [33, 5]
+          ],
+          "destination": {
+            "scene": "embers-backstage",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "to-office",
+          "name": "概念密码门 → Rook 的账房",
+          "tiles": [
+            [46, 12],
+            [46, 11]
+          ],
+          "destination": {
+            "scene": "embers-back-office",
+            "anchor": "from-return"
+          }
+        },
+        {
+          "id": "to-lounge",
+          "name": "休息间",
+          "tiles": [
+            [1, 12],
+            [1, 11]
+          ],
+          "destination": {
+            "scene": "embers-lounge",
+            "anchor": "from-return"
+          }
+        }
+      ]
+    },
+    "embers-lounge": {
+      "anchors": {
+        "start": [37, 16],
+        "from-return": [38, 16]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [42, 16],
+            [42, 15]
+          ],
+          "destination": {
+            "scene": "embers-floor",
+            "anchor": "from-to-lounge"
+          }
+        }
+      ]
+    },
+    "embers-backstage": {
+      "anchors": {
+        "start": [24, 24],
+        "from-return": [24, 24]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [24, 28],
+            [23, 28]
+          ],
+          "destination": {
+            "scene": "embers-floor",
+            "anchor": "from-to-backstage"
+          }
+        }
+      ]
+    },
+    "embers-back-office": {
+      "anchors": {
+        "start": [8, 15],
+        "from-return": [8, 15]
+      },
+      "portals": [
+        {
+          "id": "return",
+          "name": "返回",
+          "tiles": [
+            [1, 15],
+            [1, 16]
+          ],
+          "destination": {
+            "scene": "embers-floor",
+            "anchor": "from-to-office"
+          }
+        }
+      ]
+    }
+  }
+}

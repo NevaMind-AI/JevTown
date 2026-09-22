@@ -1,0 +1,655 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "contentVersion": "low-deck-s01-guided-2",
+  "objects": [
+    {
+      "id": "door-tag-317",
+      "image": "door-tag-317.png",
+      "position": [262, 211],
+      "size": [32, 12],
+      "footpoint": [16, 12],
+      "depth": 0,
+      "collision": null,
+      "entity": {
+        "id": "low-deck.door-tag-317",
+        "name": "317 消磁门牌",
+        "position": [8, 10],
+        "interactionOffsets": [[-1, 1], [1, 1]]
+      }
+    }
+  ],
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "low-deck",
+    "name": "下层回廊",
+    "english": "Low Deck",
+    "district": "下层回廊",
+    "kind": "exterior",
+    "parent": null,
+    "level": 0,
+    "description": "舱房与公共建筑围绕树下广场。两条地下通道连接街区两端，货运梯通往转运厅。",
+    "characterScale": 1.6,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/low-deck.png",
+    "spawn": [
+      265,
+      388
+    ],
+    "walkable": [
+      [
+        [
+          88,
+          330
+        ],
+        [
+          1456,
+          330
+        ],
+        [
+          1456,
+          888
+        ],
+        [
+          88,
+          888
+        ]
+      ],
+      [
+        [
+          343,
+          880
+        ],
+        [
+          1093,
+          880
+        ],
+        [
+          1093,
+          1005
+        ],
+        [
+          343,
+          1005
+        ]
+      ],
+      [
+        [
+          96,
+          288
+        ],
+        [
+          1446,
+          288
+        ],
+        [
+          1446,
+          378
+        ],
+        [
+          96,
+          378
+        ]
+      ],
+      [
+        [
+          810,
+          228
+        ],
+        [
+          1015,
+          228
+        ],
+        [
+          1015,
+          388
+        ],
+        [
+          810,
+          388
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          710,
+          608,
+          80,
+          62
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          1229,
+          741,
+          185,
+          151
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          95,
+          464,
+          141,
+          138
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1310,
+          464,
+          129,
+          138
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          385,
+          887,
+          87,
+          84
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          343,
+          50,
+          374,
+          274
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          1100,
+          51,
+          314,
+          259
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          96,
+          50,
+          227,
+          252
+        ]
+      }
+    ],
+    "items": [
+      {
+        "id": "market-receipt",
+        "name": "Mara 的旧收据",
+        "at": [
+          1180,
+          862
+        ],
+        "description": "一张记录物品去向的旧收据。"
+      }
+    ],
+    "occlusions": [
+      {
+        "id": "courtyard-tree",
+        "baseline": 669,
+        "polygon": [
+          [
+            634,
+            474
+          ],
+          [
+            650,
+            451
+          ],
+          [
+            684,
+            445
+          ],
+          [
+            718,
+            417
+          ],
+          [
+            765,
+            403
+          ],
+          [
+            795,
+            428
+          ],
+          [
+            811,
+            454
+          ],
+          [
+            846,
+            471
+          ],
+          [
+            854,
+            510
+          ],
+          [
+            843,
+            542
+          ],
+          [
+            856,
+            568
+          ],
+          [
+            826,
+            593
+          ],
+          [
+            794,
+            591
+          ],
+          [
+            778,
+            631
+          ],
+          [
+            767,
+            665
+          ],
+          [
+            711,
+            666
+          ],
+          [
+            724,
+            612
+          ],
+          [
+            703,
+            591
+          ],
+          [
+            672,
+            597
+          ],
+          [
+            651,
+            576
+          ],
+          [
+            648,
+            548
+          ],
+          [
+            628,
+            527
+          ]
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "to-transit",
+        "name": "货运梯 → 转运厅",
+        "at": [
+          910,
+          278
+        ],
+        "target": "transit-hall",
+        "targetExit": "to-low",
+        "kind": "lift",
+        "edge": null,
+        "facade": null,
+        "levelDelta": 1,
+        "transition": "lift",
+        "arrival": [
+          910,
+          351
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "enter-404",
+        "name": "404 号舱",
+        "at": [
+          230,
+          317
+        ],
+        "target": "unit-404",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": "s",
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          230,
+          382
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "enter-kitchen",
+        "name": "公共厨房",
+        "at": [
+          1260,
+          329
+        ],
+        "target": "low-kitchen",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": "s",
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1260,
+          398
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "enter-rhea",
+        "name": "Rhea 的补时铺",
+        "at": [
+          468,
+          340
+        ],
+        "target": "rhea-den",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": "s",
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          468,
+          401
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "enter-clinic",
+        "name": "基础诊所",
+        "at": [
+          644,
+          340
+        ],
+        "target": "low-clinic",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": "s",
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          644,
+          404
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "laundry-a",
+        "name": "旧洗衣管道（舱房层端）",
+        "at": [
+          173,
+          631
+        ],
+        "target": "low-laundry-duct",
+        "targetExit": "west",
+        "kind": "stairs",
+        "edge": null,
+        "facade": null,
+        "levelDelta": -1,
+        "transition": "stairs",
+        "arrival": [
+          177,
+          676
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "laundry-b",
+        "name": "旧洗衣管道（广场端）",
+        "at": [
+          1374,
+          633
+        ],
+        "target": "low-laundry-duct",
+        "targetExit": "east",
+        "kind": "stairs",
+        "edge": null,
+        "facade": null,
+        "levelDelta": -1,
+        "transition": "stairs",
+        "arrival": [
+          1374,
+          680
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "duct-a",
+        "name": "检修捷径（广场端）",
+        "at": [
+          320,
+          568
+        ],
+        "target": "low-service-duct",
+        "targetExit": "west",
+        "kind": "hatch",
+        "edge": null,
+        "facade": null,
+        "levelDelta": -1,
+        "transition": "hatch",
+        "arrival": [
+          365,
+          608
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "duct-b",
+        "name": "检修捷径（旧物街端）",
+        "at": [
+          1194,
+          568
+        ],
+        "target": "low-service-duct",
+        "targetExit": "east",
+        "kind": "hatch",
+        "edge": null,
+        "facade": null,
+        "levelDelta": -1,
+        "transition": "hatch",
+        "arrival": [
+          1140,
+          608
+        ],
+        "facing": "s",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "L1",
+        "name": "404 门口与层叠房门",
+        "at": [
+          316,
+          379
+        ],
+        "events": [
+          "01a",
+          "15a",
+          "31a",
+          "05c",
+          "15c"
+        ],
+        "npcs": [
+          "Ash",
+          "陌生住户"
+        ],
+        "note": "317 门口是 S01 初见位；电缆井第五章打开",
+        "radius": 70
+      },
+      {
+        "id": "L2",
+        "name": "旧洗衣管道岔口",
+        "at": [
+          266,
+          634
+        ],
+        "events": [
+          "16a"
+        ],
+        "npcs": [
+          "Milo"
+        ],
+        "note": "主街 vs 旧洗衣管道",
+        "radius": 70
+      },
+      {
+        "id": "L3",
+        "name": "旧站台与货运梯",
+        "at": [
+          1012,
+          334
+        ],
+        "events": [
+          "08c"
+        ],
+        "npcs": [
+          "Milo"
+        ],
+        "note": "第五章撤离口",
+        "radius": 70
+      },
+      {
+        "id": "L4",
+        "name": "厨房前口袋广场",
+        "at": [
+          1261,
+          418
+        ],
+        "events": [
+          "18c"
+        ],
+        "npcs": [
+          "Rowan",
+          "Silas"
+        ],
+        "note": "公共屏播宵禁令",
+        "radius": 70
+      },
+      {
+        "id": "L5",
+        "name": "Mara 的旧物摊",
+        "at": [
+          1203,
+          823
+        ],
+        "events": [
+          "21a",
+          "04a"
+        ],
+        "npcs": [
+          "Mara",
+          "Milo"
+        ],
+        "note": "Milo 发出三件并行小事",
+        "radius": 70
+      },
+      {
+        "id": "L6",
+        "name": "旧自动售货机",
+        "at": [
+          705,
+          364
+        ],
+        "events": [
+          "11a"
+        ],
+        "npcs": [
+          "Milo"
+        ],
+        "note": "",
+        "radius": 70
+      },
+      {
+        "id": "L7",
+        "name": "壁画走廊",
+        "at": [
+          466,
+          425
+        ],
+        "events": [
+          "14a"
+        ],
+        "npcs": [
+          "Lyra 旧录音"
+        ],
+        "note": "",
+        "radius": 70
+      },
+      {
+        "id": "L8",
+        "name": "废料槽",
+        "at": [
+          527,
+          962
+        ],
+        "events": [
+          "24a"
+        ],
+        "npcs": [
+          "仿生雨燕"
+        ],
+        "note": "",
+        "radius": 70
+      },
+      {
+        "id": "L9",
+        "name": "检修捷径岔口",
+        "at": [
+          368,
+          553
+        ],
+        "events": [
+          "05a"
+        ],
+        "npcs": [
+          "Rhea"
+        ],
+        "note": "照明绕行路 vs 喷汽检修道",
+        "radius": 70
+      },
+      {
+        "id": "L10",
+        "name": "冷却柱",
+        "at": [
+          112,
+          430
+        ],
+        "events": [],
+        "npcs": [],
+        "note": "地标；第五章断电态停机",
+        "radius": 70
+      }
+    ]
+  }
+}

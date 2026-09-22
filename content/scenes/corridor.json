@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "content_version": "demo-1",
+  "id": "corridor",
+  "name": "共居走廊",
+  "map": { "width": 18, "height": 7, "floorTile": 272, "wallTile": 732 },
+  "anchors": { "entrance": [2, 3] },
+  "entities": [
+    {
+      "id": "corridor.return",
+      "name": "返回404",
+      "position": [1, 3],
+      "character": "door",
+      "portal": { "scene": "room", "anchor": "from_corridor" }
+    }
+  ]
+}

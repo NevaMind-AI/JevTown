@@ -1,0 +1,558 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "solarium",
+    "name": "高层天井",
+    "english": "The Solarium",
+    "district": "高层天井",
+    "kind": "exterior",
+    "parent": null,
+    "level": 2,
+    "description": "玻璃穹顶、收藏建筑与花园步道组成高层天井。栈桥和服务电梯都能前往屋顶。",
+    "characterScale": 1.6,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/solarium.png",
+    "spawn": [
+      802,
+      938
+    ],
+    "walkable": [
+      [
+        [
+          43,
+          343
+        ],
+        [
+          416,
+          343
+        ],
+        [
+          416,
+          333
+        ],
+        [
+          772,
+          333
+        ],
+        [
+          772,
+          247
+        ],
+        [
+          1043,
+          247
+        ],
+        [
+          1043,
+          343
+        ],
+        [
+          1451,
+          343
+        ],
+        [
+          1451,
+          692
+        ],
+        [
+          1209,
+          692
+        ],
+        [
+          1209,
+          885
+        ],
+        [
+          978,
+          885
+        ],
+        [
+          978,
+          1018
+        ],
+        [
+          685,
+          1018
+        ],
+        [
+          685,
+          885
+        ],
+        [
+          473,
+          885
+        ],
+        [
+          473,
+          692
+        ],
+        [
+          43,
+          692
+        ]
+      ],
+      [
+        [
+          194,
+          312
+        ],
+        [
+          251,
+          312
+        ],
+        [
+          251,
+          383
+        ],
+        [
+          194,
+          383
+        ]
+      ],
+      [
+        [
+          551,
+          313
+        ],
+        [
+          627,
+          313
+        ],
+        [
+          627,
+          387
+        ],
+        [
+          551,
+          387
+        ]
+      ],
+      [
+        [
+          1240,
+          302
+        ],
+        [
+          1312,
+          302
+        ],
+        [
+          1312,
+          393
+        ],
+        [
+          1240,
+          393
+        ]
+      ],
+      [
+        [
+          848,
+          220
+        ],
+        [
+          955,
+          220
+        ],
+        [
+          955,
+          318
+        ],
+        [
+          848,
+          318
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          73,
+          406,
+          257,
+          201
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          1237,
+          400,
+          201,
+          191
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          688,
+          684,
+          239,
+          197
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          737,
+          458,
+          144,
+          105
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          783,
+          552,
+          65,
+          32
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          636,
+          512,
+          38,
+          71
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          968,
+          512,
+          38,
+          71
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          683,
+          575,
+          64,
+          52
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          886,
+          575,
+          64,
+          52
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          310,
+          589,
+          133,
+          37
+        ]
+      },
+      {
+        "id": "solid-10",
+        "rect": [
+          578,
+          867,
+          78,
+          107
+        ]
+      },
+      {
+        "id": "solid-11",
+        "rect": [
+          983,
+          879,
+          68,
+          96
+        ]
+      },
+      {
+        "id": "solid-12",
+        "rect": [
+          416,
+          879,
+          77,
+          96
+        ]
+      },
+      {
+        "id": "solid-13",
+        "rect": [
+          1125,
+          883,
+          83,
+          96
+        ]
+      }
+    ],
+    "occlusions": [
+      {
+        "id": "garden-tree",
+        "baseline": 506,
+        "polygon": [
+          [
+            741,
+            441
+          ],
+          [
+            751,
+            414
+          ],
+          [
+            773,
+            397
+          ],
+          [
+            811,
+            385
+          ],
+          [
+            837,
+            398
+          ],
+          [
+            864,
+            397
+          ],
+          [
+            883,
+            424
+          ],
+          [
+            883,
+            453
+          ],
+          [
+            866,
+            476
+          ],
+          [
+            827,
+            476
+          ],
+          [
+            818,
+            503
+          ],
+          [
+            796,
+            503
+          ],
+          [
+            799,
+            474
+          ],
+          [
+            768,
+            476
+          ]
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "enter-lobby",
+        "name": "私人电梯厅",
+        "at": [
+          797,
+          903
+        ],
+        "target": "sky-lobby",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": "s",
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          797,
+          960
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "enter-reception",
+        "name": "Celeste 宅接待会厅",
+        "at": [
+          223,
+          342
+        ],
+        "target": "celeste-reception",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": "s",
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          224,
+          393
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "enter-gallery",
+        "name": "展厅与估值台",
+        "at": [
+          586,
+          343
+        ],
+        "target": "celeste-gallery",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": "s",
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          586,
+          399
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "enter-archive",
+        "name": "档案室",
+        "at": [
+          204,
+          625
+        ],
+        "target": "celeste-archive",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": "s",
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          204,
+          665
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "enter-noel",
+        "name": "Noel 的私人厅",
+        "at": [
+          1277,
+          338
+        ],
+        "target": "noel-suite",
+        "targetExit": "return",
+        "kind": "door",
+        "edge": "n",
+        "facade": "s",
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          1277,
+          378
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "bridge-tower",
+        "name": "栈桥 → 屋顶花园",
+        "at": [
+          901,
+          245
+        ],
+        "target": "one-day-garden",
+        "targetExit": "bridge-entry",
+        "kind": "stairs",
+        "edge": null,
+        "facade": null,
+        "levelDelta": 1,
+        "transition": "stairs",
+        "arrival": [
+          901,
+          313
+        ],
+        "facing": "s",
+        "radius": 34
+      },
+      {
+        "id": "service-lift",
+        "name": "服务电梯 → 屋顶花园",
+        "at": [
+          1348,
+          623
+        ],
+        "target": "one-day-garden",
+        "targetExit": "lift-entry",
+        "kind": "lift",
+        "edge": null,
+        "facade": null,
+        "levelDelta": 1,
+        "transition": "lift",
+        "arrival": [
+          1348,
+          671
+        ],
+        "facing": "s",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "S2",
+        "name": "花园环线与观景平台",
+        "at": [
+          809,
+          636
+        ],
+        "events": [],
+        "npcs": [
+          "Noel"
+        ],
+        "note": "安静会面座椅",
+        "radius": 70
+      },
+      {
+        "id": "S4",
+        "name": "玻璃栈桥",
+        "at": [
+          973,
+          302
+        ],
+        "events": [
+          "05b"
+        ],
+        "npcs": [
+          "Iris"
+        ],
+        "note": "未验收透明外桥 vs 服务电梯",
+        "radius": 70
+      },
+      {
+        "id": "S5",
+        "name": "服务电梯",
+        "at": [
+          1240,
+          649
+        ],
+        "events": [],
+        "npcs": [],
+        "note": "慢速、认证完备",
+        "radius": 70
+      }
+    ]
+  }
+}

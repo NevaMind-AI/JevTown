@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-1-cooling-furnished-box-1",
+  "id": "low-cooling-room",
+  "name": "冷却柱机房（隐藏房间）",
+  "map": {
+    "source": "maps/low-cooling-room.json"
+  },
+  "anchors": {
+    "start": [23, 21],
+    "from-return": [23, 21]
+  },
+  "entities": [
+    {
+      "id": "low-cooling-room.return",
+      "name": "返回",
+      "position": [22, 27],
+      "portalTiles": [
+        [22, 27],
+        [23, 27],
+        [24, 27]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/low-cooling-room/portal-box.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-service-duct",
+        "anchor": "from-to-cooling"
+      }
+    }
+  ]
+}

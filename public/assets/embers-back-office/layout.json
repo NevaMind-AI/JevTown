@@ -1,0 +1,189 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "embers-back-office",
+    "name": "Rook 的账房",
+    "english": "Rook's Back Office",
+    "district": "余烬",
+    "kind": "interior",
+    "parent": "embers-floor",
+    "level": 1,
+    "description": "账簿桌、保险柜与谈判桌，藏着 Rook 的另一条账路。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 1024,
+    "image": "assets/maps/embers-back-office.png",
+    "spawn": [
+      271,
+      511
+    ],
+    "walkable": [
+      [
+        [
+          178,
+          213
+        ],
+        [
+          1378,
+          213
+        ],
+        [
+          1378,
+          870
+        ],
+        [
+          178,
+          870
+        ]
+      ],
+      [
+        [
+          0,
+          438
+        ],
+        [
+          239,
+          438
+        ],
+        [
+          239,
+          561
+        ],
+        [
+          0,
+          561
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          510,
+          214,
+          387,
+          85
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          903,
+          221,
+          68,
+          62
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          1150,
+          306,
+          189,
+          125
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1344,
+          449,
+          33,
+          50
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1120,
+          712,
+          163,
+          139
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          1068,
+          700,
+          60,
+          107
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          1286,
+          754,
+          80,
+          109
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          1304,
+          669,
+          65,
+          57
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          180,
+          823,
+          56,
+          49
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          62,
+          505
+        ],
+        "target": "embers-floor",
+        "targetExit": "to-office",
+        "kind": "door",
+        "edge": "w",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          271,
+          505
+        ],
+        "facing": "e",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "E8",
+        "name": "Rook 的账房",
+        "at": [
+          753,
+          355
+        ],
+        "events": [
+          "19b",
+          "22c",
+          "27c"
+        ],
+        "npcs": [
+          "Rook"
+        ],
+        "note": "三轮交易；赌场账路；解密钥匙",
+        "radius": 70
+      }
+    ]
+  }
+}

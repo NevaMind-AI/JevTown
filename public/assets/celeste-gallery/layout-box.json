@@ -1,0 +1,287 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background-box.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "celeste-gallery",
+    "name": "展厅与估值台",
+    "english": "Gallery & Valuation",
+    "district": "高层天井",
+    "kind": "interior",
+    "parent": "solarium",
+    "level": 2,
+    "description": "六个展柜分列两侧，中央地毯引向尽端的估值台。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 992,
+    "image": "assets/maps/celeste-gallery.png",
+    "spawn": [
+      752,
+      787
+    ],
+    "walkable": [
+      [
+        [
+          96,
+          256
+        ],
+        [
+          1440,
+          256
+        ],
+        [
+          1440,
+          768
+        ],
+        [
+          96,
+          768
+        ]
+      ],
+      [
+        [
+          672,
+          768
+        ],
+        [
+          832,
+          768
+        ],
+        [
+          832,
+          992
+        ],
+        [
+          672,
+          992
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          375,
+          313,
+          102,
+          61
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          1047,
+          313,
+          102,
+          61
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          375,
+          489,
+          102,
+          61
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1047,
+          489,
+          102,
+          61
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          375,
+          664,
+          102,
+          62
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          1047,
+          664,
+          102,
+          62
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          669,
+          208,
+          181,
+          40
+        ]
+      },
+      {
+        "id": "solid-7",
+        "rect": [
+          924,
+          733,
+          56,
+          50
+        ]
+      },
+      {
+        "id": "solid-8",
+        "rect": [
+          79,
+          482,
+          56,
+          52
+        ]
+      },
+      {
+        "id": "solid-9",
+        "rect": [
+          1396,
+          482,
+          56,
+          52
+        ]
+      },
+      {
+        "id": "solid-10",
+        "rect": [
+          80,
+          771,
+          67,
+          51
+        ]
+      },
+      {
+        "id": "solid-11",
+        "rect": [
+          1383,
+          771,
+          67,
+          51
+        ]
+      }
+    ],
+    "items": [
+      {
+        "id": "gallery-invitation",
+        "name": "展厅邀请函",
+        "at": [
+          942,
+          816
+        ],
+        "description": "邀请函上的印章与 Celeste 的收藏有关。"
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          752,
+          933
+        ],
+        "target": "solarium",
+        "targetExit": "enter-gallery",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          752,
+          785
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "S8",
+        "name": "展厅与估值台",
+        "at": [
+          753,
+          302
+        ],
+        "events": [
+          "08b",
+          "18b",
+          "20a",
+          "24b",
+          "30a"
+        ],
+        "npcs": [
+          "Celeste",
+          "Noel",
+          "估值员",
+          "侍者"
+        ],
+        "note": "赌场邀请函在此取得",
+        "radius": 70
+      }
+    ],
+    "occlusions": []
+  },
+  "variantOf": "layout.json",
+  "contentVersion": "room-world-1-box-celeste-gallery",
+  "portalPlacement": {
+    "anchors": {
+      "start": [
+        23,
+        24
+      ],
+      "from-return": [
+        23,
+        24
+      ]
+    },
+    "portals": [
+      {
+        "id": "return",
+        "name": "返回",
+        "tiles": [
+          [
+            21,
+            29
+          ],
+          [
+            22,
+            29
+          ],
+          [
+            23,
+            29
+          ],
+          [
+            24,
+            29
+          ],
+          [
+            25,
+            29
+          ]
+        ],
+        "destination": {
+          "scene": "solarium",
+          "anchor": "from-enter-gallery"
+        },
+        "sprite": {
+          "image": "assets/celeste-gallery/portal-box.png",
+          "size": [
+            32,
+            32
+          ]
+        }
+      }
+    ]
+  },
+  "collisionIds": []
+}

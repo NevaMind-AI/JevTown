@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-1-clinic-furnished-box-1",
+  "id": "low-clinic",
+  "name": "基础诊所",
+  "map": {
+    "source": "maps/low-clinic.json"
+  },
+  "anchors": {
+    "start": [24, 23],
+    "from-return": [24, 23]
+  },
+  "entities": [
+    {
+      "id": "low-clinic.return",
+      "name": "返回",
+      "position": [21, 28],
+      "portalTiles": [
+        [21, 28],
+        [22, 28],
+        [23, 28],
+        [24, 28],
+        [25, 28],
+        [26, 28]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/low-clinic/portal-box.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "low-deck",
+        "anchor": "from-enter-clinic"
+      }
+    },
+    {
+      "id": "nurse",
+      "name": "值班护士",
+      "position": [32, 19],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/nurse-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "providers": {
+    "image-provider": {
+      "baseUrl": "https://image-provider.example/v1",
+      "api": "openai-responses",
+      "apiKey": "$IMAGE_API_KEY",
+      "models": [{ "id": "gpt-image-2", "input": ["text", "image"] }]
+    }
+  }
+}

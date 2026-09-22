@@ -1,0 +1,285 @@
+{
+  "schema_version": "1.0",
+  "content_version": "demo-1",
+  "start": {
+    "scene": "room",
+    "anchor": "start"
+  },
+  "entities": {
+    "n07": {
+      "name": "老黑 · N-07",
+      "character": "f2",
+      "movable": true
+    },
+    "room.exit": {
+      "portal": {
+        "scene": "corridor",
+        "anchor": "entrance"
+      },
+      "name": "走廊门",
+      "character": "door",
+      "movable": false
+    },
+    "room.book": {
+      "name": "旧住客手记",
+      "character": "book",
+      "movable": false
+    },
+    "corridor.return": {
+      "portal": {
+        "scene": "room",
+        "anchor": "from_corridor"
+      },
+      "name": "返回404",
+      "character": "door"
+    }
+  },
+  "scenes": [
+    {
+      "schema_version": "1.0",
+      "content_version": "demo-1",
+      "id": "room",
+      "name": "404号舱",
+      "map": {
+        "width": 12,
+        "height": 10,
+        "floorTile": 271,
+        "wallTile": 732
+      },
+      "anchors": {
+        "start": [3, 5],
+        "from_corridor": [9, 5]
+      },
+      "placements": [
+        {
+          "entity": "n07",
+          "position": [5, 5]
+        },
+        {
+          "entity": "room.exit",
+          "position": [10, 5]
+        },
+        {
+          "entity": "room.book",
+          "position": [3, 3]
+        }
+      ]
+    },
+    {
+      "schema_version": "1.0",
+      "content_version": "demo-1",
+      "id": "corridor",
+      "name": "共居走廊",
+      "map": {
+        "width": 18,
+        "height": 7,
+        "floorTile": 272,
+        "wallTile": 732
+      },
+      "anchors": {
+        "entrance": [2, 3],
+        "n07_wait": [4, 3]
+      },
+      "placements": [
+        {
+          "entity": "corridor.return",
+          "position": [1, 3]
+        }
+      ]
+    }
+  ],
+  "stories": [
+    {
+      "schema_version": "1.0",
+      "content_version": "demo-1",
+      "vars": {
+        "has_pass": false,
+        "met_again": false
+      },
+      "interactions": {
+        "n07": {
+          "text": "我是老黑，编号 N-07。通行证给你，我去隔壁共居走廊等你。拿好以后，过来找我。",
+          "choices": [
+            {
+              "id": "permit",
+              "text": "接过通行证：好，我随后就到。",
+              "when": {
+                "var": "has_pass",
+                "equals": false
+              },
+              "effects": [
+                {
+                  "op": "set",
+                  "var": "has_pass",
+                  "value": true
+                },
+                {
+                  "op": "move_entity",
+                  "entity": "n07",
+                  "path": [
+                    [6, 5],
+                    [7, 5],
+                    [8, 5],
+                    [9, 5]
+                  ],
+                  "via": "room.exit",
+                  "arrival": "n07_wait"
+                }
+              ]
+            },
+            {
+              "id": "reunion",
+              "text": "老黑，我过来了。",
+              "when": {
+                "var": "has_pass",
+                "equals": true
+              },
+              "effects": [
+                {
+                  "op": "set",
+                  "var": "met_again",
+                  "value": true
+                }
+              ]
+            }
+          ]
+        },
+        "room.exit": {
+          "text": "这扇门通向共居走廊。需要通行许可。",
+          "choices": [
+            {
+              "id": "enter",
+              "text": "进入走廊",
+              "when": {
+                "var": "has_pass",
+                "equals": true
+              },
+              "effects": [
+                {
+                  "op": "travel"
+                }
+              ]
+            }
+          ]
+        },
+        "corridor.return": {
+          "text": "返回你的房间？",
+          "choices": [
+            {
+              "id": "return",
+              "text": "返回404",
+              "effects": [
+                {
+                  "op": "travel"
+                }
+              ]
+            }
+          ]
+        },
+        "room.book": {
+          "text": "纸页边缘卷起，夹着一张褪色的酒馆收据。\n“初来时，我也一直盯着手上的余额。后来才发现，这里最值得记住的，往往是不收钱的小事。”\n落款已经被划掉了。",
+          "choices": [
+            {
+              "id": "close",
+              "text": "合上手记",
+              "effects": []
+            }
+          ]
+        }
+      },
+      "id": "arrival"
+    },
+    {
+      "schema_version": "1.0",
+      "content_version": "demo-1",
+      "id": "onboarding",
+      "vars": {},
+      "interactions": {},
+      "tasks": [
+        {
+          "id": "learn_movement",
+          "title": "熟悉移动",
+          "description": "使用 WASD 或方向键探索四个方向。",
+          "steps": [
+            {
+              "id": "walk",
+              "text": "使用 WASD / 方向键向四个方向移动",
+              "condition": {
+                "event": "movement.completed",
+                "collect": "direction",
+                "count": 4,
+                "items": [
+                  {
+                    "value": "up",
+                    "label": "↑ W / ↑"
+                  },
+                  {
+                    "value": "left",
+                    "label": "← A / ←"
+                  },
+                  {
+                    "value": "down",
+                    "label": "↓ S / ↓"
+                  },
+                  {
+                    "value": "right",
+                    "label": "→ D / →"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "learn_interaction",
+          "title": "打个招呼",
+          "description": "靠近老黑 N-07，按 E 与他交谈。",
+          "steps": [
+            {
+              "id": "talk",
+              "text": "靠近 N-07，按 E 交谈",
+              "condition": {
+                "event": "interaction.started",
+                "where": {
+                  "entityId": "n07"
+                },
+                "count": 1
+              }
+            }
+          ]
+        },
+        {
+          "id": "follow_black",
+          "title": "隔壁见",
+          "description": "接过老黑的通行证，跟到共居走廊找他。",
+          "steps": [
+            {
+              "id": "permit",
+              "text": "与老黑交谈，接过通行证。",
+              "condition": {
+                "event": "choice.confirmed",
+                "where": {
+                  "entityId": "n07",
+                  "choiceId": "permit"
+                },
+                "count": 1
+              }
+            },
+            {
+              "id": "follow",
+              "text": "向右出门，在共居走廊找到老黑。",
+              "condition": {
+                "event": "choice.confirmed",
+                "where": {
+                  "entityId": "n07",
+                  "choiceId": "reunion"
+                },
+                "count": 1
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-2-npc-menu",
+  "id": "embers-back-office",
+  "name": "Rook 的账房",
+  "map": {
+    "source": "maps/embers-back-office.json"
+  },
+  "anchors": {
+    "start": [8, 15],
+    "from-return": [8, 15]
+  },
+  "entities": [
+    {
+      "id": "embers-back-office.return",
+      "name": "返回",
+      "position": [1, 15],
+      "portalTiles": [
+        [1, 15],
+        [1, 16]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "embers-floor",
+        "anchor": "from-to-office"
+      }
+    }
+  ]
+}

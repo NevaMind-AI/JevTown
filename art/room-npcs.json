@@ -1,0 +1,1694 @@
+{
+  "schema": "handoff-npc-v1",
+  "note": "Integration-neutral export, not a backend entity schema. Coordinates are source image pixels; asset paths resolve under source/imagegen-v2/.",
+  "definitions": [
+    {
+      "id": "n07",
+      "name": "N-07",
+      "kind": "named",
+      "role": "继承柜管理员 / 过时家务终端",
+      "persona": "认真、偶尔卡顿。能核对材料、交易、时间戳，不能判断互相矛盾的证词。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/n07.png",
+      "metadata": "assets/npcs/n07.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "scan-record",
+          "label": "扫描档案",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "file-record",
+          "label": "分类登记",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "ash",
+      "name": "Ash",
+      "kind": "named",
+      "role": "隔壁维修师",
+      "persona": "寡言可靠；曾与 Mira 共同生活，尊重私人关系与证言的边界。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/ash.png",
+      "metadata": "assets/npcs/ash.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "tighten-fitting",
+          "label": "紧固接头",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "inspect-part",
+          "label": "检查零件",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "rhea",
+      "name": "Rhea",
+      "kind": "named",
+      "role": "地下补时匠",
+      "persona": "反权威而谨慎；能修复非法时间芯片，对 Mira 同时敬佩与怨恨。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/rhea.png",
+      "metadata": "assets/npcs/rhea.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "repair-chip",
+          "label": "修复芯片",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "check-route",
+          "label": "核对医疗路线",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "milo",
+      "name": "Milo",
+      "kind": "named",
+      "role": "快递员",
+      "persona": "年轻热情、行动大胆，替家人跑腿还债，常先行动后思考。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/milo.png",
+      "metadata": "assets/npcs/milo.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "scan-parcel",
+          "label": "核对包裹",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "offer-delivery",
+          "label": "递交包裹",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "mara",
+      "name": "Mara",
+      "kind": "named",
+      "role": "旧物摊主",
+      "persona": "只剩十一小时；也按分钟出售自己的记忆，用不同故事试探买家。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/mara.png",
+      "metadata": "assets/npcs/mara.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "polish-object",
+          "label": "擦拭旧物",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "present-object",
+          "label": "展示旧物",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "rowan",
+      "name": "Rowan",
+      "kind": "named",
+      "role": "公共厨房组织者",
+      "persona": "善于照顾人，也可能以集体利益要求个人牺牲；公共厨房既有功绩也有制度失败。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/rowan.png",
+      "metadata": "assets/npcs/rowan.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "stir-food",
+          "label": "搅拌热食",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "serve-meal",
+          "label": "盛出餐食",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "adrian",
+      "name": "Adrian",
+      "kind": "named",
+      "role": "低级审核员",
+      "persona": "Mira 的旧同事；疲惫、恐惧、依赖程序，也因拖延留下三次迟到。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/adrian.png",
+      "metadata": "assets/npcs/adrian.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "review-file",
+          "label": "逐页复核",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "stamp-record",
+          "label": "盖章登记",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "silas",
+      "name": "Silas",
+      "kind": "named",
+      "role": "社区时间监察官",
+      "persona": "礼貌坚定；相信标准化核验与人格连续性制度，不能塑造成只为牟利的反派。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/silas.png",
+      "metadata": "assets/npcs/silas.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "verify-record",
+          "label": "核验证据",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "direct-passage",
+          "label": "示意通行",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "meridian",
+      "name": "Meridian",
+      "kind": "named",
+      "role": "公共服务 AI",
+      "persona": "只承认合法记录，不承认无法量化的感受。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/meridian.png",
+      "metadata": "assets/npcs/meridian.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "validate-form",
+          "label": "读取凭证",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "issue-ticket",
+          "label": "发放回执",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "celeste",
+      "name": "Celeste",
+      "kind": "named",
+      "role": "时间遗物收藏家",
+      "persona": "余响计划早期投资人；相信私人保存能保护脆弱数据，但要求唯一解释权。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/celeste.png",
+      "metadata": "assets/npcs/celeste.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "inspect-relic",
+          "label": "审视藏品",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "annotate-contract",
+          "label": "批注合同",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "iris",
+      "name": "Iris",
+      "kind": "named",
+      "role": "景观设计师",
+      "persona": "曾与 Mira 创建只开放一天的花园；反对封园，也清楚私人资金的代价。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/iris.png",
+      "metadata": "assets/npcs/iris.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "water-seedling",
+          "label": "照看种子",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "tune-bird",
+          "label": "校准机械鸟",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "noel",
+      "name": "Noel",
+      "kind": "named",
+      "role": "年轻时间继承人",
+      "persona": "余额丰厚而孤独；被定制人格抚养，相信数字生命又害怕被迎合。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/noel.png",
+      "metadata": "assets/npcs/noel.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "adjust-audio",
+          "label": "调低私人音频",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "read-contract",
+          "label": "核对个人合同",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "rook",
+      "name": "Rook",
+      "kind": "named",
+      "role": "荷官兼情报商",
+      "persona": "不直接说谎，却擅长让人自行误解；克制而精确。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/rook.png",
+      "metadata": "assets/npcs/rook.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "deal-cards",
+          "label": "发牌",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "count-chips",
+          "label": "清点筹码",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "lyra",
+      "name": "Lyra",
+      "kind": "named",
+      "role": "驻场歌手",
+      "persona": "出售由他人记忆合成的情绪体验；Cora 的旧搭档，歌声保存 Mira 回声及自己的共谋。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/lyra.png",
+      "metadata": "assets/npcs/lyra.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "sing-phrase",
+          "label": "演唱片段",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "adjust-monitor",
+          "label": "校对监听",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "flint",
+      "name": "Flint",
+      "kind": "named",
+      "role": "赌场安保主管",
+      "persona": "易怒、守规矩，对弱者有保护欲；不能用固定暴力动作代替此矛盾。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/flint.png",
+      "metadata": "assets/npcs/flint.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "check-radio",
+          "label": "核对岗哨",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "check-pass",
+          "label": "检查通行凭证",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "resident",
+      "name": "居民",
+      "kind": "crowd",
+      "role": "社区居民 / 排队居民 / 低余额住户",
+      "persona": "覆盖未具名住户、公共厨房参与者、排队者和归零等候区住户；不替任一人发明身份与结局。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/resident.png",
+      "metadata": "assets/npcs/resident.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "check-time",
+          "label": "查看余时",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "hold-form",
+          "label": "整理材料",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "elder",
+      "name": "陌生老人",
+      "kind": "crowd",
+      "role": "寄存票持有人",
+      "persona": "安检前请玩家代持寄存票；源文明确老人不是骗子。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/elder.png",
+      "metadata": "assets/npcs/elder.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "check-watch",
+          "label": "查看腕表",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "offer-ticket",
+          "label": "递出寄存票",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "clerk",
+      "name": "实习柜员",
+      "kind": "crowd",
+      "role": "计时所服务柜员",
+      "persona": "当前锚点中的实习柜员，负责材料与回执；没有新增姓名或私密背景。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/clerk.png",
+      "metadata": "assets/npcs/clerk.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "check-form",
+          "label": "核对材料",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "return-receipt",
+          "label": "递交回执",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "nurse",
+      "name": "值班护士",
+      "kind": "crowd",
+      "role": "基础诊所护士",
+      "persona": "世界锚点明确的值班护士；只做诊所值守与物资工作。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/nurse.png",
+      "metadata": "assets/npcs/nurse.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "prepare-dressing",
+          "label": "准备敷料",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "review-chart",
+          "label": "核对护理记录",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "receptionist",
+      "name": "接待员",
+      "kind": "crowd",
+      "role": "私人电梯厅接待",
+      "persona": "负责通行证生成与访客登记，源于 sky-lobby 锚点。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/receptionist.png",
+      "metadata": "assets/npcs/receptionist.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "register-visitor",
+          "label": "登记访客",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "offer-pass",
+          "label": "发放通行证",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "waiter",
+      "name": "侍者",
+      "kind": "crowd",
+      "role": "接待会与展厅侍者",
+      "persona": "负责接待会饮品服务；无新增剧情身份。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/waiter.png",
+      "metadata": "assets/npcs/waiter.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "balance-tray",
+          "label": "整理托盘",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "offer-cup",
+          "label": "递送饮品",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "appraiser",
+      "name": "估值员",
+      "kind": "crowd",
+      "role": "藏品估值人员",
+      "persona": "源文中的估值员可能误认物品价值；动作表现核验，不凭动画判定真伪。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/appraiser.png",
+      "metadata": "assets/npcs/appraiser.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "examine-object",
+          "label": "放大检视",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "record-value",
+          "label": "记录估值",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "collector",
+      "name": "陌生收藏者",
+      "kind": "crowd",
+      "role": "接待会来宾 / 收藏者",
+      "persona": "高层接待会未具名来宾；不可写成新的余响计划核心投资人。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/collector.png",
+      "metadata": "assets/npcs/collector.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "read-catalog",
+          "label": "翻阅目录",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "inspect-display",
+          "label": "评看展品",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "gambler",
+      "name": "赌客",
+      "kind": "crowd",
+      "role": "围观赌客 / 争议筹码持有人",
+      "persona": "覆盖未具名赌客与作弊者外观；作弊指控与伴侣说法仅在对应事件里成立，不固定显示为罪犯。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/gambler.png",
+      "metadata": "assets/npcs/gambler.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "inspect-hand",
+          "label": "查看手牌",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "stack-chips",
+          "label": "整理筹码",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "cashier",
+      "name": "兑时员",
+      "kind": "crowd",
+      "role": "赌场筹码与兑时柜员",
+      "persona": "对应兑奖机故障的兑时员，负责核对兑换，不提前宣告事件结果。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/cashier.png",
+      "metadata": "assets/npcs/cashier.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "count-exchange",
+          "label": "点算兑换",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "verify-receipt",
+          "label": "校验兑换单",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "guard",
+      "name": "安检保安",
+      "kind": "crowd",
+      "role": "计时所安检值守",
+      "persona": "源文允许玩家将寄存票交给保安。只负责安检，不新建武装冲突。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/guard.png",
+      "metadata": "assets/npcs/guard.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "scan-pass",
+          "label": "扫描证件",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "guide-queue",
+          "label": "指引等候",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "volunteer",
+      "name": "陪伴志愿者",
+      "kind": "crowd",
+      "role": "归零等候区陪伴人员",
+      "persona": "源文明确可呼叫志愿陪伴员；尊重是否愿意陪谈，不将陪伴画成医疗治疗。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/volunteer.png",
+      "metadata": "assets/npcs/volunteer.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "offer-water",
+          "label": "递送温水",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "listen",
+          "label": "陪伴倾听",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "digital-life",
+      "name": "数字生命",
+      "kind": "special",
+      "role": "尚未命名的新生命",
+      "persona": "只在终局启动；不是玩家、Mira 或任何一位样本的复制品。启动后主动关闭脸部拟合，只留下无五官像素剪影。",
+      "presence": "codex-only",
+      "defaultVisible": false,
+      "image": "assets/npcs/digital-life.png",
+      "metadata": "assets/npcs/digital-life.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "decline-fitting",
+          "label": "关闭脸部拟合",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "choose-boundary",
+          "label": "表达自身边界",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    },
+    {
+      "id": "bio-swift",
+      "name": "仿生雨燕",
+      "kind": "special",
+      "role": "受损的医疗路线机器生命",
+      "persona": "原为花园授粉机，Rhea 改写后运药；坠落后类痛模拟持续报警，真伪与隐私后果属于剧情。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/bio-swift.png",
+      "metadata": "assets/npcs/bio-swift.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["talk-0", "talk-1", "talk-2", "talk-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "diagnostic",
+          "label": "诊断报警",
+          "frameMs": 240,
+          "frames": ["duty-1-0", "duty-1-1", "duty-1-2", "duty-1-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "test-wing",
+          "label": "测试翼片",
+          "frameMs": 240,
+          "frames": ["duty-2-0", "duty-2-1", "duty-2-2", "duty-2-3"],
+          "loop": true
+        }
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "n07",
+      "characterId": "n07",
+      "name": "N-07",
+      "map": "unit-404",
+      "at": [986, 427],
+      "approach": [1042, 578],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 1.9
+    },
+    {
+      "id": "ash",
+      "characterId": "ash",
+      "name": "Ash",
+      "map": "low-deck",
+      "at": [337, 403],
+      "approach": [394, 460],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 2.5
+    },
+    {
+      "id": "rhea",
+      "characterId": "rhea",
+      "name": "Rhea",
+      "map": "rhea-den",
+      "at": [423, 522],
+      "approach": [467, 640],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 2.8
+    },
+    {
+      "id": "milo",
+      "characterId": "milo",
+      "name": "Milo",
+      "map": "low-deck",
+      "at": [1045, 395],
+      "approach": [1102, 452],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 4.5
+    },
+    {
+      "id": "mara",
+      "characterId": "mara",
+      "name": "Mara",
+      "map": "low-deck",
+      "at": [1160, 833],
+      "approach": [1095, 833],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 2.9
+    },
+    {
+      "id": "rowan",
+      "characterId": "rowan",
+      "name": "Rowan",
+      "map": "low-kitchen",
+      "at": [589, 386],
+      "approach": [633, 504],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 6.6
+    },
+    {
+      "id": "adrian",
+      "characterId": "adrian",
+      "name": "Adrian",
+      "map": "civic-office",
+      "at": [674, 344],
+      "approach": [718, 462],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 4.1
+    },
+    {
+      "id": "silas",
+      "characterId": "silas",
+      "name": "Silas",
+      "map": "transit-hall",
+      "at": [943, 556],
+      "approach": [987, 674],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 5.5
+    },
+    {
+      "id": "meridian",
+      "characterId": "meridian",
+      "name": "Meridian",
+      "map": "civic-office",
+      "at": [1174, 785],
+      "approach": [1109, 785],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 6.5
+    },
+    {
+      "id": "celeste",
+      "characterId": "celeste",
+      "name": "Celeste",
+      "map": "celeste-reception",
+      "at": [514, 497],
+      "approach": [558, 615],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 6.2
+    },
+    {
+      "id": "iris",
+      "characterId": "iris",
+      "name": "Iris",
+      "map": "one-day-garden",
+      "at": [1163, 302],
+      "approach": [1098, 302],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 5.1
+    },
+    {
+      "id": "noel",
+      "characterId": "noel",
+      "name": "Noel",
+      "map": "noel-suite",
+      "at": [790, 333],
+      "approach": [834, 451],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 4.2
+    },
+    {
+      "id": "rook",
+      "characterId": "rook",
+      "name": "Rook",
+      "map": "embers-floor",
+      "at": [724, 559],
+      "approach": [768, 677],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 5.5
+    },
+    {
+      "id": "lyra",
+      "characterId": "lyra",
+      "name": "Lyra",
+      "map": "embers-floor",
+      "at": [776, 271],
+      "approach": [820, 389],
+      "placement": "stage",
+      "radius": 76,
+      "phase": 5.2
+    },
+    {
+      "id": "flint",
+      "characterId": "flint",
+      "name": "Flint",
+      "map": "embers-floor",
+      "at": [245, 654],
+      "approach": [201, 772],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 5.6
+    },
+    {
+      "id": "resident",
+      "characterId": "resident",
+      "name": "居民",
+      "map": "low-kitchen",
+      "at": [391, 672],
+      "approach": [435, 790],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 8.6
+    },
+    {
+      "id": "elder",
+      "characterId": "elder",
+      "name": "陌生老人",
+      "map": "civic-office",
+      "at": [1291, 659],
+      "approach": [1335, 777],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 3.9
+    },
+    {
+      "id": "clerk",
+      "characterId": "clerk",
+      "name": "实习柜员",
+      "map": "civic-office",
+      "at": [470, 336],
+      "approach": [514, 454],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 4.4
+    },
+    {
+      "id": "nurse",
+      "characterId": "nurse",
+      "name": "值班护士",
+      "map": "low-clinic",
+      "at": [1055, 612],
+      "approach": [1099, 730],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 7.2
+    },
+    {
+      "id": "receptionist",
+      "characterId": "receptionist",
+      "name": "接待员",
+      "map": "sky-lobby",
+      "at": [499, 553],
+      "approach": [543, 671],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 4.4
+    },
+    {
+      "id": "waiter",
+      "characterId": "waiter",
+      "name": "侍者",
+      "map": "celeste-reception",
+      "at": [999, 471],
+      "approach": [1043, 589],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 7
+    },
+    {
+      "id": "appraiser",
+      "characterId": "appraiser",
+      "name": "估值员",
+      "map": "celeste-gallery",
+      "at": [756, 296],
+      "approach": [800, 414],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 9.4
+    },
+    {
+      "id": "collector",
+      "characterId": "collector",
+      "name": "陌生收藏者",
+      "map": "celeste-reception",
+      "at": [471, 685],
+      "approach": [515, 803],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 9.4
+    },
+    {
+      "id": "gambler",
+      "characterId": "gambler",
+      "name": "赌客",
+      "map": "embers-floor",
+      "at": [1099, 478],
+      "approach": [1188, 567],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 5.1
+    },
+    {
+      "id": "cashier",
+      "characterId": "cashier",
+      "name": "兑时员",
+      "map": "embers-floor",
+      "at": [699, 802],
+      "approach": [743, 920],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 5.6
+    },
+    {
+      "id": "guard",
+      "characterId": "guard",
+      "name": "安检保安",
+      "map": "civic-office",
+      "at": [1355, 348],
+      "approach": [1399, 466],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 4.6
+    },
+    {
+      "id": "volunteer",
+      "characterId": "volunteer",
+      "name": "陪伴志愿者",
+      "map": "civic-zeroing-lounge",
+      "at": [971, 375],
+      "approach": [1015, 493],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 2.6
+    },
+    {
+      "id": "bio-swift",
+      "characterId": "bio-swift",
+      "name": "仿生雨燕",
+      "map": "low-deck",
+      "at": [558, 937],
+      "approach": [493, 937],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 4.3
+    },
+    {
+      "id": "resident-queue",
+      "characterId": "resident",
+      "name": "排队居民",
+      "map": "civic-office",
+      "at": [936, 554],
+      "approach": [980, 672],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 0.1
+    },
+    {
+      "id": "resident-zeroing",
+      "characterId": "resident",
+      "name": "等候住户",
+      "map": "civic-zeroing-lounge",
+      "at": [602, 378],
+      "approach": [646, 496],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 2.4
+    },
+    {
+      "id": "resident-door",
+      "characterId": "resident",
+      "name": "陌生住户",
+      "map": "low-deck",
+      "at": [450, 394],
+      "approach": [507, 451],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 8.2
+    },
+    {
+      "id": "gambler-dispute",
+      "characterId": "gambler",
+      "name": "争议筹码持有人",
+      "map": "embers-floor",
+      "at": [322, 652],
+      "approach": [432, 684],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 8.6
+    }
+  ]
+}

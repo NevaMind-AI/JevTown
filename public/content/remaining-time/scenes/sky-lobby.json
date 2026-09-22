@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "content_version": "room-world-1-box-sky-lobby",
+  "id": "sky-lobby",
+  "name": "私人电梯厅",
+  "map": {
+    "source": "maps/sky-lobby.json"
+  },
+  "anchors": {
+    "start": [23, 25],
+    "from-return": [24, 24],
+    "from-lift": [24, 10]
+  },
+  "entities": [
+    {
+      "id": "sky-lobby.return",
+      "name": "返回",
+      "position": [22, 29],
+      "portalTiles": [
+        [22, 29],
+        [23, 29],
+        [24, 29],
+        [25, 29]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/sky-lobby/portal-box.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "solarium",
+        "anchor": "from-enter-lobby"
+      }
+    },
+    {
+      "id": "sky-lobby.lift",
+      "name": "电梯 → 转运厅",
+      "position": [24, 8],
+      "portalTiles": [
+        [24, 8],
+        [23, 8]
+      ],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/remaining-time/portal-shadow.png",
+        "size": [32, 32]
+      },
+      "portal": {
+        "scene": "transit-hall",
+        "anchor": "from-to-solarium"
+      }
+    },
+    {
+      "id": "receptionist",
+      "name": "接待员",
+      "position": [15, 17],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/receptionist-idle.png",
+        "size": [160, 160],
+        "anchor": [0.5, 0.9375],
+        "offset": [16, 16]
+      }
+    }
+  ]
+}

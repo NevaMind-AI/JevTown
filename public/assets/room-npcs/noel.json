@@ -1,0 +1,229 @@
+{
+  "version": 1,
+  "id": "noel",
+  "image": "noel.png",
+  "frameSize": [
+    64,
+    64
+  ],
+  "anchor": [
+    32,
+    60
+  ],
+  "visualHeight": 42,
+  "displayScale": 1,
+  "frames": {
+    "idle-0": {
+      "x": 0,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "idle-1": {
+      "x": 64,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        31.0,
+        60
+      ]
+    },
+    "idle-2": {
+      "x": 128,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "idle-3": {
+      "x": 192,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "talk-0": {
+      "x": 0,
+      "y": 64,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "talk-1": {
+      "x": 64,
+      "y": 64,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        31.0,
+        60
+      ]
+    },
+    "talk-2": {
+      "x": 128,
+      "y": 64,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        31.5,
+        60
+      ]
+    },
+    "talk-3": {
+      "x": 192,
+      "y": 64,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-1-0": {
+      "x": 0,
+      "y": 128,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        31.5,
+        60
+      ]
+    },
+    "duty-1-1": {
+      "x": 64,
+      "y": 128,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-1-2": {
+      "x": 128,
+      "y": 128,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-1-3": {
+      "x": 192,
+      "y": 128,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-2-0": {
+      "x": 0,
+      "y": 192,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-2-1": {
+      "x": 64,
+      "y": 192,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-2-2": {
+      "x": 128,
+      "y": 192,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    },
+    "duty-2-3": {
+      "x": 192,
+      "y": 192,
+      "w": 64,
+      "h": 64,
+      "anchor": [
+        32.0,
+        60
+      ]
+    }
+  },
+  "animations": {
+    "idle": {
+      "frames": [
+        "idle-0",
+        "idle-1",
+        "idle-2",
+        "idle-3"
+      ],
+      "duration": 1000,
+      "loop": true,
+      "label": "待命",
+      "actionId": "idle"
+    },
+    "talk": {
+      "frames": [
+        "talk-0",
+        "talk-1",
+        "talk-2",
+        "talk-3"
+      ],
+      "duration": 220,
+      "loop": true,
+      "label": "回应",
+      "actionId": "talk"
+    },
+    "duty-1": {
+      "frames": [
+        "duty-1-0",
+        "duty-1-1",
+        "duty-1-2",
+        "duty-1-3"
+      ],
+      "duration": 240,
+      "loop": true,
+      "label": "调低私人音频",
+      "actionId": "adjust-audio"
+    },
+    "duty-2": {
+      "frames": [
+        "duty-2-0",
+        "duty-2-1",
+        "duty-2-2",
+        "duty-2-3"
+      ],
+      "duration": 240,
+      "loop": true,
+      "label": "核对个人合同",
+      "actionId": "read-contract"
+    }
+  },
+  "source": "../../../../character-assets/npc-assets/source/noel.png",
+  "registration": "Per-frame head registration; nearest-neighbor extraction of generated raster pixels."
+}

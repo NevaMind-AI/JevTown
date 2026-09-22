@@ -1,0 +1,225 @@
+{
+  "format": "source-scene-layout-v1",
+  "status": "scene-integrated",
+  "coordinateSystem": "source pixels, top-left origin, x right, y down",
+  "background": "background-box.png",
+  "source": "project-myrmidon-map-prototype/source/imagegen-v2/world.json",
+  "sourceLayout": {
+    "id": "celeste-archive",
+    "name": "档案室 / 收藏库",
+    "english": "Celeste's Archive",
+    "district": "高层天井",
+    "kind": "interior",
+    "parent": "solarium",
+    "level": 2,
+    "description": "封存展柜与校准工作台，保存着 Celeste 的私人收藏。",
+    "characterScale": 2.5,
+    "width": 1536,
+    "height": 992,
+    "image": "assets/maps/celeste-archive.png",
+    "spawn": [
+      752,
+      787
+    ],
+    "walkable": [
+      [
+        [
+          160,
+          256
+        ],
+        [
+          1376,
+          256
+        ],
+        [
+          1376,
+          768
+        ],
+        [
+          160,
+          768
+        ]
+      ],
+      [
+        [
+          672,
+          768
+        ],
+        [
+          832,
+          768
+        ],
+        [
+          832,
+          992
+        ],
+        [
+          672,
+          992
+        ]
+      ]
+    ],
+    "collisions": [
+      {
+        "id": "solid-0",
+        "rect": [
+          203,
+          318,
+          211,
+          94
+        ]
+      },
+      {
+        "id": "solid-1",
+        "rect": [
+          265,
+          371,
+          57,
+          61
+        ]
+      },
+      {
+        "id": "solid-2",
+        "rect": [
+          1103,
+          492,
+          312,
+          75
+        ]
+      },
+      {
+        "id": "solid-3",
+        "rect": [
+          1234,
+          527,
+          66,
+          65
+        ]
+      },
+      {
+        "id": "solid-4",
+        "rect": [
+          1052,
+          513,
+          53,
+          51
+        ]
+      },
+      {
+        "id": "solid-5",
+        "rect": [
+          246,
+          834,
+          68,
+          52
+        ]
+      },
+      {
+        "id": "solid-6",
+        "rect": [
+          1206,
+          834,
+          68,
+          52
+        ]
+      }
+    ],
+    "exits": [
+      {
+        "id": "return",
+        "name": "返回",
+        "at": [
+          752,
+          933
+        ],
+        "target": "solarium",
+        "targetExit": "enter-archive",
+        "kind": "door",
+        "edge": "s",
+        "facade": null,
+        "levelDelta": 0,
+        "transition": "walk",
+        "arrival": [
+          752,
+          785
+        ],
+        "facing": "n",
+        "radius": 34
+      }
+    ],
+    "anchors": [
+      {
+        "id": "S9",
+        "name": "档案室 / 收藏库",
+        "at": [
+          1257,
+          642
+        ],
+        "events": [
+          "07b",
+          "25b"
+        ],
+        "npcs": [
+          "Celeste"
+        ],
+        "note": "三个展柜；校准器三入口",
+        "radius": 70
+      }
+    ],
+    "occlusions": []
+  },
+  "variantOf": "layout.json",
+  "contentVersion": "room-world-1-box-celeste-archive",
+  "portalPlacement": {
+    "anchors": {
+      "start": [
+        23,
+        24
+      ],
+      "from-return": [
+        23,
+        24
+      ]
+    },
+    "portals": [
+      {
+        "id": "return",
+        "name": "返回",
+        "tiles": [
+          [
+            21,
+            29
+          ],
+          [
+            22,
+            29
+          ],
+          [
+            23,
+            29
+          ],
+          [
+            24,
+            29
+          ],
+          [
+            25,
+            29
+          ]
+        ],
+        "destination": {
+          "scene": "solarium",
+          "anchor": "from-enter-archive"
+        },
+        "sprite": {
+          "image": "assets/celeste-archive/portal-box.png",
+          "size": [
+            32,
+            32
+          ]
+        }
+      }
+    ]
+  },
+  "collisionIds": []
+}

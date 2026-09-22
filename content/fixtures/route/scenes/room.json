@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "content_version": "demo-1",
+  "id": "room",
+  "name": "404号舱",
+  "map": {
+    "width": 12,
+    "height": 10,
+    "floorTile": 0,
+    "wallTile": 1
+  },
+  "anchors": {
+    "start": [3, 5],
+    "from_corridor": [9, 5]
+  },
+  "entities": [
+    {
+      "id": "n07",
+      "position": [5, 5],
+      "name": "老黑 · N-07",
+      "character": "f2",
+      "movable": true
+    },
+    {
+      "id": "room.exit",
+      "position": [10, 5],
+      "portal": {
+        "scene": "corridor",
+        "anchor": "entrance"
+      },
+      "name": "走廊门",
+      "character": "door",
+      "movable": false
+    },
+    {
+      "id": "room.book",
+      "name": "旧住客手记",
+      "position": [3, 3],
+      "character": "book",
+      "movable": false
+    },
+    {
+      "id": "room.furniture.0",
+      "name": "木桌",
+      "position": [2, 7],
+      "character": "table"
+    },
+    {
+      "id": "room.furniture.1",
+      "name": "圆凳",
+      "position": [1, 7],
+      "character": "stool"
+    },
+    {
+      "id": "room.furniture.2",
+      "name": "圆凳",
+      "position": [3, 7],
+      "character": "stool"
+    },
+    {
+      "id": "room.furniture.3",
+      "name": "木桌",
+      "position": [6, 7],
+      "character": "table"
+    },
+    {
+      "id": "room.furniture.4",
+      "name": "圆凳",
+      "position": [5, 7],
+      "character": "stool"
+    },
+    {
+      "id": "room.furniture.5",
+      "name": "圆凳",
+      "position": [7, 7],
+      "character": "stool"
+    },
+    {
+      "id": "room.furniture.6",
+      "name": "吧台",
+      "position": [7, 2],
+      "character": "counter"
+    },
+    {
+      "id": "room.furniture.7",
+      "name": "汤锅",
+      "position": [8, 2],
+      "character": "pot"
+    },
+    {
+      "id": "room.furniture.8",
+      "name": "平底锅",
+      "position": [9, 2],
+      "character": "pan"
+    },
+    {
+      "id": "room.furniture.9",
+      "name": "蒸笼",
+      "position": [10, 2],
+      "character": "steamer"
+    },
+    {
+      "id": "room.furniture.10",
+      "name": "纸海报",
+      "position": [7, 1],
+      "character": "poster-1"
+    },
+    {
+      "id": "room.furniture.11",
+      "name": "红海报",
+      "position": [9, 1],
+      "character": "poster-2"
+    }
+  ]
+}
