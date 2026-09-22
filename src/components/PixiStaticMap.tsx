@@ -2,9 +2,35 @@ import { PixiComponent, applyDefaultProps } from '@pixi/react';
 import * as PIXI from 'pixi.js';
 import type { AnimatedSprite, MapRender, TileMap } from '../../prototype/mapData';
 
+/**
+ * The rendering subset of a world map.
+ *
+ * Two callers pass a map here: `PixiGame` hands over the `WorldMap` class, and `LocalGame` builds
+ * a plain object from scene content. Both carry these nine fields identically. They disagree about
+ * `collision` and `anchors` -- the class holds a resolved layer and a `Map`, the scene object holds
+ * the serialized optional forms -- and neither renderer reads either one, so the prop asks only for
+ * what it draws.
+ */
+export type RenderableMap = Pick<
+  WorldMap,
+  | 'width'
+  | 'height'
+  | 'tileSetUrl'
+  | 'tileSetDimX'
+  | 'tileSetDimY'
+  | 'tileDim'
+  | 'bgTiles'
+  | 'objectTiles'
+  | 'animatedSprites'
+>;
+
 export const PixiStaticMap = PixiComponent('StaticMap', {
   create: (props: {
+<<<<<<< HEAD
     map: TileMap & { animationSheets?: MapRender['animationSheets'] };
+=======
+    map: RenderableMap & { animationSheets?: MapRender['animationSheets'] };
+>>>>>>> 2937c94 (🔀 merge: bring feat/agentic onto dev (phase 1))
     assetBase?: string;
     [k: string]: any;
   }) => {

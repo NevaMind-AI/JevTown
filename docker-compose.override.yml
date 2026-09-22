@@ -1,0 +1,11 @@
+# Auto-loaded by `docker compose` alongside docker-compose.yml.
+#
+# Repairs ghcr.io/get-convex/convex-dashboard:latest at container start. The published image
+# ships a Turbopack build whose externalized dependencies are referenced under hash-suffixed
+# alias names that are absent from node_modules, so the dashboard returns 500 on every route.
+# See scripts/fix-dashboard-modules.sh. Delete this file once the upstream image is fixed.
+services:
+  dashboard:
+    volumes:
+      - ./scripts/fix-dashboard-modules.sh:/usr/local/bin/fix-dashboard-modules.sh:ro
+    command: sh -c "sh /usr/local/bin/fix-dashboard-modules.sh; exec node ./server.js"
