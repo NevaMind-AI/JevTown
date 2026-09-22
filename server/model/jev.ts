@@ -1,5 +1,6 @@
 import { recordObservation } from './langfuse.ts';
 import { retryWithBackoff } from './llm.ts';
+import { watch } from '../../agent/model/watchdog.ts';
 import type { ChatTrace, Observation } from '../../agent/model/trace.ts';
 import type { SystemOneAnswers, SystemOneQuestions, LLMUsage } from '../../agent/model/client.ts';
 
@@ -65,6 +66,10 @@ export async function systemOne(body: SystemOneRequest): Promise<SystemOneRespon
   const startTime = Date.now();
   try {
     const { result, retries, ms } = await retryWithBackoff(async () => {
+      // Inside the retry rather than around it, so one attempt that never answers is visibly
+      // different from three that failed fast and waited out the backoff. The enclosing
+      // `stage()` in `server/index.ts` times the whole thing; this times each try at it.
+      const attempt = watch('jev', `POST ${config.url}/v1/systemone (${request.model})`);
       const response = await fetch(config.url + '/v1/systemone', {
         method: 'POST',
         headers: {
@@ -72,7 +77,11 @@ export async function systemOne(body: SystemOneRequest): Promise<SystemOneRespon
           ...(config.apiKey ? { Authorization: 'Bearer ' + config.apiKey } : {}),
         },
         body: JSON.stringify(request),
+      }).catch((error: unknown) => {
+        attempt(`no response: ${error instanceof Error ? error.message : String(error)}`);
+        throw error;
       });
+      attempt(`HTTP ${response.status}`);
       if (!response.ok) {
         const error = await response.text();
         console.error({ error });

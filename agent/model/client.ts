@@ -1,4 +1,5 @@
 import { ChatTrace, TraceEntry } from './trace';
+import { watch } from './watchdog';
 
 /**
  * The browser's model client.
@@ -49,24 +50,52 @@ class ModelProxyError extends Error {
   }
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    throw new ModelProxyError(
-      response.status,
-      `Model proxy ${path} failed (${response.status}): ${text}`,
-    );
+/**
+ * One request to the proxy, under the watchdog.
+ *
+ * Every model call the tab makes goes through here, so this is the one place that can say "the
+ * browser asked and has not been answered". That distinction is the first fork when a run stops
+ * moving: a `→` with no `←` means the request left the tab and the proxy log is where to look
+ * next, while no `→` at all means nothing ever got as far as asking and the problem is upstairs
+ * in the decision loop.
+ *
+ * `/trace` is watched like the rest, and is not an odd case worth exempting: `Tracer.close()`
+ * awaits it *before* a decision is allowed to re-enter the world, so a Langfuse export that hangs
+ * freezes the agent exactly as thoroughly as a model call that hangs.
+ */
+async function post<T>(path: string, body: unknown, label?: string): Promise<T> {
+  const done = watch('model', label ? `POST ${path} (${label})` : `POST ${path}`);
+  try {
+    const response = await fetch(`${BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      done(`HTTP ${response.status}`);
+      throw new ModelProxyError(
+        response.status,
+        `Model proxy ${path} failed (${response.status}): ${text}`,
+      );
+    }
+    const parsed = (await response.json()) as T;
+    done(`HTTP ${response.status}`);
+    return parsed;
+  } catch (error) {
+    // Idempotent, so the two paths above that have already reported their status code keep it.
+    // What this catches that they do not is the network failure itself: a proxy that is not
+    // listening rejects the `fetch` rather than answering it.
+    done(`failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
   }
-  return (await response.json()) as T;
 }
 
 export async function chatCompletion(body: ChatCompletionBody): Promise<ChatCompletionResult> {
-  return await post<ChatCompletionResult>('/chat', body);
+  // The trace name is what the call is *for* -- `agent.decide`, `agent.startConversation` -- so it
+  // is the label worth carrying into the log. It is absent when tracing is off, and the path alone
+  // is then enough.
+  return await post<ChatCompletionResult>('/chat', body, body.trace?.name);
 }
 
 // ---------------------------------------------------------------- System One
@@ -128,7 +157,7 @@ export interface SystemOneResult {
 }
 
 export async function systemOne(body: SystemOneBody): Promise<SystemOneResult> {
-  return await post<SystemOneResult>('/systemone', body);
+  return await post<SystemOneResult>('/systemone', body, body.trace?.name);
 }
 
 export async function fetchEmbeddingBatch(

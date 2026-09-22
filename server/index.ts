@@ -5,6 +5,7 @@ import { chatCompletion, fetchEmbeddingBatch, detectMismatchedLLMProvider } from
 import { systemOne, type SystemOneRequest } from './model/jev.ts';
 import { recordObservation } from './model/langfuse.ts';
 import type { TraceEntry } from '../agent/model/trace.ts';
+import { watch } from '../agent/model/watchdog.ts';
 import { databaseUrl, migrate } from './db/index.ts';
 import {
   applyBatch,
@@ -85,6 +86,27 @@ function send(response: ServerResponse, status: number, body: unknown) {
   response.end(text);
 }
 
+/**
+ * One awaited hop inside a request, named and timed.
+ *
+ * A request to this proxy is not one wait, it is three -- the quota query, the upstream model
+ * call, and the `llm_calls` insert -- and none of them has a timeout on it. Postgres and the
+ * model provider fail in the same shape from out here (a promise that does not settle), so
+ * without a line per hop a stalled request says only "the proxy took it and never answered".
+ * With one, the last `→` printed names the hop that ate it.
+ */
+async function stage<T>(name: string, work: () => Promise<T>): Promise<T> {
+  const done = watch('proxy', name);
+  try {
+    const result = await work();
+    done();
+    return result;
+  } catch (error) {
+    done(`threw: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
+  }
+}
+
 async function handle(request: IncomingMessage, response: ServerResponse) {
   const url = new URL(request.url ?? '/', 'http://localhost');
   if (request.method === 'OPTIONS') return send(response, 204, {});
@@ -100,13 +122,22 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
   // against the cap would make a well-traced run look expensive.
   if (path === '/trace') {
     const { entries } = (await readJson(request)) as { entries: TraceEntry[] };
-    for (const entry of entries ?? []) {
-      await recordObservation(entry.trace, entry.observation);
-    }
+    // Watched despite being free, because the tab *waits* for it: `Tracer.close()` awaits this
+    // round trip before the decision it belongs to is allowed back into the world, so a Langfuse
+    // endpoint that accepts a connection and never answers freezes agents just as hard as a
+    // model that does. It is one hop, so one stage covers the whole batch.
+    await stage(`langfuse export (${entries?.length ?? 0} observations)`, async () => {
+      for (const entry of entries ?? []) {
+        await recordObservation(entry.trace, entry.observation);
+      }
+    });
     return send(response, 200, { ok: true });
   }
 
   if (callsServed >= CALL_CAP) {
+    // Worth a line of its own: from the tab this is an ordinary 429 among the quota's 429s, and
+    // the two have completely different fixes.
+    console.warn(`[proxy] refusing ${path}: the process call cap of ${CALL_CAP} is spent`);
     return send(response, 429, {
       error: `Model call cap of ${CALL_CAP} reached for this proxy process. Restart it, or raise MODEL_PROXY_CALL_CAP, once you know why.`,
     });
@@ -115,10 +146,12 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
 
   if (path === '/chat') {
     const body = await readJson(request);
-    const quota = await overQuota(body.worldId);
+    const quota = await stage('quota check (postgres)', () => overQuota(body.worldId));
     if (quota) return send(response, 429, { error: quota });
     const started = Date.now();
-    const result = await chatCompletion({ ...body, stream: false });
+    const result = await stage('upstream /v1/chat/completions', () =>
+      chatCompletion({ ...body, stream: false }),
+    );
     await logCall({
       worldId: body.worldId,
       purpose: body.trace?.name,
@@ -139,10 +172,10 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
     // Typed on the way in, as `/embed` is: the route forwards a body it has not read, so the one
     // field it does read -- the world to bill -- is worth naming.
     const body = (await readJson(request)) as SystemOneRequest & { worldId?: string };
-    const quota = await overQuota(body.worldId);
+    const quota = await stage('quota check (postgres)', () => overQuota(body.worldId));
     if (quota) return send(response, 429, { error: quota });
     const started = Date.now();
-    const result = await systemOne(body);
+    const result = await stage('upstream /v1/systemone', () => systemOne(body));
     await logCall({
       worldId: body.worldId,
       purpose: body.trace?.name,
@@ -158,10 +191,12 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
 
   if (path === '/embed') {
     const { texts, worldId } = (await readJson(request)) as { texts: string[]; worldId?: string };
-    const quota = await overQuota(worldId);
+    const quota = await stage('quota check (postgres)', () => overQuota(worldId));
     if (quota) return send(response, 429, { error: quota });
     const started = Date.now();
-    const { embeddings, ms } = await fetchEmbeddingBatch(texts);
+    const { embeddings, ms } = await stage(`upstream /v1/embeddings (${texts?.length ?? 0})`, () =>
+      fetchEmbeddingBatch(texts),
+    );
     await logCall({ worldId, purpose: 'embed', latencyMs: Date.now() - started });
     return send(response, 200, { embeddings, ms });
   }
@@ -189,7 +224,7 @@ async function overQuota(worldId: string | undefined): Promise<string | undefine
 async function logCall(call: Parameters<typeof recordLlmCall>[0]) {
   if (!storageReady) return;
   try {
-    await recordLlmCall(call);
+    await stage('llm_calls insert (postgres)', () => recordLlmCall(call));
   } catch (error) {
     console.error('Could not record an llm_calls row:', error);
   }
@@ -261,12 +296,24 @@ async function openStorage() {
 void openStorage();
 
 createServer((request, response) => {
-  handle(request, response).catch((error: unknown) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('Model proxy error:', message);
-    // Never leak a key through an upstream error body.
-    send(response, 502, { error: 'Upstream model call failed. See the proxy log.' });
+  // The outermost pair. Everything the tab sees as "the proxy did not answer" is one of these
+  // with no `←` against it, and the stages nested underneath say which hop it is sitting in.
+  const done = watch('proxy', `${request.method} ${request.url}`);
+  // A request the tab abandons -- a reload, a navigation, a closed devtools session -- never
+  // reaches the `.then` below, and an unclosed entry would sit in the sweep being reported as a
+  // hang forever. `writableEnded` is what separates that from an answer that was actually sent.
+  response.on('close', () => {
+    if (!response.writableEnded) done('client disconnected before an answer');
   });
+  handle(request, response)
+    .then(() => done(String(response.statusCode)))
+    .catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      done(`error: ${message}`);
+      console.error('Model proxy error:', message);
+      // Never leak a key through an upstream error body.
+      send(response, 502, { error: 'Upstream model call failed. See the proxy log.' });
+    });
 }).listen(PORT, () => {
   console.log(`Model proxy on http://127.0.0.1:${PORT} (cap ${CALL_CAP} calls)`);
 });

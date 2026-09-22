@@ -512,9 +512,15 @@ export async function retryWithBackoff<T>(
       const retryError = e as RetryError;
       if (i < RETRY_BACKOFF.length) {
         if (retryError.retry) {
+          // The reason, not just the fact. A run that ends up 31s behind has spent it in here,
+          // and "attempt 1 failed" on its own does not say whether that was a 429 worth waiting
+          // out, a 500 upstream, or a connection that never opened.
           console.log(
-            `Attempt ${i + 1} failed, waiting ${RETRY_BACKOFF[i]}ms to retry...`,
-            Date.now(),
+            `[upstream] attempt ${i + 1} failed (${
+              retryError.error instanceof Error
+                ? retryError.error.message
+                : String(retryError.error)
+            }), waiting ${RETRY_BACKOFF[i]}ms to retry...`,
           );
           await new Promise((resolve) =>
             setTimeout(resolve, RETRY_BACKOFF[i] + RETRY_JITTER * Math.random()),

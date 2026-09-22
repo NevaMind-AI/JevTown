@@ -12,6 +12,7 @@ import { GameId } from '../../engine/aiTown/ids';
 import { AgentStoreSnapshot, InMemoryAgentStore } from '../../agent/store/memoryStore';
 import { runAgentOperation } from '../../agent/operations';
 import { godStep } from '../../agent/god';
+import { watch } from '../../agent/model/watchdog';
 import { GameWorldReader } from './worldReader';
 
 /**
@@ -199,11 +200,21 @@ export class AgenticRuntime {
    * An operation that throws must not take the loop with it. The engine already handles an
    * operation that never reports back: `Agent.tick` times it out after `ACTION_TIMEOUT` and
    * decides again, so a swallowed failure costs one wasted decision rather than a stuck agent.
+   *
+   * It is also the outermost thing that can be timed, which is why it is watched. An operation is
+   * not one model call: `agentDecide` reads prompt context, hashes a trace id, asks the model,
+   * and then ships the trace -- and only after all four does the decision re-enter the world
+   * through `ctx.inputs.send`. So an operation that is outstanding while no `[model]` request is
+   * outstanding is stuck in this layer rather than on the wire, and that is a different bug in a
+   * different file. The pair of logs is what tells them apart.
    */
   private async step(work: () => Promise<void>, label: string) {
+    const done = watch('agentic', label);
     try {
       await work();
+      done('done');
     } catch (error) {
+      done('threw');
       console.error(`Agent operation ${label} failed:`, error);
     }
   }

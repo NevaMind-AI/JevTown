@@ -5,6 +5,7 @@ import { decider } from '../../agent/config';
 import { StoredMessage } from '../../agent/ports';
 import { GameSnapshot } from '../hooks/gameSnapshot';
 import { useElementSize } from '../hooks/useElementSize';
+import { watch, outstanding } from '../../agent/model/watchdog';
 import { AgenticRuntime } from '../sim/agenticRuntime';
 import { createAgenticWorld } from '../sim/createAgenticWorld';
 import { loadScene } from '../sim/demo/loadScene';
@@ -48,14 +49,22 @@ export default function AgenticDemo() {
   const [error, setError] = useState('');
   useEffect(() => {
     const controller = new AbortController();
+    // The first of the three things that can leave this page showing a status line forever. It is
+    // twenty-six scenes' worth of JSON over `fetch`, so it is a real wait and it can hang.
+    const done = watch('demo', `load scene ${SOLARIUM_SCENE_ID}`);
     loadScene(SOLARIUM_SCENE_ID, controller.signal)
       .then((loaded) => {
+        done('loaded');
         if (!controller.signal.aborted) setScene(loaded);
       })
       .catch((e: Error) => {
+        done(`failed: ${e.message}`);
         if (!controller.signal.aborted) setError(e.message);
       });
-    return () => controller.abort();
+    return () => {
+      done('abandoned');
+      controller.abort();
+    };
   }, []);
   if (error) return <p role="alert">{error}</p>;
   if (!scene) return <p role="status">Loading the solarium…</p>;
@@ -74,6 +83,15 @@ const BUBBLE_MS = 8_000;
 const BUBBLE_CHARS = 110;
 
 /**
+ * How often the demo says it is still there.
+ *
+ * Ten seconds is longer than any healthy wait in the loop and short enough that nobody stares at
+ * a frozen room wondering whether to reload. It is a fixed cost of one line per interval, which
+ * is the price of a run that explains itself when it stops.
+ */
+const HEARTBEAT_MS = 10_000;
+
+/**
  * Read once at module load, like every other flag here: the world is built in an effect, and a
  * value that could change between renders would silently rebuild it.
  */
@@ -82,15 +100,25 @@ const requestedAgents = requestedAgentCount((import.meta as any).env?.VITE_DEMO_
 function RunningDemo({ scene }: { scene: Scene }) {
   const [runtime, setRuntime] = useState<AgenticRuntime | Error>();
   useEffect(() => {
+    // Synchronous, so it cannot hang -- but with `VITE_DEMO_AGENTS` able to ask for fifty it can
+    // be slow, and a slow build is indistinguishable from a stuck one from the outside. The
+    // timing also pins down which side of the build a later silence started on.
+    const started = performance.now();
+    console.log(`[demo] building the world · ${requestedAgents} agents requested`);
     try {
-      setRuntime(
-        createAgenticWorld({
-          source: solariumWorldSource(scene, { agents: requestedAgents }),
-          worldId: 'solarium-demo',
-          godEnabled: false,
-        }),
+      const built = createAgenticWorld({
+        source: solariumWorldSource(scene, { agents: requestedAgents }),
+        worldId: 'solarium-demo',
+        godEnabled: false,
+      });
+      console.log(
+        `[demo] world built in ${Math.round(performance.now() - started)}ms · ` +
+          `${built.game.world.agents.size} agents, ${built.game.world.players.size} players, ` +
+          `decider ${decider()}`,
       );
+      setRuntime(built);
     } catch (e) {
+      console.error('[demo] the world failed to build:', e);
       setRuntime(e as Error);
     }
   }, [scene]);
@@ -147,6 +175,44 @@ function DemoStage({ scene, runtime }: { scene: Scene; runtime: AgenticRuntime }
     };
     handle = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(handle);
+  }, [runtime]);
+
+  /**
+   * A pulse, so a run that has stopped says why.
+   *
+   * "Stuck" has three causes that look identical on screen and the three lines this prints tell
+   * them apart. **No game time** means the `requestAnimationFrame` loop above is not running --
+   * a thrown render, a backgrounded tab -- and nothing below it will ever fire. **Game time but
+   * no new inputs, with work in flight** means the simulation is fine and the loop is blocked on
+   * something outside it; `outstanding()` names it, and the `[model]` and `[proxy]` lines follow
+   * it across the process boundary. **Game time, no new inputs, and nothing in flight** is the
+   * uncomfortable one: nobody is waiting on anything, so the agents have decided to stand still
+   * and that is the decider's answer rather than a hang.
+   */
+  useEffect(() => {
+    let lastTime = runtime.time;
+    // `version` rather than `events().length`, which a sync flush is entitled to prune.
+    let lastVersion = runtime.version;
+    const timer = window.setInterval(() => {
+      const waiting = outstanding();
+      const advanced = Math.round((runtime.time - lastTime) / 1000);
+      const inputs = runtime.version - lastVersion;
+      lastTime = runtime.time;
+      lastVersion = runtime.version;
+      console.log(
+        `[demo] +${advanced}s game time · ${inputs} new input${inputs === 1 ? '' : 's'} · ` +
+          `${runtime.game.world.conversations.size} conversation` +
+          `${runtime.game.world.conversations.size === 1 ? '' : 's'} · ` +
+          (waiting.length
+            ? `waiting on ${waiting.length}: ` +
+              waiting
+                .slice(0, 3)
+                .map((w) => `${w.label} (${Math.round(w.waitingMs / 1000)}s)`)
+                .join(', ')
+            : 'nothing in flight'),
+      );
+    }, HEARTBEAT_MS);
+    return () => window.clearInterval(timer);
   }, [runtime]);
 
   const game = runtime.game;
