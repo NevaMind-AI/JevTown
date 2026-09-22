@@ -1,4 +1,4 @@
-import { v } from 'convex/values';
+import { v } from '../util/validators';
 
 const IdShortCodes = { agents: 'a', conversations: 'c', players: 'p', operations: 'o', entities: 'e' };
 export type IdTypes = keyof typeof IdShortCodes;

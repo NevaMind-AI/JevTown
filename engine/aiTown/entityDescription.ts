@@ -1,4 +1,4 @@
-import { ObjectType, v } from 'convex/values';
+import { ObjectType, v } from '../util/validators';
 import { GameId, entityId, parseGameId } from './ids';
 
 /**

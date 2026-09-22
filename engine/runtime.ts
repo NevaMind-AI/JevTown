@@ -1,4 +1,4 @@
-import { Value } from 'convex/values';
+import { Value } from './util/validators';
 
 /**
  * The loop that advances a game, with nothing around it.

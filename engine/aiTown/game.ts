@@ -1,4 +1,4 @@
-import { Infer, v } from 'convex/values';
+import { Infer, v } from '../util/validators';
 import { World, serializedWorld } from './world';
 import { CollisionOverlay } from './collisionOverlay';
 import { WorldMap, serializedWorldMap } from './worldMap';

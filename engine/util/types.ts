@@ -1,4 +1,4 @@
-import { Infer, v } from 'convex/values';
+import { Infer, v } from './validators';
 
 export const point = v.object({
   x: v.number(),
