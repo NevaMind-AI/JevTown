@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "play:local": "npm-run-all --parallel proxy vite:local",
+    "play:demo": "npm-run-all --parallel proxy vite:demo",
     "build:local": "vite build --mode memory",
     "prototype": "tsc --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck --outDir .prototype prototype/world.ts prototype/cli.ts && node .prototype/cli.js",
     "test:prototype": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand tests/engine",
@@ -19,6 +20,7 @@
     "le": "vite src/editor/",
     "proxy": "node --experimental-strip-types server/index.ts",
     "vite:local": "vite --mode memory",
+    "vite:demo": "vite --mode demo",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose stop postgres"
   },

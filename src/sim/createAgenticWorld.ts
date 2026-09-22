@@ -3,7 +3,7 @@ import worldFileJson from '../../data/world.json';
 import { characters } from '../../data/characters';
 import { Game } from '../../engine/aiTown/game';
 import { MapContext, WorldFile } from '../../engine/aiTown/worldFile';
-import { CollisionLayer } from '../../engine/aiTown/worldMap';
+import { CollisionLayer, SerializedWorldMap } from '../../engine/aiTown/worldMap';
 import { createWorldPlan } from '../../engine/createWorld';
 import { COMMON_KNOWLEDGE_ID } from '../../engine/prose/contract';
 import { InMemoryAgentStore } from '../../agent/store/memoryStore';
@@ -16,10 +16,13 @@ import { AgenticRuntime, AgenticRuntimeOptions } from './agenticRuntime';
  * are in `engine/createWorld.ts`, and what is left here is feeding it a map and handing the
  * result to a runtime.
  *
- * The map is still `data/gentle.js`, which is the one `data/world.json` was authored against —
- * its anchors are the places the world file puts entities. Sharing a map with `MemoryWorld`'s
- * scenes is the remaining piece of docs/11 §9 F1 and needs anchors authored into `dev`'s
- * per-scene JSON; until then the two worlds tick on one clock but stand on different ground.
+ * Which map is now the caller's business. It used to be `data/gentle.js` and nothing else --
+ * the map `data/world.json` was authored against -- and that pairing is still the default, so a
+ * caller that passes nothing gets exactly the world it got before. What changed is that
+ * `createWorldPlan` was always map-agnostic by construction (see its header: "what it
+ * deliberately does not do is read a map module"), and this function was the one place that
+ * forgot. A `WorldSource` is now the argument it should always have been, which is what lets a
+ * `dev` scene stand in without touching the engine (`sceneWorldMap.ts`).
  */
 
 const mapModule = gentle as typeof gentle & {
@@ -27,10 +30,17 @@ const mapModule = gentle as typeof gentle & {
   anchors?: Record<string, { x: number; y: number; w: number; h: number; description: string }>;
 };
 
-const worldFile = worldFileJson as WorldFile;
+/** A map and the world authored against it, which only ever make sense as a pair. */
+export interface WorldSource {
+  worldFile: WorldFile;
+  /** Anchors and collision already resolved: this is what the world is built and drawn from. */
+  map: SerializedWorldMap;
+  /** Character names a mobile actor may declare. Validation rejects anything else. */
+  characters: Set<string>;
+}
 
 /** Static collision, derived from the object layers for a map that predates docs/07 §5.1. */
-function staticCollision(): CollisionLayer {
+function gentleCollision(): CollisionLayer {
   return (
     mapModule.collision ??
     Array.from({ length: gentle.mapwidth }, (_, x) =>
@@ -39,16 +49,6 @@ function staticCollision(): CollisionLayer {
       ),
     )
   );
-}
-
-function mapContext(collision: CollisionLayer): MapContext {
-  return {
-    anchors: new Map(Object.entries(mapModule.anchors ?? {})),
-    characters: new Set(characters.map((c) => c.name)),
-    width: gentle.mapwidth,
-    height: gentle.mapheight,
-    blocked: (x, y) => collision[x]?.[y] ?? false,
-  };
 }
 
 /**
@@ -61,7 +61,40 @@ function serializeAnchors() {
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 
+/** The original pairing: `data/world.json` over `data/gentle.js`. */
+export function gentleWorldSource(): WorldSource {
+  return {
+    worldFile: worldFileJson as WorldFile,
+    map: {
+      width: gentle.mapwidth,
+      height: gentle.mapheight,
+      tileSetUrl: gentle.tilesetpath,
+      tileSetDimX: gentle.tilesetpxw,
+      tileSetDimY: gentle.tilesetpxh,
+      tileDim: gentle.tiledim,
+      bgTiles: gentle.bgtiles,
+      objectTiles: gentle.objmap,
+      animatedSprites: gentle.animatedsprites,
+      collision: gentleCollision(),
+      anchors: serializeAnchors(),
+    },
+    characters: new Set(characters.map((c) => c.name)),
+  };
+}
+
+function mapContext(source: WorldSource, collision: CollisionLayer): MapContext {
+  return {
+    anchors: new Map((source.map.anchors ?? []).map((anchor) => [anchor.id, anchor])),
+    characters: source.characters,
+    width: source.map.width,
+    height: source.map.height,
+    blocked: (x, y) => collision[x]?.[y] ?? false,
+  };
+}
+
 export interface CreateAgenticWorldOptions {
+  /** The map and the world file authored against it. Defaults to the gentle pairing. */
+  source?: WorldSource;
   worldId?: string;
   /**
    * Game time the world starts at. Defaults to the wall clock, which is what the Convex engine
@@ -78,8 +111,10 @@ export interface CreateAgenticWorldOptions {
 }
 
 export function createAgenticWorld(options: CreateAgenticWorldOptions = {}): AgenticRuntime {
-  const collision = staticCollision();
-  const context = mapContext(collision);
+  const source = options.source ?? gentleWorldSource();
+  const worldFile = source.worldFile;
+  const collision = source.map.collision ?? [];
+  const context = mapContext(source, collision);
   const startTime = options.startTime ?? Date.now();
   const plan = createWorldPlan(worldFile, context, collision, {
     maxMobileActors: options.maxMobileActors,
@@ -102,19 +137,10 @@ export function createAgenticWorld(options: CreateAgenticWorldOptions = {}): Age
     playerDescriptions: [],
     agentDescriptions: [],
     entityDescriptions: [],
-    worldMap: {
-      width: gentle.mapwidth,
-      height: gentle.mapheight,
-      tileSetUrl: gentle.tilesetpath,
-      tileSetDimX: gentle.tilesetpxw,
-      tileSetDimY: gentle.tilesetpxh,
-      tileDim: gentle.tiledim,
-      bgTiles: gentle.bgtiles,
-      objectTiles: gentle.objmap,
-      animatedSprites: gentle.animatedsprites,
-      collision: plan.collision,
-      anchors: serializeAnchors(),
-    },
+    // The plan's collision, not the source's: fixed entities have had their anchors subtracted
+    // out of it (docs/07 §5.2), and drawing or pathing on the unsubtracted one would keep a door
+    // solid after its entity opened.
+    worldMap: { ...source.map, collision: plan.collision },
   });
 
   const store = new InMemoryAgentStore();

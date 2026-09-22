@@ -1,3 +1,4 @@
+import { Container } from '@pixi/react';
 import { Character } from './Character.tsx';
 import { orientationDegrees } from '../../engine/util/geometry.ts';
 import { characters } from '../../data/characters.ts';
@@ -20,12 +21,14 @@ export const Player = ({
   game,
   isViewer,
   player,
+  scale = 1,
   onClick,
 }: {
   game: GameSnapshot;
   isViewer: boolean;
   player: ServerPlayer;
-
+  /** The map's `playerScale`: how much bigger than a 32px tile a person is drawn here. */
+  scale?: number;
   onClick: SelectElement;
 }) => {
   const playerCharacter = game.playerDescriptions.get(player.id)?.character;
@@ -56,11 +59,17 @@ export const Player = ({
     );
   const tileDim = game.worldMap.tileDim;
   const facing = { dx: location.dx, dy: location.dy };
+  const x = location.x * tileDim + tileDim / 2;
+  const y = location.y * tileDim + tileDim / 2;
+  // Position on the container and draw the character at its origin, so `scale` scales the sprite
+  // and not the coordinate. A map whose art was drawn for a taller figure than a 32px tile sheet
+  // says so with `playerScale` — `dev`'s rooms all do — and this is what honours it.
+  // `zIndex` is the sprite's feet, which is what sorts a character against the room's art layers.
   return (
-    <>
+    <Container x={x} y={y} scale={scale} zIndex={y}>
       <Character
-        x={location.x * tileDim + tileDim / 2}
-        y={location.y * tileDim + tileDim / 2}
+        x={0}
+        y={0}
         orientation={orientationDegrees(facing)}
         isMoving={location.speed > 0}
         isThinking={isThinking}
@@ -76,6 +85,6 @@ export const Player = ({
           onClick({ kind: 'player', id: player.id });
         }}
       />
-    </>
+    </Container>
   );
 };

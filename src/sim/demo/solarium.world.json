@@ -1,0 +1,75 @@
+{
+  "format_version": "a1.0",
+  "meta": {
+    "id": "solarium-demo",
+    "title": "Solarium, a flow check",
+    "description": "Five agents on dev's 高层天井 map. Authored to exercise walk/decide/invite/converse end to end on a dev scene, not to be good fiction. See src/components/AgenticDemo.tsx.",
+    "authored_by": "hand",
+    "seed": 7
+  },
+  "world_rules": "A glass atrium near the top of a residential tower. Residents pass through it between the lifts, the gallery, and the roof garden. Nothing supernatural happens here, and nobody present can leave the level.",
+  "common_knowledge": "state: ordinary\n\nThe bridge to the roof garden has been shut since the storm, so everyone going up is queueing for the one service lift. The wait has made the atrium busier and more irritable than usual. Nothing else out of the ordinary has happened here.",
+  "entities": [
+    {
+      "id": "ren",
+      "kind": "actor",
+      "mobile": true,
+      "name": "Ren",
+      "character": "f1",
+      "spawn": { "anchor": "central-hall" },
+      "description": "Ren has lived on this level for eleven years and treats the atrium as a front room. He greets everyone who crosses it, remembers what they told him last time, and will happily keep a stranger talking well past the point they wanted to leave."
+    },
+    {
+      "id": "mira",
+      "kind": "actor",
+      "mobile": true,
+      "name": "Mira",
+      "character": "f6",
+      "spawn": { "anchor": "from-enter-gallery" },
+      "description": "Mira values things for the gallery downstairs and cannot stop doing it off the clock. She appraises furniture, clothing and people out loud, usually accurately and rarely kindly, and is genuinely puzzled when this lands badly."
+    },
+    {
+      "id": "kestrel",
+      "kind": "actor",
+      "mobile": true,
+      "name": "Kestrel",
+      "character": "f4",
+      "spawn": { "anchor": "east-terrace" },
+      "description": "Kestrel came up for the roof garden, found the bridge shut, and has been circling the level ever since looking for another way up. She is short with anyone who slows her down and asks about the service lift within two sentences of meeting anybody."
+    },
+    {
+      "id": "ovid",
+      "kind": "actor",
+      "mobile": true,
+      "name": "Ovid",
+      "character": "f2",
+      "spawn": { "anchor": "west-corridor" },
+      "description": "Ovid maintains the lifts and is the only person here who knows why the bridge is really shut. He is friendly, talks a great deal, and deflects that one question every time without ever appearing to refuse it."
+    },
+    {
+      "id": "nell",
+      "kind": "actor",
+      "mobile": true,
+      "name": "Nell",
+      "character": "f8",
+      "spawn": { "anchor": "south-west-room" },
+      "description": "Nell is fourteen and supposed to be at school. She knows every quiet corner of this level, watches the adults far more closely than they notice, and trades what she has seen for company, because she is bored rather than malicious."
+    },
+    {
+      "id": "the-long-bench",
+      "kind": "prop",
+      "name": "The long bench",
+      "anchor": "the-long-bench",
+      "description": "A long bench of pale wood set against the atrium rail, worn smooth down the middle by decades of people waiting for a lift that was not coming.",
+      "initial_state": "state: ordinary\n\nEmpty, and clean enough. Someone has left a folded coat at the far end; it has been there since this morning and nobody has claimed it."
+    },
+    {
+      "id": "the-notice-board",
+      "kind": "prop",
+      "name": "The notice board",
+      "anchor": "the-notice-board",
+      "description": "A glass-fronted notice board by the gallery door, holding printed slips about lift maintenance and quiet hours, several of them years out of date.",
+      "initial_state": "state: ordinary\n\nThe newest slip announces the bridge closure and gives no reason and no end date. It is unsigned, which several residents have noticed."
+    }
+  ]
+}

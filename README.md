@@ -89,18 +89,21 @@ path is set by `base: '/ai-town/'` in [vite.config.ts](vite.config.ts), with pat
 
 ## Running the agentic demo
 
-An experimental branch runs prompt-driven agents on a `dev` room, with nobody playing. It replaces
-the game rather than joining it: unset the flag and the same branch is the game again.
+`npm run play:demo` runs prompt-driven agents on a `dev` room, with nobody playing. It replaces the
+game rather than joining it: `npm run play:local` is the game again, unchanged.
 
 ```sh
-git checkout feat/jev-demo-solarium
 npm ci
-VITE_AGENTIC_DEMO=1 npm run play:local
+npm run play:demo
 ```
 
-Then open `http://localhost:5173/ai-town/`. On that branch `play:local` starts two processes: Vite,
-and a small Node proxy that holds the model credentials so the browser never sees one. The
-simulation itself still runs in the browser; the proxy never executes simulation logic.
+Then open `http://localhost:5173/ai-town/`. Either script starts two processes: Vite, and a small
+Node proxy that holds the model credentials so the browser never sees one. The simulation itself
+still runs in the browser; the proxy never executes simulation logic.
+
+The only difference between the two is the Vite mode. `play:demo` runs `vite --mode demo`, which
+loads the committed [.env.demo](.env.demo) in addition to your `.env.local`; that file sets the one
+flag that selects the demo, and deliberately nothing else.
 
 ### Credentials
 
@@ -120,12 +123,12 @@ proxy reports which provider it picked, and why, on boot.
 
 ### Knobs
 
-Client flags need the `VITE_` prefix (Vite only exposes those to the bundle) and can also go in
-`.env.local`:
+Client flags need the `VITE_` prefix (Vite only exposes those to the bundle) and belong in
+`.env.local`, not in `.env.demo` — Vite loads the mode file last, so a knob set there would override
+the one you set for yourself:
 
 | Flag                         | Effect                                                           |
 | ---------------------------- | ---------------------------------------------------------------- |
-| `VITE_AGENTIC_DEMO=1`        | Runs the demo instead of the game                                |
 | `VITE_DEMO_AGENTS=n`         | Cast size, clamped to `[1, 50]`; five by default                 |
 | `VITE_ACTION_DECIDER=jev`    | Uses the typed System One decider instead of the chat model      |
 | `VITE_DISABLE_MEMORY=true`   | Skips embeddings, for a backend with no embedding model          |
@@ -138,7 +141,7 @@ Every decision and every line of dialogue is a model call, so a large cast is ex
 off in this demo — a reload starts a new world — and enabling it is a matter of setting
 `DATABASE_URL` and starting the bundled Postgres with `docker compose up -d postgres`.
 
-The branch carries its own notes next to the code: `src/sim/demo/README.md` for the demo itself,
+The demo carries its own notes next to the code: `src/sim/demo/README.md` for the demo itself,
 `server/README.md` for the proxy and storage service, and `docs/` for the design documents behind
 them.
 
