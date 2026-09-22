@@ -1,0 +1,471 @@
+# The Merge and Simulation Authority
+
+`merge: dev ← feat/agentic` ·
+`verified against dev@53772d5, feat/agentic@a4e35e4, base upstream/main`
+
+**The two branches are disjoint in code and opposed in architecture.** The code disjointness makes
+the merge cheap — nine real conflicts, not the sixty-nine git reports. The architectural opposition
+is the whole of the actual work: `dev` built a browser-authoritative simulation with its own clock,
+its own RNG discipline and its own replay log, and this branch built a server-authoritative one with
+the same three things. Neither is wrong. They cannot both survive.
+
+This document records what the merge costs, the decision to make the backend the sole authority over
+time and state, and the contract that decision implies. It forces `05` §13 A6 (retention) and
+re-scales the pacing constants `09` §6 and §10 fix in real-time terms.
+
+> **Parallel proposal, not the chosen one.** `11-frontend-authority-and-storage.md` takes the
+> opposite decision — the browser owns the simulation and the backend is storage plus a model proxy
+> — and that is the branch being built. The two are kept side by side in the way `04` and `05` are.
+> §1 (the merge mechanics and the graft) and §4.2 (the RNG rule) apply to either. §3, §5 and §6 are
+> replaced by `11`; M1, M3 and M4 are answered there. Line references below were verified against
+> `dev@53772d5`, which has since moved to `87c7b22` — see `11` §4.5.
+
+---
+
+## 1. The merge
+
+### 1.1 There is no merge base
+
+`dev` was re-rooted from an attributed snapshot on 2026-09-07 (`2f97ab4`). This branch descends from
+the upstream root (`f91da4a`, 2018-06-04). `git merge-base dev feat/agentic` exits 1.
+
+```
+$ git rev-list --left-right --count dev...feat/agentic
+68      1153
+$ git merge-base --all dev feat/agentic
+$ echo $?
+1
+```
+
+Without a base, git degrades every file both branches inherited from upstream into an add/add
+conflict. That is how a nine-file disagreement presents as sixty-nine — `LICENSE`, `.prettierrc`,
+and all fifteen files under `src/editor/` are among the conflicts, and no one disagrees about any of
+them. `dev` additionally ran a repo-wide `prettier --write .`, so the phantom conflicts are not even
+whitespace-clean and cannot be dismissed with `-w`.
+
+Graft before merging. It is reversible and rewrites no history:
+
+```
+git replace --graft $(git rev-list --max-parents=0 dev) upstream/main
+git merge <the other branch>      # 9 conflicts, 12 hunks
+git replace -d <root-sha>
+```
+
+Verified in a throwaway worktree. With `base = upstream/main` the 69 decompose into 33 that resolve
+to `dev`, 24 that resolve to this branch, and 12 where both sides genuinely edited the file; git
+auto-merges 3 of those 12 line-wise, leaving 9.
+
+The rebase alternative (`git rebase --onto upstream/main --root dev`) permanently connects the
+histories and makes every future merge trivial, at the cost of rewriting `dev`'s 68 commits.
+`remtime/dev` exists on the remote, so that is a coordination question, not a local one.
+
+### 1.2 Ownership divides almost perfectly by directory
+
+Against `upstream/main`:
+
+| directory               | `dev`           | this branch    |
+| ----------------------- | --------------- | -------------- |
+| `convex/`               | +73 −60         | **+7177 −356** |
+| `src/`                  | **+9850 −3108** | +341 −39       |
+| `prototype/`            | **+8908**       | —              |
+| `public/ art/ content/` | **+9978**       | —              |
+| `docs/`                 | +1465           | +4927          |
+| `scripts/`              | +1224           | +117           |
+
+Thirteen files are touched by both. `dev`'s entire `convex/` delta is a repo-wide prettier pass plus
+a `DISABLE_MEMORY` env guard that lets the backend boot without an embedding model
+(`convex/agent/conversation.ts`, `convex/agent/memory.ts`, `convex/util/llm.ts`). Nothing
+architectural. **Take this branch's `convex/` wholesale and replay the `DISABLE_MEMORY` patch on
+top**; it is worth keeping as a local-dev affordance and costs four lines.
+
+The nine conflicts: `README.md`, `package.json`, `convex/init.ts`, `convex/util/llm.ts`,
+`data/convertMap.js`, `data/gentle.js`, `src/App.tsx`, `src/components/Game.tsx`,
+`src/components/PixiGame.tsx`.
+
+Of these, only `convex/init.ts` carries design content. `package.json` collides on one line — both
+branches prepend an env-sync script to `predev` (`scripts/sync-env.mjs` against
+`scripts/push-convex-env.mjs`); pick one. `Game.tsx` and `PixiGame.tsx` collide because `dev`
+extracted `GameFrame` and `TownViewport` for reuse while this branch lifted `viewportRef` up to
+`Game` and added entity rendering — the same direction, and they compose.
+
+### 1.3 Both branches converged on the same map format
+
+The one real design overlap. `convex/init.ts:23-25` already anticipates the shape `dev` shipped:
+
+> `data/gentle.js` predates `07` and exports neither `collision` nor `anchors`; a map regenerated by
+> `data/convertMap.js` exports both.
+
+`dev` deleted `data/gentle.js` and replaced it with per-scene JSON under
+`src/content/demo/maps/*.json`, which carries `collision` and `blockedEdges` but no `anchors`, and
+authors tiles row-major (`render.matrixOrder: "yx"`) with an adapter at the boundary
+(`dev: prototype/mapData.ts:18`, used at `dev: convex/init.ts:79-80`).
+
+Resolution: port this branch's `convertAnchors` (~20 lines of `data/convertMap.js`) into `dev`'s
+JSON emitter, and feed `mapContext()` through `columnMajorLayers()`. The `anchors` requirement is
+not negotiable — `07` §4 makes the world file address places by anchor id and never by raw
+coordinate, so a map without anchors has nowhere to put entities.
+
+Note the incidental coupling this creates: `dev: convex/init.ts:5` imports from `prototype/`, and
+`dev: prototype/mapData.ts:2` imports the `SerializedWorldMap` type back from
+`convex/aiTown/worldMap.ts`. This branch's changes there are additive optional fields, so the type
+import survives the merge, but the cycle should be broken during the port rather than inherited.
+
+### 1.4 Cost
+
+**Mechanical merge to a green build: 1–2 days.** What it produces is two disconnected games in one
+repository, still switched by `MODE === 'memory'` (`dev: src/main.tsx:11`, `dev: src/App.tsx:9`).
+Sections 3–7 are the part that is not a merge.
+
+---
+
+## 2. What `dev` actually built
+
+Necessary context, because the branch's own description — "game features, unrelated to Convex" — is
+true in substance and misleading in detail.
+
+`dev` contains a second engine. `prototype/` is 8,898 lines of standalone TypeScript with its own
+state, command vocabulary, snapshot format, replay driver and test suite, and no Convex dependency
+(`dev: prototype/world.ts:109`, `export class MemoryWorld`). The tavern, dining, commerce,
+scheduling, performance and ability systems all live there. `src/components/LocalGame.tsx` (1,463
+lines) drives it from a `window.setInterval` that reads `performance.now()` and commits elapsed real
+milliseconds in ≤100ms quanta (`dev: src/components/LocalGame.tsx:499`, `:576`).
+
+So the browser tab _is_ the simulation on that branch. Two consequences the merge has to absorb:
+
+1. **`dev` has in-game time, and it is the core mechanic.** Not a real-time passthrough. The
+   documented clock (`content/STORY_CAPABILITIES.md`) gears 30 real seconds to 600 game seconds —
+   20× compression settled in 10-minute quanta — starting at 18:00 with a 5-day balance.
+2. **Time is the currency.** `balance` is debited by elapsed simulation time, not only by discrete
+   actions: `dev: prototype/world.ts:1622` and `:1633` both run `draft.balance -= seconds` where
+   `seconds` derives from the milliseconds advanced. §7 turns on this fact.
+
+---
+
+## 3. Time authority
+
+**Decided: the backend is the sole driver of the time system.** Frontend-initiated pause
+(`idlePauseSeconds`, `setClockSpeed`, `waitUntil`) is given up deliberately.
+
+### 3.1 What the engine does today
+
+`currentTs` starts at the wall clock and advances `TICK` (16ms, `convex/constants.ts:8`) per tick,
+committing a step every `STEP_INTERVAL` (1000ms, `:9`). Game time tracks real time 1:1
+(`convex/engine/abstractGame.ts:30`). There is no compression anywhere in the engine.
+
+Neither branch modified `useHistoricalTime.ts`, `useHistoricalValue.ts`, or
+`convex/engine/historicalObject.ts`. The playback clock is stock upstream on both sides, merges
+clean, and is the foundation §6 builds on.
+
+### 3.2 What the decision obliges
+
+`dev`'s gearing must be re-implemented _on top of_ the engine's `currentTime` rather than ported as
+a second clock. `storyTime` and `balance` become derived scalars in the world document, advanced
+inside `tick()`. Derived, never independently stored — a second stored clock is a second source of
+truth by definition, and will drift.
+
+Every pacing constant this branch introduced is calibrated in real seconds. Under 20× compression
+they mean something else, and each needs an explicit new value rather than an inherited one:
+
+| constant                           | now   | at 20×      | failure if inherited                               |
+| ---------------------------------- | ----- | ----------- | -------------------------------------------------- |
+| `MIN_DECISION_INTERVAL` (`09` §10) | 5s    | 100 game-s  | agents deliberate faster than the world moves      |
+| `APPROACH_TIMEOUT` (`09` §6)       | 60s   | 20 game-min | approach abandoned mid-journey                     |
+| `MAX_CONVERSATION_DURATION`        | 10min | 3.3 game-hr | one exchange consumes a sixth of the day           |
+| `MAX_INTERACTION_TURNS`            | 6     | —           | turns are countable, not timed; survives unchanged |
+
+### 3.3 The unpriced consequence
+
+Agent and god calls scale with _game-time_ throughput. Twenty-times compression is twenty times the
+model spend per game-day unless the decision cadence is re-geared in the same move. Make the
+compression ratio an explicit policy constant and read the bill off it. Do not inherit 20× because a
+prototype story file happened to specify it.
+
+---
+
+## 4. The replay contract
+
+The requirement: replay the log from the beginning and land in exactly the same state, every time.
+Four things can break that. This branch already addresses all four.
+
+| divergence source         | mechanism                          | location                               |
+| ------------------------- | ---------------------------------- | -------------------------------------- |
+| input ordering            | monotonic `number` per engine      | `inputs` (upstream)                    |
+| step / tick boundaries    | boundary recorded at commit        | `steps` (`convex/engine/schema.ts:70`) |
+| RNG draws inside `tick()` | seeded sfc32 in the world document | `convex/util/rng.ts:15`                |
+| model outputs             | outcome emitted as an engine input | `inputs` (`05` §9)                     |
+
+### 4.1 `received` is not the source of truth
+
+The input schema says so directly (`convex/engine/schema.ts:29`):
+
+> Timestamp when the server received the input. This timestamp is best-effort, since we don't
+> guarantee strict monotonicity here. So, an input may not get assigned to the engine step whose
+> time interval contains this timestamp.
+
+And upstream's replay is not sound on its own. `startTs` and the loop's termination both derive from
+`now` — the wall clock at the moment `runStep` happened to fire (`convex/engine/abstractGame.ts:30`,
+and the `if (now < candidateTs) break` below it). Replaying from the input log alone recomputes
+different boundaries, inputs land on different ticks, and the run diverges.
+
+That is precisely why `steps` exists (`convex/engine/abstractGame.ts:190`): it records the boundary
+each step actually took, so replay drives from the boundaries rather than from a clock it no longer
+has.
+
+**Single source of truth: `inputs.number` for order, `steps` for time.** Nothing else.
+
+### 4.2 The RNG rule, and enforcing it
+
+`tick()` runs inside a Convex _action_, where `Math.random()` is genuinely unseeded — Convex makes
+it deterministic only inside queries and mutations, and only across retries of one execution. Any
+bare `Math.random()`, `Date.now()` or `performance.now()` reached from simulation code is a silent
+replay divergence.
+
+This branch already converted the known case — `convex/aiTown/player.ts:160` draws the pathfinding
+backoff from `game.rng.random()`. The risk is not the existing code; it is the ~8,900 lines of
+`prototype/` arriving in §6's port, which currently takes `clock = Date.now` and
+`random = Math.random` as constructor defaults.
+
+Add a lint rule banning all three identifiers inside `convex/aiTown/` and `convex/engine/` before
+the port starts. Enforce it mechanically. A divergence introduced this way does not fail a test — it
+surfaces months later as a run that will not reproduce.
+
+### 4.3 Retention is now forced
+
+This branch already emptied the vacuum list and recorded why (`convex/crons.ts:28-32`):
+
+```
+//   - `inputs` is the replay log. Vacuuming it destroys the ability to replay a run.
+const TablesToVacuum: TableNames[] = [];
+```
+
+`dev` still vacuums `'inputs'`. That file is not among §1.2's nine conflicts, so it auto-resolves in
+this branch's favour — but verify it after merging, because a wrong resolution here is silent and
+unrecoverable.
+
+The open question `05` §13 A6 raises is now load-bearing. `steps` grows at one row per second per
+running world: ≈2.6M rows per world-month. Either periodic snapshots (replay from the last snapshot
+rather than genesis) or a retention window, decided deliberately. Replay-from-genesis is simplest
+and gets expensive; snapshots add a table and a correctness surface. Not decided here.
+
+---
+
+## 5. State ownership
+
+**The backend calculates. The frontend plays back.** No world state is computed on the client, and
+nothing is transmitted as a delta.
+
+### 5.1 Three channels
+
+1. **Discrete state — the whole document, every change.** `useQuery(api.world.worldState)`
+   (`src/hooks/serverGame.ts:24`) receives the complete world document and deserialises it with
+   `new World(...)`. No merge state, no ordering requirement, no recomputation.
+2. **Continuous values — recorded samples, replayed.** `beginStep` seeds a `HistoricalObject` per
+   player (`convex/aiTown/game.ts:263`); positions are sampled every tick and packed at commit into
+   one quantised → delta-encoded → run-length → varint buffer. The client unpacks and interpolates.
+   Smooth motion is _playback of server-recorded samples_, not client simulation. Note
+   `convex/aiTown/game.ts:117` deletes `historicalLocations` from the world document on load — the
+   buffer is a rendering artifact and deliberately outside replayable state.
+3. **Static descriptions.** `gameDescriptions` (`convex/world.ts:225`) ships the whole `maps` row,
+   including the `collision` layer this branch made authoritative rather than derived. §7.4 depends
+   on that.
+
+### 5.2 Snapshots, not deltas
+
+The rejected alternative is "server computes, sends a delta, client applies". Three reasons:
+
+- Deltas require gapless ordered delivery plus client-side merge state. A dropped or reordered delta
+  desyncs silently and surfaces later as an unreproducible visual bug.
+- Full documents are idempotent. Reconnect, refresh, or resume after a week and the client is
+  correct with no resync protocol.
+- Convex's reactive query already _is_ a consistent-snapshot push. Hand-rolled deltas fight the
+  platform for a bandwidth saving that does not exist here — the bulky continuous data already left
+  through channel 2.
+
+### 5.3 Closing the tab
+
+Nothing to build. The client was never a participant, so its disappearance requires no checkpoint
+handoff and no reconciliation on reconnect. The only related machinery is lifecycle:
+`worldStatus.lastViewed` is heartbeated and a cron flips the world `inactive` after
+`IDLE_WORLD_TIMEOUT`. Under backend-owned time that becomes a _cost_ question — do we pay for model
+calls in a world nobody is watching — not a correctness one.
+
+### 5.4 What the port costs
+
+`MemoryWorld` is authoritative in the browser today. After the port, `LocalGame.tsx` reads from
+`useServerGame()` and `MemoryWorld` moves behind `tick()`. Most of that 1,463-line file is rewiring.
+The simulation logic in `prototype/` largely survives; the ownership changes.
+
+Two things make it cheaper than it looks. `storyTime`, `balance`, inventory, task progress and
+dialogue flags are discrete scalars — straight into the world document, shipped whole. And this
+branch's entities are static by construction (`convex/aiTown/entity.ts:15`: the mobile actor stays a
+`Player` + `Agent` pair and is the only tier that can move), so props and fixed actors need no
+historical buffer at all.
+
+The invariant to hold through the port: **the client may interpolate between server-recorded samples
+and may hold view state — camera, open panels, selection. It may never advance the simulation.** The
+moment a component computes a world value the server did not send, there are two sources of truth
+again.
+
+---
+
+## 6. Player input
+
+The frontend wants WASD rather than upstream's click-to-move. This breaks the assumption behind
+`moveTo`: that the server is handed a destination and owns the entire journey.
+
+### 6.1 The confirmation round trip is not needed
+
+`useSendInput` (`src/hooks/sendInput.ts:42`) contains two distinct waits:
+
+```ts
+const inputId = await convex.mutation(api.world.sendWorldInput, { engineId, name, args });
+return await waitForInput(convex, inputId);
+```
+
+`engineInsertInput` assigns `number` inside the mutation transaction. Once that commits, the input's
+position in the log is fixed and nothing later can precede it. **Ordering is settled by the first
+await.** The second (up to `STEP_INTERVAL` plus the playback buffer) only retrieves the handler's
+return value.
+
+So: await the mutation for anything order-sensitive; await `waitForInput` only where the outcome
+branches the UI — did the purchase succeed, was the seat taken. Movement needs neither.
+
+### 6.2 Why the batched `(from, to)` teleport fails here
+
+The proposal — client owns position during the move, sends one atomic `(from, to)` at the end,
+server treats it as a teleport — is a reasonable pattern in general and wrong for this game
+specifically.
+
+**Movement spends the currency.** Per §2, `balance` is debited by elapsed simulation time. A move
+the server did not simulate is a move the server cannot price, and the straight-line distance
+between the endpoints is not the path length: a player who walks around the bar and one who cuts
+across it would be charged identically. That is client-authoritative currency, arrived at by
+accident.
+
+Two further costs. Collision authority moves to the client, which is tolerable single-player and not
+at `MAX_HUMAN_PLAYERS = 8` (`convex/constants.ts:19`). And proximity fidelity is lost: `09` §6's
+`INTERACTION_DISTANCE` and the conversation gate both key off distance _over time_, so an agent
+never notices a player who did not walk past but appeared.
+
+### 6.3 Send heading, not destination
+
+The unit matching WASD is a direction that persists until it changes.
+
+```ts
+setHeading: inputHandler({
+  args: { playerId, heading: v.union(point, v.null()) },
+  ...
+})
+```
+
+One input per key-state change — crossing the tavern is two inputs, not sixty. This preserves the
+batching the proposal wanted without conceding authority: the server integrates in `tick()`, owns
+collision, owns the time cost, and `historicalLocations` works unchanged.
+
+**Implementation note.** `tickPosition` (`convex/aiTown/player.ts:143`) does not integrate velocity;
+it reads a precomputed path via `pathPosition(path, now)`. So do not add a heading mode to the tick
+loop. _Synthesise a path from the heading_: on `setHeading(h)`, cast a ray from the current position
+along `h` until it hits collision or a bounded length, emit timed waypoints, and assign it as
+`pathfinding.state.path` — the same slot `findRoute` (`convex/aiTown/movement.ts:58`) fills. The
+existing tick loop, collision check, backoff and history buffer all work untouched.
+
+**Where the player stopped.** The release input lands ~1s after the key came up, so a
+server-truncated ray overshoots. Have the client _propose_ the stop:
+
+```ts
+{ heading: null, stoppedAt: { distance: d, at: t } }
+```
+
+The server clamps `d` to the ray it computed itself and validates `d ≤ speed × (t − tStart)`. The
+client cannot exceed a ray derived from the server's own collision map, and the time cost still
+comes from the server's numbers. This is the correct home for the "only the arrival matters"
+instinct: the endpoint is what the player cares about, and constraining it to a server-owned ray is
+what makes accepting it safe.
+
+### 6.4 Prediction, and why it is cheap here
+
+Heading alone still carries ~1s of input lag. Predict the local avatar client-side.
+
+This is easier here than in typical multiplayer because **the client already holds the authoritative
+collision map** (§5.1, channel 3). Client and server integrate the same straight line against the
+same data and agree except under dynamic blocking — another entity stepping into the path — which is
+rare and small enough to ease out over a few frames.
+
+The constraint that keeps this inside §5: **the predicted position is render-only.** Never read by
+game logic, never sent back, never persisted, never used to compute `balance`. It is the same
+category as the interpolation already happening in `useHistoricalValue` — extrapolating forward from
+local input instead of interpolating between known samples. The authoritative position remains
+whatever the server last said.
+
+Then lower `STEP_INTERVAL` from 1000ms toward ~200ms so the correction window is short and
+mispredictions are imperceptible. Cost is roughly 5× the function invocations. This is the
+highest-leverage single number in the system.
+
+### 6.5 Latency budget
+
+| term                | value      | source                                                                                            |
+| ------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| mutation round trip | 50–150ms   | network                                                                                           |
+| wait for next step  | ≤1000ms    | `STEP_INTERVAL`                                                                                   |
+| playback buffer     | 250–1500ms | `SOFT_MIN_SERVER_BUFFER_AGE` … `MAX_SERVER_BUFFER_AGE` (`src/hooks/useHistoricalTime.ts:141-143`) |
+
+Worst case ≈1.5–2.5s. For discrete actions this is irrelevant — the simulation settles every 30 real
+seconds in 10-minute jumps, an order of magnitude coarser than the round trip. Only movement is
+latency-sensitive, which is what §6.3 and §6.4 address. Use a pending affordance (disabled control,
+spinner) for discrete actions while the receipt is outstanding.
+
+Do **not** reach for Convex's `withOptimisticUpdate` on world state. It reintroduces exactly the
+second source of truth §5 eliminates. Prediction under §6.4 is admissible because it is confined to
+the render layer; an optimistic mutation update is not.
+
+### 6.6 Sorting `dev`'s command vocabulary
+
+`dev: prototype/world.ts:71` defines ~18 `Command` variants. They split four ways:
+
+- **Become engine inputs.** `buy`, `sell`, `interact`, `choose`, `stand`, `trade`, `nextScene`,
+  `clean`, `practice`, `startPractice`, `playNote`, `skipPerformance`.
+- **Stay client-local.** Camera pan and zoom, panel open/close, entity selection, hover, menu
+  scroll. These are view state; sending them would be the real over-engineering.
+- **Retired by §3.** `setClockSpeed`, `waitUntil`, `advanceStoryTime`.
+- **Reshaped by §6.3.** `move { dx, dy, sprint }` → `setHeading`.
+
+Do `move` first. It establishes the intent-shaped pattern the rest follow, and it is the only one
+whose shape is genuinely in question.
+
+---
+
+## 7. Open questions
+
+| #   | question                                                                          | blocks     |
+| --- | --------------------------------------------------------------------------------- | ---------- |
+| M1  | Snapshot-and-truncate, or keep `inputs` + `steps` from genesis? (`05` §13 A6)     | §4.3       |
+| M2  | Is 20× compression still right when agents, not one player, drive the world?      | §3.3, cost |
+| M3  | Should a world keep stepping — and spending — unobserved?                         | §5.3       |
+| M4  | `STEP_INTERVAL`: leave at 1000ms and tune reactively, or drop to ~200ms up front? | §6.4       |
+| M5  | Rebase `dev` onto `upstream/main` permanently, or graft per-merge?                | §1.1       |
+
+M5 has a coordination cost (`remtime/dev` exists on the remote) and is worth deciding once rather
+than re-grafting at every merge.
+
+One item is not a question but should be said out loud: `dev`'s replay stack — `Event[]`,
+`Snapshot`, `prototype/replay.ts`, `src/lib/autosaves.ts`, its recording-capacity management — is
+retired in favour of `inputs` + `steps`. That is real, working, tested code being dropped. Keeping
+both would produce two logs that can disagree, which defeats the purpose of §4.
+
+---
+
+## 8. Sequence
+
+1. Decide M5. Graft or rebase accordingly.
+2. Merge. Take this branch's `convex/` wholesale; replay `dev`'s `DISABLE_MEMORY` patch.
+3. Verify `convex/crons.ts` kept the empty `TablesToVacuum` (§4.3).
+4. Reconcile the map loader: `convertAnchors` into `dev`'s JSON emitter via `columnMajorLayers()`
+   (§1.3). Break the `convex/` → `prototype/` import while doing it.
+5. Add the lint rule banning `Date.now`, `Math.random`, `performance.now` under `convex/aiTown/` and
+   `convex/engine/` (§4.2). Before any porting.
+6. Implement `setHeading` with ray synthesis and the proposed-stop clamp (§6.3). Land it without
+   prediction first — the protocol is right either way, and §6.4 is a pure client-side upgrade that
+   changes no input, no handler and no recorded history.
+7. Move `storyTime` and `balance` into the world document as derived scalars advanced in `tick()`
+   (§3.2). Fix the compression ratio deliberately (M2).
+8. Port the remaining commands in §6.6's first bucket.
