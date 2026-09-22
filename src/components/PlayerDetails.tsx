@@ -6,8 +6,8 @@ import { SelectElement } from './Player';
 import { Messages } from './Messages';
 import { toastOnError } from '../toasts';
 import { useSendInput } from '../hooks/sendInput';
-import { Player } from '../../convex/aiTown/player';
-import { GameId } from '../../convex/aiTown/ids';
+import { Player } from '../../engine/aiTown/player';
+import { GameId } from '../../engine/aiTown/ids';
 import { ServerGame } from '../hooks/serverGame';
 import { StateDocument } from './StateDocument';
 

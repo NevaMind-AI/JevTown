@@ -1,5 +1,5 @@
-import { DecisionManifest } from '../aiTown/manifest';
-import { extractJsonObject } from '../prose/envelope';
+import { DecisionManifest } from '../../engine/aiTown/manifest';
+import { extractJsonObject } from '../../engine/prose/envelope';
 import {
   PromptContext,
   commonKnowledgeSection,

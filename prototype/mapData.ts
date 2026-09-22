@@ -1,29 +1,7 @@
 import type { ISpritesheetData } from 'pixi.js';
+import type { SerializedWorldMap } from '../engine/aiTown/worldMap';
 
-export type AnimatedSprite = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  layer: number;
-  sheet: string;
-  animation: string;
-};
-
-export type TileMap = {
-  width: number;
-  height: number;
-  tileSetUrl: string;
-  tileSetDimX: number;
-  tileSetDimY: number;
-  tileDim: number;
-  // Renderer layers use column-major order: layer[x][y].
-  bgTiles: number[][][];
-  objectTiles: number[][][];
-  animatedSprites: AnimatedSprite[];
-};
-
-export type MapRender = Omit<TileMap, 'width' | 'height'> & {
+export type MapRender = Omit<SerializedWorldMap, 'width' | 'height'> & {
   matrixOrder?: 'yx'; // Absent only in recordings made before row-major map authoring.
   animationSheets: Record<
     string,
@@ -36,7 +14,7 @@ export type MapRender = Omit<TileMap, 'width' | 'height'> & {
   >;
 };
 
-// The shared renderer uses columns; authored maps use rows.
+// The shared renderer and Convex wire format still use columns; authored maps use rows.
 export function columnMajorLayers(rows: number[][][]): number[][][] {
   return rows.map((layer) => layer[0].map((_, x) => layer.map((row) => row[x])));
 }

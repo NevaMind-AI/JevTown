@@ -2,17 +2,17 @@ import { ConvexError, v } from 'convex/values';
 import { internalMutation, mutation, query } from './_generated/server';
 import { characters } from '../data/characters';
 import { readEntityState } from './prose/store';
-import { COMMON_KNOWLEDGE_ID } from './prose/contract';
+import { COMMON_KNOWLEDGE_ID } from '../engine/prose/contract';
 import { insertInput } from './aiTown/insertInput';
 import {
   DEFAULT_NAME,
   ENGINE_ACTION_DURATION,
   IDLE_WORLD_TIMEOUT,
   WORLD_HEARTBEAT_INTERVAL,
-} from './constants';
-import { playerId } from './aiTown/ids';
+} from '../engine/constants';
+import { playerId } from '../engine/aiTown/ids';
 import { kickEngine, startEngine, stopEngine } from './aiTown/main';
-import { engineInsertInput } from './engine/abstractGame';
+import { engineInsertInput } from './engine/engineStore';
 
 export const defaultWorldStatus = query({
   handler: async (ctx) => {

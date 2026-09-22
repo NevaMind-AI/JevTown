@@ -3,12 +3,12 @@ import { Id } from '../_generated/dataModel';
 import { ActionCtx, internalAction, internalMutation, internalQuery } from '../_generated/server';
 import { api, internal } from '../_generated/api';
 import { chatCompletion } from '../util/llm';
-import { extractJsonObject } from '../prose/envelope';
+import { extractJsonObject } from '../../engine/prose/envelope';
 import {
   BOTH_TIERS_STATE_CONTRACT,
   COMMON_KNOWLEDGE_CONTRACT,
   COMMON_KNOWLEDGE_ID,
-} from '../prose/contract';
+} from '../../engine/prose/contract';
 import { readEntityState } from '../prose/store';
 import { Tracer } from './tracing';
 

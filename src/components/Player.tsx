@@ -1,14 +1,13 @@
 import { Character } from './Character.tsx';
-import { orientationDegrees } from '../../convex/util/geometry.ts';
+import { orientationDegrees } from '../../engine/util/geometry.ts';
 import { characters } from '../../data/characters.ts';
 import { toast } from 'react-toastify';
-import { Player as ServerPlayer } from '../../convex/aiTown/player.ts';
-import { GameId } from '../../convex/aiTown/ids.ts';
+import { Player as ServerPlayer } from '../../engine/aiTown/player.ts';
+import { GameId } from '../../engine/aiTown/ids.ts';
 import { Id } from '../../convex/_generated/dataModel';
-import { Location, locationFields, playerLocation } from '../../convex/aiTown/location.ts';
-import { useHistoricalValue } from '../hooks/useHistoricalValue.ts';
-import { PlayerDescription } from '../../convex/aiTown/playerDescription.ts';
-import { WorldMap } from '../../convex/aiTown/worldMap.ts';
+import { playerLocation } from '../../engine/aiTown/location.ts';
+import { PlayerDescription } from '../../engine/aiTown/playerDescription.ts';
+import { WorldMap } from '../../engine/aiTown/worldMap.ts';
 import { ServerGame } from '../hooks/serverGame.ts';
 
 export type SelectedElement =
@@ -23,14 +22,12 @@ export const Player = ({
   isViewer,
   player,
   onClick,
-  historicalTime,
 }: {
   game: ServerGame;
   isViewer: boolean;
   player: ServerPlayer;
 
   onClick: SelectElement;
-  historicalTime?: number;
 }) => {
   const playerCharacter = game.playerDescriptions.get(player.id)?.character;
   if (!playerCharacter) {
@@ -38,22 +35,15 @@ export const Player = ({
   }
   const character = characters.find((c) => c.name === playerCharacter);
 
-  const locationBuffer = game.world.historicalLocations?.get(player.id);
-  const historicalLocation = useHistoricalValue<Location>(
-    locationFields,
-    historicalTime,
-    playerLocation(player),
-    locationBuffer,
-  );
+  // The player's position as the simulation last left it. There is no buffer to replay: under
+  // docs/11 §1 whoever renders this is also running the tick, so the current value *is* the
+  // authoritative one (docs/11 §2.3 deletes the sample-and-replay path outright).
+  const location = playerLocation(player);
   if (!character) {
     if (!logged.has(playerCharacter)) {
       logged.add(playerCharacter);
       toast.error(`Unknown character ${playerCharacter}`);
     }
-    return null;
-  }
-
-  if (!historicalLocation) {
     return null;
   }
 
@@ -66,20 +56,18 @@ export const Player = ({
       (a) => a.playerId === player.id && !!a.inProgressOperation,
     );
   const tileDim = game.worldMap.tileDim;
-  const historicalFacing = { dx: historicalLocation.dx, dy: historicalLocation.dy };
+  const facing = { dx: location.dx, dy: location.dy };
   return (
     <>
       <Character
-        x={historicalLocation.x * tileDim + tileDim / 2}
-        y={historicalLocation.y * tileDim + tileDim / 2}
-        orientation={orientationDegrees(historicalFacing)}
-        isMoving={historicalLocation.speed > 0}
+        x={location.x * tileDim + tileDim / 2}
+        y={location.y * tileDim + tileDim / 2}
+        orientation={orientationDegrees(facing)}
+        isMoving={location.speed > 0}
         isThinking={isThinking}
         isSpeaking={isSpeaking}
         emoji={
-          player.activity && player.activity.until > (historicalTime ?? Date.now())
-            ? player.activity?.emoji
-            : undefined
+          player.activity && player.activity.until > Date.now() ? player.activity?.emoji : undefined
         }
         isViewer={isViewer}
         textureUrl={character.textureUrl}

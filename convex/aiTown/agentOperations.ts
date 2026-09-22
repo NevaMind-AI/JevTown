@@ -3,19 +3,19 @@ import { internalAction } from '../_generated/server';
 
 import { rememberConversation } from '../agent/memory';
 import { updateStateAfterConversation } from '../agent/stateUpdate';
-import { GameId, agentId, conversationId, playerId } from './ids';
+import { GameId, agentId, conversationId, playerId } from '../../engine/aiTown/ids';
 import {
   continueConversationMessage,
   leaveConversationMessage,
   startConversationMessage,
 } from '../agent/conversation';
-import { assertNever } from '../util/assertNever';
-import { DecisionManifest } from './manifest';
+import { assertNever } from '../../engine/util/assertNever';
+import { DecisionManifest } from '../../engine/aiTown/manifest';
 import { decisionSystemPrompt, idleFallback, parseDecision } from '../agent/decide';
 import { interactWithEntity } from '../agent/interact';
 import { chatCompletion } from '../util/llm';
 import { api, internal } from '../_generated/api';
-import { sleep } from '../util/sleep';
+import { sleep } from '../../engine/util/sleep';
 import { Tracer } from '../agent/tracing';
 
 export const agentRememberConversation = internalAction({
@@ -97,7 +97,7 @@ export const agentGenerateMessage = internalAction({
       args.otherPlayerId as GameId<'players'>,
     );
 
-    await ctx.runMutation(internal.aiTown.agent.agentSendMessage, {
+    await ctx.runMutation(internal.aiTown.agentDriver.agentSendMessage, {
       worldId: args.worldId,
       conversationId: args.conversationId,
       agentId: args.agentId,

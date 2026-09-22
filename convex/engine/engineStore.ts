@@ -1,92 +1,16 @@
-import { ConvexError, Infer, Value, v } from 'convex/values';
-import { Doc, Id } from '../_generated/dataModel';
-import { ActionCtx, DatabaseReader, MutationCtx, internalQuery } from '../_generated/server';
-import { engine } from '../engine/schema';
-import { internal } from '../_generated/api';
+import { ConvexError, Infer, v } from 'convex/values';
+import { Id } from '../_generated/dataModel';
+import { DatabaseReader, MutationCtx, internalQuery } from '../_generated/server';
+import { engine } from './schema';
 
-export abstract class AbstractGame {
-  abstract tickDuration: number;
-  abstract stepDuration: number;
-  abstract maxTicksPerStep: number;
-  abstract maxInputsPerStep: number;
-
-  constructor(public engine: Doc<'engines'>) {}
-
-  abstract handleInput(now: number, name: string, args: object, inputNumber?: number): Value;
-  abstract tick(now: number): void;
-
-  // Optional callback at the beginning of each step.
-  beginStep(now: number) {}
-  abstract saveStep(ctx: ActionCtx, engineUpdate: EngineUpdate): Promise<void>;
-
-  async runStep(ctx: ActionCtx, now: number) {
-    const inputs = await ctx.runQuery(internal.engine.abstractGame.loadInputs, {
-      engineId: this.engine._id,
-      processedInputNumber: this.engine.processedInputNumber,
-      max: this.maxInputsPerStep,
-    });
-
-    const lastStepTs = this.engine.currentTime;
-    const startTs = lastStepTs ? lastStepTs + this.tickDuration : now;
-    let currentTs = startTs;
-    let inputIndex = 0;
-    let numTicks = 0;
-    let processedInputNumber = this.engine.processedInputNumber;
-    const completedInputs = [];
-
-    this.beginStep(currentTs);
-
-    while (numTicks < this.maxTicksPerStep) {
-      numTicks += 1;
-
-      // Collect all of the inputs for this tick.
-      const tickInputs = [];
-      while (inputIndex < inputs.length) {
-        const input = inputs[inputIndex];
-        if (input.received > currentTs) {
-          break;
-        }
-        inputIndex += 1;
-        processedInputNumber = input.number;
-        tickInputs.push(input);
-      }
-
-      // Feed the inputs to the game.
-      for (const input of tickInputs) {
-        let returnValue;
-        try {
-          const value = this.handleInput(currentTs, input.name, input.args, input.number);
-          returnValue = { kind: 'ok' as const, value };
-        } catch (e: any) {
-          console.error(`Input ${input._id} failed: ${e.message}`);
-          returnValue = { kind: 'error' as const, message: e.message };
-        }
-        completedInputs.push({ inputId: input._id, returnValue });
-      }
-
-      // Simulate the game forward one tick.
-      this.tick(currentTs);
-
-      const candidateTs = currentTs + this.tickDuration;
-      if (now < candidateTs) {
-        break;
-      }
-      currentTs = candidateTs;
-    }
-
-    // Commit the step by moving time forward, consuming our inputs, and saving the game's state.
-    const expectedGenerationNumber = this.engine.generationNumber;
-    this.engine.currentTime = currentTs;
-    this.engine.lastStepTs = lastStepTs;
-    this.engine.generationNumber += 1;
-    this.engine.processedInputNumber = processedInputNumber;
-    const { _id, _creationTime, ...engine } = this.engine;
-    const engineUpdate = { engine, completedInputs, expectedGenerationNumber };
-    await this.saveStep(ctx, engineUpdate);
-
-    console.debug(`Simulated from ${startTs} to ${currentTs} (${currentTs - startTs}ms)`);
-  }
-}
+/**
+ * The storage half of the old `AbstractGame`.
+ *
+ * The class itself is gone: its loop is now `engine/runtime.ts:runTicks`, which takes no `ctx`.
+ * What is left here is the part that was always Convex — reading the engine row, allocating input
+ * numbers, and committing a step — and it goes away with the rest of `convex/` once the frontend
+ * owns the log (docs/11 §4.2).
+ */
 
 const completedInput = v.object({
   inputId: v.id('inputs'),

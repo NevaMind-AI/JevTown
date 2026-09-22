@@ -1,5 +1,5 @@
 import { DEFAULT_IDLE_MS, decisionSystemPrompt, parseDecision } from './decide';
-import { DecisionManifest } from '../aiTown/manifest';
+import { DecisionManifest } from '../../engine/aiTown/manifest';
 import { PromptContext } from './promptContext';
 
 const MANIFEST: DecisionManifest = {

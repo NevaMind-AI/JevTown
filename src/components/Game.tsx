@@ -10,8 +10,6 @@ import EntityDetails from './EntityDetails.tsx';
 import { SelectedElement } from './Player.tsx';
 import { api } from '../../convex/_generated/api';
 import { useWorldHeartbeat } from '../hooks/useWorldHeartbeat.ts';
-import { useHistoricalTime } from '../hooks/useHistoricalTime.ts';
-import { DebugTimeManager } from './DebugTimeManager.tsx';
 import { useServerGame } from '../hooks/serverGame.ts';
 import FreezeButton from './FreezeButton.tsx';
 import MusicButton from './buttons/MusicButton.tsx';
@@ -34,9 +32,6 @@ export default function Game() {
   // Send a periodic heartbeat to our world to keep it alive.
   useWorldHeartbeat();
 
-  const worldState = useQuery(api.world.worldState, worldId ? { worldId } : 'skip');
-  const { historicalTime, timeManager } = useHistoricalTime(worldState?.engine);
-
   const scrollViewRef = useRef<HTMLDivElement>(null);
   // Held here rather than inside `PixiGame` so the floating controls can drive the camera.
   const viewportRef = useRef<Viewport | undefined>();
@@ -46,7 +41,6 @@ export default function Game() {
   }
   return (
     <>
-      {SHOW_DEBUG_UI && <DebugTimeManager timeManager={timeManager} width={200} height={100} />}
       <div className="mx-auto w-full max-w grid grid-rows-[240px_1fr] lg:grid-rows-[1fr] lg:grid-cols-[1fr_auto] lg:grow max-w-[1400px] min-h-[720px] max-h-[720px] game-frame">
         {/* Game area */}
         <div className="relative overflow-hidden bg-brown-900" ref={gameWrapperRef}>
@@ -69,7 +63,6 @@ https://github.com/michalochman/react-pixi-fiber/issues/145#issuecomment-5315492
                     engineId={engineId}
                     width={width}
                     height={height}
-                    historicalTime={historicalTime}
                     setSelectedElement={setSelectedElement}
                     selectedElement={selectedElement}
                     viewportRef={viewportRef}

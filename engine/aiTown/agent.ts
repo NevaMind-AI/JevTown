@@ -17,13 +17,9 @@ import {
   MESSAGE_COOLDOWN,
   MIDPOINT_THRESHOLD,
 } from '../constants';
-import { FunctionArgs } from 'convex/server';
-import { MutationCtx, internalMutation } from '../_generated/server';
 import { distance } from '../util/geometry';
-import { internal } from '../_generated/api';
 import { movePlayer, stopPlayer } from './movement';
-import { buildManifest, targetIsStillLegal } from './manifest';
-import { insertInput } from './insertInput';
+import { DecisionManifest, buildManifest, targetIsStillLegal } from './manifest';
 
 export class Agent {
   id: GameId<'agents'>;
@@ -301,11 +297,11 @@ export class Agent {
     return true;
   }
 
-  startOperation<Name extends keyof AgentOperations>(
+  startOperation<Name extends AgentOperationName>(
     game: Game,
     now: number,
     name: Name,
-    args: Omit<FunctionArgs<AgentOperations[Name]>, 'operationId'>,
+    args: AgentOperationArgs[Name],
   ) {
     if (this.inProgressOperation) {
       throw new Error(
@@ -361,55 +357,54 @@ export const serializedAgent = {
 };
 export type SerializedAgent = ObjectType<typeof serializedAgent>;
 
-type AgentOperations = typeof internal.aiTown.agentOperations;
+/**
+ * The asynchronous work an agent can ask for, and the arguments it supplies.
+ *
+ * The engine names an operation and hands over its arguments; what actually runs it -- a Convex
+ * action today, a browser task after docs/11 §1 -- is the host's business. Declaring the map here
+ * rather than deriving it from `internal.aiTown.agentOperations` is what lets this module compile
+ * with no runtime host, and it keeps the call sites type-checked either way.
+ *
+ * `operationId` is deliberately absent: `startOperation` allocates it from the world's id
+ * sequence, so it is replayable and never supplied by a caller.
+ */
+export type AgentOperationArgs = {
+  agentRememberConversation: {
+    worldId: string;
+    playerId: GameId<'players'>;
+    agentId: GameId<'agents'>;
+    conversationId: GameId<'conversations'>;
+  };
+  agentGenerateMessage: {
+    worldId: string;
+    playerId: GameId<'players'>;
+    agentId: GameId<'agents'>;
+    conversationId: GameId<'conversations'>;
+    otherPlayerId: GameId<'players'>;
+    messageUuid: string;
+    type: 'start' | 'continue' | 'leave';
+  };
+  agentDecide: {
+    worldId: string;
+    playerId: GameId<'players'>;
+    agentId: GameId<'agents'>;
+    manifest: DecisionManifest;
+  };
+  agentInteract: {
+    worldId: string;
+    playerId: GameId<'players'>;
+    agentId: GameId<'agents'>;
+    targetId: string;
+    intent: string;
+  };
+};
 
-export async function runAgentOperation(ctx: MutationCtx, operation: string, args: any) {
-  let reference;
-  switch (operation) {
-    case 'agentRememberConversation':
-      reference = internal.aiTown.agentOperations.agentRememberConversation;
-      break;
-    case 'agentGenerateMessage':
-      reference = internal.aiTown.agentOperations.agentGenerateMessage;
-      break;
-    case 'agentDecide':
-      reference = internal.aiTown.agentOperations.agentDecide;
-      break;
-    case 'agentInteract':
-      reference = internal.aiTown.agentOperations.agentInteract;
-      break;
-    default:
-      throw new Error(`Unknown operation: ${operation}`);
-  }
-  await ctx.scheduler.runAfter(0, reference, args);
-}
+export type AgentOperationName = keyof AgentOperationArgs;
 
-export const agentSendMessage = internalMutation({
-  args: {
-    worldId: v.id('worlds'),
-    conversationId,
-    agentId,
-    playerId,
-    text: v.string(),
-    messageUuid: v.string(),
-    leaveConversation: v.boolean(),
-    operationId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert('messages', {
-      conversationId: args.conversationId,
-      author: args.playerId,
-      text: args.text,
-      messageUuid: args.messageUuid,
-      worldId: args.worldId,
-    });
-    await insertInput(ctx, args.worldId, 'agentFinishSendingMessage', {
-      conversationId: args.conversationId,
-      agentId: args.agentId,
-      timestamp: Date.now(),
-      leaveConversation: args.leaveConversation,
-      operationId: args.operationId,
-    });
-  },
-});
-
+/** The operation names, for hosts that dispatch on a string. */
+export const AGENT_OPERATION_NAMES = [
+  'agentRememberConversation',
+  'agentGenerateMessage',
+  'agentDecide',
+  'agentInteract',
+] as const satisfies readonly AgentOperationName[];

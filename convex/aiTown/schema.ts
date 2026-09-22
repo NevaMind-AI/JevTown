@@ -1,14 +1,14 @@
 import { v } from 'convex/values';
 import { defineTable } from 'convex/server';
-import { serializedPlayer } from './player';
-import { serializedPlayerDescription } from './playerDescription';
-import { serializedAgent } from './agent';
-import { serializedAgentDescription } from './agentDescription';
-import { serializedEntityDescription } from './entityDescription';
-import { serializedWorld } from './world';
-import { serializedWorldMap } from './worldMap';
-import { serializedConversation } from './conversation';
-import { conversationId, playerId } from './ids';
+import { serializedPlayer } from '../../engine/aiTown/player';
+import { serializedPlayerDescription } from '../../engine/aiTown/playerDescription';
+import { serializedAgent } from '../../engine/aiTown/agent';
+import { serializedAgentDescription } from '../../engine/aiTown/agentDescription';
+import { serializedEntityDescription } from '../../engine/aiTown/entityDescription';
+import { serializedWorld } from '../../engine/aiTown/world';
+import { serializedWorldMap } from '../../engine/aiTown/worldMap';
+import { serializedConversation } from '../../engine/aiTown/conversation';
+import { conversationId, playerId } from '../../engine/aiTown/ids';
 
 export const aiTownTables = {
   // This table has a single document that stores all players, conversations, and agents. This

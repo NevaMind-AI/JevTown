@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { internalQuery } from '../_generated/server';
 import { readEntityState } from '../prose/store';
-import { COMMON_KNOWLEDGE_ID, EntityTier, stateContractFor } from '../prose/contract';
+import { COMMON_KNOWLEDGE_ID, EntityTier, stateContractFor } from '../../engine/prose/contract';
 
 /**
  * Everything a state-writing prompt needs about one entity, and the sections that assemble it.
