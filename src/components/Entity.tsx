@@ -2,7 +2,7 @@ import { Container, Graphics, Text } from '@pixi/react';
 import * as PIXI from 'pixi.js';
 import { useCallback } from 'react';
 import { Entity as ServerEntity } from '../../engine/aiTown/entity.ts';
-import { ServerGame } from '../hooks/serverGame.ts';
+import { GameSnapshot } from '../hooks/gameSnapshot.ts';
 import { SelectElement } from './Player.tsx';
 
 /**
@@ -23,7 +23,7 @@ export const EntityMarker = ({
   isSelected,
   onClick,
 }: {
-  game: ServerGame;
+  game: GameSnapshot;
   entity: ServerEntity;
   isSelected: boolean;
   onClick: SelectElement;

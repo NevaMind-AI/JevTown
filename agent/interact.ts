@@ -1,22 +1,20 @@
-import { v } from 'convex/values';
-import { Id } from '../_generated/dataModel';
-import { ActionCtx, internalMutation } from '../_generated/server';
-import { api, internal } from '../_generated/api';
-import { LLMMessage, chatCompletion } from '../util/llm';
-import { GameId } from '../../engine/aiTown/ids';
-import { MAX_INTERACTION_TURNS } from '../../engine/constants';
-import { ENVELOPE_INSTRUCTION, TARGET_ENVELOPE_INSTRUCTION } from '../../engine/prose/contract';
-import { parseEnvelope } from '../../engine/prose/envelope';
-import { parseStateDocument } from '../../engine/prose/stateDocument';
+import { LLMMessage, chatCompletion } from './model/llm';
+import { GameId } from '../engine/aiTown/ids';
+import { MAX_INTERACTION_TURNS } from '../engine/constants';
+import { ENVELOPE_INSTRUCTION, TARGET_ENVELOPE_INSTRUCTION } from '../engine/prose/contract';
+import { parseEnvelope } from '../engine/prose/envelope';
+import { parseStateDocument } from '../engine/prose/stateDocument';
 import {
   PromptContext,
   commonKnowledgeSection,
   describe,
+  promptContextFor,
   stateWritingSystemPrompt,
   worldRulesSection,
 } from './promptContext';
+import { AgentContext } from './ports';
 import { StateUpdateOutcome, requestStateUpdate, sendStateUpdate } from './stateUpdate';
-import { Tracer } from './tracing';
+import { Tracer } from './model/tracing';
 
 /**
  * What happens when an agent reaches something it decided to approach (docs/09 §6).
@@ -32,28 +30,6 @@ import { Tracer } from './tracing';
  * conversation between two people, which is why tier (a) keeps `Conversation`.
  */
 
-async function loadContext(ctx: ActionCtx, worldId: Id<'worlds'>, entityId: string) {
-  return await ctx.runQuery(internal.agent.promptContext.queryPromptContext, {
-    worldId,
-    entityId,
-  });
-}
-
-export const recordTurn = internalMutation({
-  args: {
-    worldId: v.id('worlds'),
-    interactionId: v.string(),
-    seq: v.number(),
-    actorId: v.string(),
-    targetId: v.string(),
-    speaker: v.union(v.literal('actor'), v.literal('target')),
-    text: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert('interactionTurns', args);
-  },
-});
-
 /**
  * docs/05 §6.2, actor → prop. One-way and one call: the acting agent writes both its own state
  * and the prop's, because the prop makes no call of its own and has no memory to write.
@@ -63,8 +39,7 @@ export const recordTurn = internalMutation({
  * longer blocks.
  */
 async function interactWithProp(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   actor: PromptContext,
   target: PromptContext,
   intent: string,
@@ -90,8 +65,8 @@ async function interactWithProp(
 
   // One call, one trace -- a prop makes no call of its own, so there is no exchange to group.
   const tracer = await Tracer.standalone({
-    worldId,
-    key: `interaction:${worldId}:${crypto.randomUUID()}`,
+    worldId: ctx.world.worldId,
+    key: `interaction:${ctx.world.worldId}:${crypto.randomUUID()}`,
     name: `${actor.name} → ${target.name}`,
     tags: ['interaction', 'prop'],
     metadata: { actorId: actor.entityId, targetId: target.entityId, intent },
@@ -115,7 +90,7 @@ async function interactWithProp(
   const selfDocument = parsed.self.state
     ? parseStateDocument(parsed.self.state).conformance
     : undefined;
-  await sendStateUpdate(ctx, worldId, actor.entityId, {
+  await sendStateUpdate(ctx, actor.entityId, {
     update: parsed.self,
     state: parsed.self.state,
     conformance: selfDocument,
@@ -131,18 +106,14 @@ async function interactWithProp(
   const targetConformance = parsed.target.state
     ? parseStateDocument(parsed.target.state).conformance
     : undefined;
-  await ctx.runMutation(api.aiTown.main.sendInput, {
-    worldId,
-    name: 'entityUpdateTarget',
-    args: {
-      actorId: actor.entityId,
-      entityId: target.entityId,
-      state: parsed.target.state,
-      reason: parsed.target.reason,
-      tags: {
-        ...(targetConformance ?? {}),
-        problems: parsed.target.problems,
-      },
+  await ctx.inputs.send('entityUpdateTarget', {
+    actorId: actor.entityId,
+    entityId: target.entityId,
+    state: parsed.target.state,
+    reason: parsed.target.reason,
+    tags: {
+      ...(targetConformance ?? {}),
+      problems: parsed.target.problems,
     },
   });
 }
@@ -153,8 +124,7 @@ async function interactWithProp(
  * reason together.
  */
 async function interactWithFixedActor(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   actor: PromptContext,
   target: PromptContext,
   intent: string,
@@ -164,7 +134,7 @@ async function interactWithFixedActor(
   // The whole exchange runs in this one action, so the wrapper span is a real measured span and
   // every turn below leaves in a single export when it closes.
   const tracer = await Tracer.forInteraction({
-    worldId,
+    worldId: ctx.world.worldId,
     interactionId,
     name: `${actor.name} ↔ ${target.name}`,
     metadata: { actorId: actor.entityId, targetId: target.entityId, intent },
@@ -209,10 +179,8 @@ async function interactWithFixedActor(
     });
     const text = content.trim();
     transcript.push({ speaker: speakerIsActor ? 'actor' : 'target', text });
-    await ctx.runMutation(internal.agent.interact.recordTurn, {
-      worldId,
+    await ctx.store.recordInteractionTurn({
       interactionId,
-      seq: turn,
       actorId: actor.entityId,
       targetId: target.entityId,
       speaker: speakerIsActor ? 'actor' : 'target',
@@ -250,7 +218,7 @@ async function interactWithFixedActor(
         return content;
       },
     });
-    await sendStateUpdate(ctx, worldId, side.entityId, outcome);
+    await sendStateUpdate(ctx, side.entityId, outcome);
   }
 
   await tracer.close({
@@ -261,22 +229,21 @@ async function interactWithFixedActor(
 }
 
 export async function interactWithEntity(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   playerId: GameId<'players'>,
   targetId: string,
   intent: string,
 ): Promise<void> {
-  const actor = await loadContext(ctx, worldId, playerId);
-  const target = await loadContext(ctx, worldId, targetId);
+  const actor = await promptContextFor(ctx, playerId);
+  const target = await promptContextFor(ctx, targetId);
   if (!actor || !target) {
     console.warn(`Interaction ${playerId} -> ${targetId} is missing context`);
     return;
   }
   if (target.tier === 'prop') {
-    await interactWithProp(ctx, worldId, actor, target, intent);
+    await interactWithProp(ctx, actor, target, intent);
   } else {
-    await interactWithFixedActor(ctx, worldId, actor, target, intent);
+    await interactWithFixedActor(ctx, actor, target, intent);
   }
 }
 

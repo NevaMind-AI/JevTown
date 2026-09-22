@@ -1,37 +1,29 @@
-import { v } from 'convex/values';
-import { Id } from '../_generated/dataModel';
-import { ActionCtx, internalQuery } from '../_generated/server';
-import { LLMMessage, chatCompletion } from '../util/llm';
+import { LLMMessage, chatCompletion } from './model/llm';
 import * as memory from './memory';
-import { api, internal } from '../_generated/api';
 import * as embeddingsCache from './embeddingsCache';
-import { GameId, conversationId, playerId } from '../../engine/aiTown/ids';
-import { NUM_MEMORIES_TO_SEARCH } from '../../engine/constants';
+import { GameId } from '../engine/aiTown/ids';
+import { NUM_MEMORIES_TO_SEARCH } from '../engine/constants';
 import {
   PromptContext,
   commonKnowledgeSection,
   describe,
+  promptContextFor,
   worldRulesSection,
 } from './promptContext';
-import { Tracer } from './tracing';
-
-const selfInternal = internal.agent.conversation;
+import { Tracer } from './model/tracing';
+import { AgentContext } from './ports';
 
 export async function startConversationMessage(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   conversationId: GameId<'conversations'>,
   playerId: GameId<'players'>,
   otherPlayerId: GameId<'players'>,
 ): Promise<string> {
-  const { player, otherPlayer, agent, otherAgent, lastConversation } = await ctx.runQuery(
-    selfInternal.queryPromptData,
-    {
-      worldId,
-      playerId,
-      otherPlayerId,
-      conversationId,
-    },
+  const { player, otherPlayer, agent, otherAgent, lastConversation } = await promptData(
+    ctx,
+    playerId,
+    otherPlayerId,
+    conversationId,
   );
   const memories =
     process.env.DISABLE_MEMORY === 'true'
@@ -39,7 +31,10 @@ export async function startConversationMessage(
       : await memory.searchMemories(
           ctx,
           player.id as GameId<'players'>,
-          await embeddingsCache.fetch(ctx, `${player.name} is talking to ${otherPlayer.name}`),
+          await embeddingsCache.fetchEmbedding(
+            ctx,
+            `${player.name} is talking to ${otherPlayer.name}`,
+          ),
           Number(process.env.NUM_MEMORIES_TO_SEARCH) || NUM_MEMORIES_TO_SEARCH,
         );
 
@@ -50,7 +45,7 @@ export async function startConversationMessage(
     `You are ${player.name}, and you just started a conversation with ${otherPlayer.name}.`,
   ];
   prompt.push(...agentPrompts(otherPlayer, agent, otherAgent ?? null));
-  prompt.push(...proseStatePrompts(await proseStateContext(ctx, worldId, playerId)));
+  prompt.push(...proseStatePrompts(await promptContextFor(ctx, playerId)));
   prompt.push(...previousConversationPrompt(otherPlayer, lastConversation));
   prompt.push(...untrustedMemoryInstructions(memories));
   if (memoryWithOtherPlayer) {
@@ -69,7 +64,7 @@ export async function startConversationMessage(
   ];
 
   const tracer = await Tracer.forConversation({
-    worldId,
+    worldId: ctx.world.worldId,
     conversationId,
     name: `${player.name} ↔ ${otherPlayer.name}`,
     metadata: { playerId, otherPlayerId },
@@ -92,20 +87,16 @@ function trimContentPrefx(content: string, prompt: string) {
 }
 
 export async function continueConversationMessage(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   conversationId: GameId<'conversations'>,
   playerId: GameId<'players'>,
   otherPlayerId: GameId<'players'>,
 ): Promise<string> {
-  const { player, otherPlayer, conversation, agent, otherAgent } = await ctx.runQuery(
-    selfInternal.queryPromptData,
-    {
-      worldId,
-      playerId,
-      otherPlayerId,
-      conversationId,
-    },
+  const { player, otherPlayer, conversation, agent, otherAgent } = await promptData(
+    ctx,
+    playerId,
+    otherPlayerId,
+    conversationId,
   );
   const now = Date.now();
   const started = new Date(conversation.created);
@@ -115,7 +106,7 @@ export async function continueConversationMessage(
       : await memory.searchMemories(
           ctx,
           player.id as GameId<'players'>,
-          await embeddingsCache.fetch(ctx, `What do you think about ${otherPlayer.name}?`),
+          await embeddingsCache.fetchEmbedding(ctx, `What do you think about ${otherPlayer.name}?`),
           3,
         );
   const prompt = [
@@ -123,7 +114,7 @@ export async function continueConversationMessage(
     `The conversation started at ${started.toLocaleString()}. It's now ${now.toLocaleString()}.`,
   ];
   prompt.push(...agentPrompts(otherPlayer, agent, otherAgent ?? null));
-  prompt.push(...proseStatePrompts(await proseStateContext(ctx, worldId, playerId)));
+  prompt.push(...proseStatePrompts(await promptContextFor(ctx, playerId)));
   prompt.push(...untrustedMemoryInstructions(memories));
   prompt.push(
     `Below is the current chat history between you and ${otherPlayer.name}.`,
@@ -138,7 +129,6 @@ export async function continueConversationMessage(
     ...relatedMemoriesMessages(memories),
     ...(await previousMessages(
       ctx,
-      worldId,
       player,
       otherPlayer,
       conversation.id as GameId<'conversations'>,
@@ -148,7 +138,7 @@ export async function continueConversationMessage(
   llmMessages.push({ role: 'user', content: lastPrompt });
 
   const tracer = await Tracer.forConversation({
-    worldId,
+    worldId: ctx.world.worldId,
     conversationId,
     name: `${player.name} ↔ ${otherPlayer.name}`,
     startedAt: conversation.created,
@@ -165,27 +155,23 @@ export async function continueConversationMessage(
 }
 
 export async function leaveConversationMessage(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   conversationId: GameId<'conversations'>,
   playerId: GameId<'players'>,
   otherPlayerId: GameId<'players'>,
 ): Promise<string> {
-  const { player, otherPlayer, conversation, agent, otherAgent } = await ctx.runQuery(
-    selfInternal.queryPromptData,
-    {
-      worldId,
-      playerId,
-      otherPlayerId,
-      conversationId,
-    },
+  const { player, otherPlayer, conversation, agent, otherAgent } = await promptData(
+    ctx,
+    playerId,
+    otherPlayerId,
+    conversationId,
   );
   const prompt = [
     `You are ${player.name}, and you're currently in a conversation with ${otherPlayer.name}.`,
     `You've decided to leave the question and would like to politely tell them you're leaving the conversation.`,
   ];
   prompt.push(...agentPrompts(otherPlayer, agent, otherAgent ?? null));
-  prompt.push(...proseStatePrompts(await proseStateContext(ctx, worldId, playerId)));
+  prompt.push(...proseStatePrompts(await promptContextFor(ctx, playerId)));
   prompt.push(
     `Below is the current chat history between you and ${otherPlayer.name}.`,
     `How would you like to tell them that you're leaving? Your response should be brief and within 200 characters.`,
@@ -197,7 +183,6 @@ export async function leaveConversationMessage(
     },
     ...(await previousMessages(
       ctx,
-      worldId,
       player,
       otherPlayer,
       conversation.id as GameId<'conversations'>,
@@ -207,7 +192,7 @@ export async function leaveConversationMessage(
   llmMessages.push({ role: 'user', content: lastPrompt });
 
   const tracer = await Tracer.forConversation({
-    worldId,
+    worldId: ctx.world.worldId,
     conversationId,
     name: `${player.name} ↔ ${otherPlayer.name}`,
     startedAt: conversation.created,
@@ -260,17 +245,6 @@ function proseStatePrompts(context: PromptContext | null): string[] {
   return prompt;
 }
 
-async function proseStateContext(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
-  playerId: GameId<'players'>,
-): Promise<PromptContext | null> {
-  return await ctx.runQuery(internal.agent.promptContext.queryPromptContext, {
-    worldId,
-    entityId: playerId,
-  });
-}
-
 function previousConversationPrompt(
   otherPlayer: { name: string },
   conversation: { created: number } | null,
@@ -315,14 +289,13 @@ export function relatedMemoriesMessages(memories: Array<{ description: string }>
 }
 
 async function previousMessages(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   player: { id: string; name: string },
   otherPlayer: { id: string; name: string },
   conversationId: GameId<'conversations'>,
 ) {
   const llmMessages: LLMMessage[] = [];
-  const prevMessages = await ctx.runQuery(api.messages.listMessages, { worldId, conversationId });
+  const prevMessages = await ctx.store.listMessages(conversationId);
   for (const message of prevMessages) {
     const author = message.author === player.id ? player : otherPlayer;
     const recipient = message.author === player.id ? otherPlayer : player;
@@ -334,107 +307,73 @@ async function previousMessages(
   return llmMessages;
 }
 
-export const queryPromptData = internalQuery({
-  args: {
-    worldId: v.id('worlds'),
-    playerId,
-    otherPlayerId: playerId,
-    conversationId,
-  },
-  handler: async (ctx, args) => {
-    const world = await ctx.db.get(args.worldId);
-    if (!world) {
-      throw new Error(`World ${args.worldId} not found`);
+/**
+ * Both speakers, their agents and the last time they talked.
+ *
+ * Was a Convex `internalQuery` over six tables. Five of the six are the world document and the
+ * description maps, which are synchronous reads now; only "when did these two last talk" is still
+ * a fetch, and docs/11 §6.4 derives that from `conversations.participants` rather than keeping
+ * the `participatedTogether` projection Convex made us materialise.
+ */
+async function promptData(
+  ctx: AgentContext,
+  playerId: GameId<'players'>,
+  otherPlayerId: GameId<'players'>,
+  conversationId: GameId<'conversations'>,
+) {
+  const player = ctx.world.player(playerId);
+  if (!player) {
+    throw new Error(`Player ${playerId} not found`);
+  }
+  const playerDescription = ctx.world.playerDescription(playerId);
+  if (!playerDescription) {
+    throw new Error(`Player description for ${playerId} not found`);
+  }
+  const otherPlayer = ctx.world.player(otherPlayerId);
+  if (!otherPlayer) {
+    throw new Error(`Player ${otherPlayerId} not found`);
+  }
+  const otherPlayerDescription = ctx.world.playerDescription(otherPlayerId);
+  if (!otherPlayerDescription) {
+    throw new Error(`Player description for ${otherPlayerId} not found`);
+  }
+  const conversation = ctx.world.conversation(conversationId);
+  if (!conversation) {
+    throw new Error(`Conversation ${conversationId} not found`);
+  }
+  const agent = ctx.world.agentForPlayer(playerId);
+  if (!agent) {
+    throw new Error(`Player ${playerId} not found`);
+  }
+  const agentDescription = ctx.world.agentDescription(agent.id);
+  if (!agentDescription) {
+    throw new Error(`Agent description for ${agent.id} not found`);
+  }
+  const otherAgent = ctx.world.agentForPlayer(otherPlayerId);
+  let otherAgentDescription;
+  if (otherAgent) {
+    otherAgentDescription = ctx.world.agentDescription(otherAgent.id);
+    if (!otherAgentDescription) {
+      throw new Error(`Agent description for ${otherAgent.id} not found`);
     }
-    const player = world.players.find((p) => p.id === args.playerId);
-    if (!player) {
-      throw new Error(`Player ${args.playerId} not found`);
-    }
-    const playerDescription = await ctx.db
-      .query('playerDescriptions')
-      .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('playerId', args.playerId))
-      .first();
-    if (!playerDescription) {
-      throw new Error(`Player description for ${args.playerId} not found`);
-    }
-    const otherPlayer = world.players.find((p) => p.id === args.otherPlayerId);
-    if (!otherPlayer) {
-      throw new Error(`Player ${args.otherPlayerId} not found`);
-    }
-    const otherPlayerDescription = await ctx.db
-      .query('playerDescriptions')
-      .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('playerId', args.otherPlayerId))
-      .first();
-    if (!otherPlayerDescription) {
-      throw new Error(`Player description for ${args.otherPlayerId} not found`);
-    }
-    const conversation = world.conversations.find((c) => c.id === args.conversationId);
-    if (!conversation) {
-      throw new Error(`Conversation ${args.conversationId} not found`);
-    }
-    const agent = world.agents.find((a) => a.playerId === args.playerId);
-    if (!agent) {
-      throw new Error(`Player ${args.playerId} not found`);
-    }
-    const agentDescription = await ctx.db
-      .query('agentDescriptions')
-      .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('agentId', agent.id))
-      .first();
-    if (!agentDescription) {
-      throw new Error(`Agent description for ${agent.id} not found`);
-    }
-    const otherAgent = world.agents.find((a) => a.playerId === args.otherPlayerId);
-    let otherAgentDescription;
-    if (otherAgent) {
-      otherAgentDescription = await ctx.db
-        .query('agentDescriptions')
-        .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('agentId', otherAgent.id))
-        .first();
-      if (!otherAgentDescription) {
-        throw new Error(`Agent description for ${otherAgent.id} not found`);
-      }
-    }
-    const lastTogether = await ctx.db
-      .query('participatedTogether')
-      .withIndex('edge', (q) =>
-        q
-          .eq('worldId', args.worldId)
-          .eq('player1', args.playerId)
-          .eq('player2', args.otherPlayerId),
-      )
-      // Order by conversation end time descending.
-      .order('desc')
-      .first();
-
-    let lastConversation = null;
-    if (lastTogether) {
-      lastConversation = await ctx.db
-        .query('archivedConversations')
-        .withIndex('worldId', (q) =>
-          q.eq('worldId', args.worldId).eq('id', lastTogether.conversationId),
-        )
-        .first();
-      if (!lastConversation) {
-        throw new Error(`Conversation ${lastTogether.conversationId} not found`);
-      }
-    }
-    return {
-      player: { name: playerDescription.name, ...player },
-      otherPlayer: { name: otherPlayerDescription.name, ...otherPlayer },
-      conversation,
-      agent: {
-        identity: agentDescription.identity,
-        behavior: agentDescription.behavior,
-        ...agent,
-      },
-      otherAgent: otherAgent && {
-        identity: otherAgentDescription!.identity,
-        ...otherAgent,
-      },
-      lastConversation,
-    };
-  },
-});
+  }
+  const lastConversation = await ctx.store.lastConversationBetween(playerId, otherPlayerId);
+  return {
+    player: { name: playerDescription.name, ...player },
+    otherPlayer: { name: otherPlayerDescription.name, ...otherPlayer },
+    conversation,
+    agent: {
+      identity: agentDescription.identity,
+      behavior: agentDescription.behavior,
+      ...agent,
+    },
+    otherAgent: otherAgent && {
+      identity: otherAgentDescription!.identity,
+      ...otherAgent,
+    },
+    lastConversation: lastConversation ?? null,
+  };
+}
 
 function stopWords(otherPlayer: string, player: string) {
   // These are the words we ask the LLM to stop on. OpenAI only supports 4.

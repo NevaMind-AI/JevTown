@@ -21,7 +21,7 @@
 // Everything degrades to nothing when the keys are unset: `generation()` returns `undefined`,
 // which `chatCompletion` treats as "don't trace", and `close()` does no work.
 
-import { ChatTrace } from '../util/llm';
+import { ChatTrace } from './llm';
 import {
   LangfuseBatch,
   TraceRef,
@@ -29,7 +29,7 @@ import {
   randomSpanId,
   spanIdForKey,
   traceIdForKey,
-} from '../util/langfuse';
+} from './langfuse';
 
 type TracerInit = {
   traceId: string;
