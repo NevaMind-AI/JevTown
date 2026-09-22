@@ -4,11 +4,10 @@ import { characters } from '../../data/characters.ts';
 import { toast } from 'react-toastify';
 import { Player as ServerPlayer } from '../../engine/aiTown/player.ts';
 import { GameId } from '../../engine/aiTown/ids.ts';
-import { Id } from '../../convex/_generated/dataModel';
 import { playerLocation } from '../../engine/aiTown/location.ts';
 import { PlayerDescription } from '../../engine/aiTown/playerDescription.ts';
 import { WorldMap } from '../../engine/aiTown/worldMap.ts';
-import { ServerGame } from '../hooks/serverGame.ts';
+import { GameSnapshot } from '../hooks/gameSnapshot.ts';
 
 export type SelectedElement =
   | { kind: 'player'; id: GameId<'players'> }
@@ -23,7 +22,7 @@ export const Player = ({
   player,
   onClick,
 }: {
-  game: ServerGame;
+  game: GameSnapshot;
   isViewer: boolean;
   player: ServerPlayer;
 

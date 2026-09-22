@@ -1,5 +1,5 @@
 import { requestStateUpdate } from './stateUpdate';
-import { STATE_WORD_BUDGET } from '../../engine/prose/contract';
+import { STATE_WORD_BUDGET } from '../engine/prose/contract';
 
 const GOOD_DOC = 'state: uneasy\n\nThe mill runs hot at night.\n\nShe means to ask the miller.';
 

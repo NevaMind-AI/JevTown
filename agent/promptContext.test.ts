@@ -6,7 +6,7 @@ import {
   stateWritingSystemPrompt,
   worldRulesSection,
 } from './promptContext';
-import { ENVELOPE_INSTRUCTION } from '../../engine/prose/contract';
+import { ENVELOPE_INSTRUCTION } from '../engine/prose/contract';
 
 const ALICE: PromptContext = {
   entityId: 'p:1',

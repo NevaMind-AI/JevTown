@@ -1,7 +1,5 @@
-import { v } from 'convex/values';
-import { internalQuery } from '../_generated/server';
-import { readEntityState } from '../prose/store';
-import { COMMON_KNOWLEDGE_ID, EntityTier, stateContractFor } from '../../engine/prose/contract';
+import { AgentContext } from './ports';
+import { COMMON_KNOWLEDGE_ID, EntityTier, stateContractFor } from '../engine/prose/contract';
 
 /**
  * Everything a state-writing prompt needs about one entity, and the sections that assemble it.
@@ -32,78 +30,62 @@ export interface PromptContext {
   commonKnowledge?: string;
 }
 
-export const queryPromptContext = internalQuery({
-  args: { worldId: v.id('worlds'), entityId: v.string() },
-  handler: async (ctx, args): Promise<PromptContext | null> => {
-    const world = await ctx.db.get(args.worldId);
-    if (!world) {
-      throw new Error(`World ${args.worldId} not found`);
-    }
-    const worldDescription = await ctx.db
-      .query('worldDescriptions')
-      .withIndex('worldId', (q) => q.eq('worldId', args.worldId))
-      .first();
-    const worldRules = worldDescription?.worldRules ?? '';
-    const state = await readEntityState(ctx.db, args.worldId, args.entityId);
-    const commonKnowledge = await readEntityState(ctx.db, args.worldId, COMMON_KNOWLEDGE_ID);
+/**
+ * Assemble one entity's prompt context.
+ *
+ * Was a Convex `internalQuery` reading five tables. Four of those five live in the world document
+ * the caller is already holding, so they are synchronous reads now; only the prose tier is still
+ * a real fetch.
+ */
+export async function promptContextFor(
+  ctx: AgentContext,
+  entityId: string,
+): Promise<PromptContext | null> {
+  const worldRules = ctx.world.worldDescription().worldRules;
+  const state = await ctx.store.readEntityState(entityId);
+  const commonKnowledge = await ctx.store.readEntityState(COMMON_KNOWLEDGE_ID);
 
-    if (args.entityId.startsWith('p:')) {
-      const playerDescription = await ctx.db
-        .query('playerDescriptions')
-        .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('playerId', args.entityId))
-        .first();
-      if (!playerDescription) {
-        return null;
-      }
-      const agent = world.agents.find((a) => a.playerId === args.entityId);
-      const agentDescription = agent
-        ? await ctx.db
-            .query('agentDescriptions')
-            .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('agentId', agent.id))
-            .first()
-        : undefined;
-      return {
-        entityId: args.entityId,
-        tier: 'actor',
-        name: playerDescription.name,
-        description: agentDescription?.identity ?? playerDescription.description,
-        behavior: agentDescription?.behavior,
-        state,
-        worldRules,
-        commonKnowledge,
-      };
-    }
-
-    const entity = world.entities?.find((e) => e.id === args.entityId);
-    const entityDescription = await ctx.db
-      .query('entityDescriptions')
-      .withIndex('worldId', (q) => q.eq('worldId', args.worldId).eq('entityId', args.entityId))
-      .first();
-    if (!entityDescription) {
+  if (entityId.startsWith('p:')) {
+    const playerDescription = ctx.world.playerDescription(entityId);
+    if (!playerDescription) {
       return null;
     }
+    const agent = ctx.world.agentForPlayer(entityId);
+    const agentDescription = agent ? ctx.world.agentDescription(agent.id) : undefined;
     return {
-      entityId: args.entityId,
-      tier: entityDescription.kind,
-      name: entityDescription.name ?? 'It',
-      description: entityDescription.description,
-      behavior: entityDescription.behavior,
+      entityId,
+      tier: 'actor',
+      name: playerDescription.name,
+      description: agentDescription?.identity ?? playerDescription.description,
+      behavior: agentDescription?.behavior,
       state,
-      physics: entity?.physics,
       worldRules,
       commonKnowledge,
     };
-  },
-});
+  }
 
-export const queryAgentForPlayer = internalQuery({
-  args: { worldId: v.id('worlds'), playerId: v.string() },
-  handler: async (ctx, args) => {
-    const world = await ctx.db.get(args.worldId);
-    const agent = world?.agents.find((a) => a.playerId === args.playerId);
-    return agent ? { agentId: agent.id } : null;
-  },
-});
+  const entity = ctx.world.entity(entityId);
+  const entityDescription = ctx.world.entityDescription(entityId);
+  if (!entityDescription) {
+    return null;
+  }
+  return {
+    entityId,
+    tier: entityDescription.kind,
+    name: entityDescription.name ?? 'It',
+    description: entityDescription.description,
+    behavior: entityDescription.behavior,
+    state,
+    physics: entity?.physics,
+    worldRules,
+    commonKnowledge,
+  };
+}
+
+/** The agent driving a player, if it has one. */
+export function agentIdForPlayer(ctx: AgentContext, playerId: string): string | undefined {
+  return ctx.world.agentForPlayer(playerId)?.id;
+}
 
 /**
  * The immutable prose an entity is described by, wherever it is injected — its own prompt or

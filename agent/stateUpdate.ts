@@ -1,20 +1,16 @@
-import { Id } from '../_generated/dataModel';
-import { ActionCtx } from '../_generated/server';
-import { api, internal } from '../_generated/api';
-import { LLMMessage, chatCompletion, fetchEmbedding } from '../util/llm';
-import { GameId } from '../../engine/aiTown/ids';
+import { LLMMessage, chatCompletion, fetchEmbedding } from './model/llm';
+import { GameId } from '../engine/aiTown/ids';
+import { AgentContext } from './ports';
 import {
   ENVELOPE_INSTRUCTION,
   STATE_REASK_LIMIT,
   STATE_WORD_BUDGET,
-} from '../../engine/prose/contract';
-import { EnvelopeUpdate, parseEnvelope } from '../../engine/prose/envelope';
-import { Tracer } from './tracing';
-import { Conformance, StateDocument, parseStateDocument } from '../../engine/prose/stateDocument';
-import { stateWritingSystemPrompt } from './promptContext';
-import { calculateImportance } from './memory';
-
-const selfInternal = internal.agent.promptContext;
+} from '../engine/prose/contract';
+import { EnvelopeUpdate, parseEnvelope } from '../engine/prose/envelope';
+import { Tracer } from './model/tracing';
+import { Conformance, StateDocument, parseStateDocument } from '../engine/prose/stateDocument';
+import { agentIdForPlayer, promptContextFor, stateWritingSystemPrompt } from './promptContext';
+import { calculateImportance, loadConversation } from './memory';
 
 export interface StateUpdateOutcome {
   update: EnvelopeUpdate;
@@ -88,27 +84,16 @@ export async function requestStateUpdate(opts: {
  * summarise-only call that `memory.rememberConversation` makes.
  */
 export async function updateStateAfterConversation(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   playerId: GameId<'players'>,
   conversationId: GameId<'conversations'>,
 ): Promise<StateUpdateOutcome | null> {
-  const context = await ctx.runQuery(selfInternal.queryPromptContext, {
-    worldId,
-    entityId: playerId,
-  });
+  const context = await promptContextFor(ctx, playerId);
   if (!context) {
     return null;
   }
-  const data = await ctx.runQuery(internal.agent.memory.loadConversation, {
-    worldId,
-    playerId,
-    conversationId,
-  });
-  const messages = await ctx.runQuery(internal.agent.memory.loadMessages, {
-    worldId,
-    conversationId,
-  });
+  const data = await loadConversation(ctx, playerId, conversationId);
+  const messages = await ctx.store.listMessages(conversationId);
   if (!messages.length) {
     return null;
   }
@@ -127,7 +112,7 @@ export async function updateStateAfterConversation(
   // Same conversation id, so this lands in the same trace as the turns it is summarising -- the
   // state write is the last thing that happens to a conversation, not a separate event.
   const tracer = await Tracer.forConversation({
-    worldId,
+    worldId: ctx.world.worldId,
     conversationId,
     name: `${player.name} ↔ ${otherPlayer.name}`,
     metadata: { playerId, otherPlayerId: otherPlayer.id },
@@ -162,16 +147,8 @@ export async function updateStateAfterConversation(
     },
   });
 
-  await sendStateUpdate(ctx, worldId, playerId, outcome);
-  await storeConversationMemories(
-    ctx,
-    worldId,
-    playerId,
-    conversationId,
-    otherPlayer,
-    outcome,
-    tracer,
-  );
+  await sendStateUpdate(ctx, playerId, outcome);
+  await storeConversationMemories(ctx, playerId, conversationId, otherPlayer, outcome, tracer);
   // Closed last so the importance calls above ride out in the same export.
   await tracer.close({ metadata: { reasks: outcome.reasks, fellBack: outcome.fellBack } });
   return outcome;
@@ -183,27 +160,22 @@ export async function updateStateAfterConversation(
  * turns "does prose state drift" into a query over a real run (docs/08 §7 D6).
  */
 export async function sendStateUpdate(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   entityId: string,
   outcome: StateUpdateOutcome,
 ) {
-  await ctx.runMutation(api.aiTown.main.sendInput, {
-    worldId,
-    name: 'entityUpdateState',
-    // No physics rides here. The handler derives it from the document's own tag, which is what
-    // lets a god write move physics too (docs/05 §4.3 as amended).
-    args: {
-      entityId,
-      state: outcome.state,
-      memory: outcome.update.memory,
-      reason: outcome.update.reason,
-      tags: {
-        ...(outcome.conformance ?? {}),
-        reasks: outcome.reasks,
-        fellBack: outcome.fellBack,
-        problems: outcome.problems,
-      },
+  // No physics rides here. The handler derives it from the document's own tag, which is what
+  // lets a god write move physics too (docs/05 §4.3 as amended).
+  await ctx.inputs.send('entityUpdateState', {
+    entityId,
+    state: outcome.state,
+    memory: outcome.update.memory,
+    reason: outcome.update.reason,
+    tags: {
+      ...(outcome.conformance ?? {}),
+      reasks: outcome.reasks,
+      fellBack: outcome.fellBack,
+      problems: outcome.problems,
     },
   });
 }
@@ -214,19 +186,14 @@ export async function sendStateUpdate(
  * is what docs/05 §9.1 requires of the log; this is the searchable copy.
  */
 async function storeConversationMemories(
-  ctx: ActionCtx,
-  worldId: Id<'worlds'>,
+  ctx: AgentContext,
   playerId: GameId<'players'>,
   conversationId: GameId<'conversations'>,
   otherPlayer: { id: string; name: string },
   outcome: StateUpdateOutcome,
   tracer?: Tracer,
 ) {
-  const agent = await ctx.runQuery(internal.agent.promptContext.queryAgentForPlayer, {
-    worldId,
-    playerId,
-  });
-  if (!agent) {
+  if (!agentIdForPlayer(ctx, playerId)) {
     return;
   }
   for (const entry of outcome.update.memory) {
@@ -236,8 +203,7 @@ async function storeConversationMemories(
       tracer?.generation('memory.importance', { playerId }),
     );
     const { embedding } = await fetchEmbedding(description);
-    await ctx.runMutation(internal.agent.memory.insertMemory, {
-      agentId: agent.agentId as GameId<'agents'>,
+    await ctx.store.insertMemory({
       playerId,
       description,
       importance,

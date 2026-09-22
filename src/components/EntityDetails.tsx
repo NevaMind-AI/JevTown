@@ -1,9 +1,6 @@
-import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
-import { Id } from '../../convex/_generated/dataModel';
 import closeImg from '../../assets/close.svg';
 import { GameId } from '../../engine/aiTown/ids';
-import { ServerGame } from '../hooks/serverGame';
+import { GameSnapshot } from '../hooks/gameSnapshot';
 import { SelectElement } from './Player';
 import { StateDocument } from './StateDocument';
 
@@ -14,20 +11,22 @@ import { StateDocument } from './StateDocument';
  * different things — the top half never changes, the bottom half is the whole point.
  */
 export default function EntityDetails({
-  worldId,
   game,
   entityId,
+  state,
+  turns,
   setSelectedElement,
 }: {
-  worldId: Id<'worlds'>;
-  game: ServerGame;
+  game: GameSnapshot;
   entityId: GameId<'entities'>;
+  /** The entity's current prose document, from the store (docs/05 §8). */
+  state?: string;
+  /** The last exchange it took part in, oldest turn first. */
+  turns?: { actorId: string; speaker: 'actor' | 'target'; text: string }[];
   setSelectedElement: SelectElement;
 }) {
   const entity = game.world.entities.get(entityId);
   const description = game.entityDescriptions.get(entityId);
-  const state = useQuery(api.world.entityState, { worldId, entityId });
-  const turns = useQuery(api.world.recentInteraction, { worldId, entityId });
 
   if (!entity || !description) {
     return null;
@@ -62,7 +61,7 @@ export default function EntityDetails({
       <p className="desc my-4">{description.description}</p>
 
       <div className="my-4">
-        <StateDocument state={state ?? undefined} />
+        <StateDocument state={state} />
       </div>
 
       {turns && turns.length > 0 && (

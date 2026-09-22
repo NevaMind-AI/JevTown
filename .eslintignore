@@ -3,7 +3,6 @@ webpack*
 next.config.js
 tailwind.config.js
 postcss.config.js
-convex/_generated/*
 data/*.js
 src/editor/*
 dist/*
