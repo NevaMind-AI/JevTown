@@ -1,4 +1,4 @@
-import { ObjectType, v } from 'convex/values';
+import { ObjectType, v } from './validators';
 
 /**
  * A seeded PRNG whose state lives in the world document.

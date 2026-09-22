@@ -1,4 +1,4 @@
-import { v } from 'convex/values';
+import { v } from '../util/validators';
 import { agentId, conversationId, parseGameId } from './ids';
 import { Player } from './player';
 import { Conversation, conversationInputs } from './conversation';

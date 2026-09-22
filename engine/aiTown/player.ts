@@ -1,4 +1,4 @@
-import { Infer, ObjectType, v } from 'convex/values';
+import { Infer, ObjectType, v } from '../util/validators';
 import { Point, Vector, path, point, vector } from '../util/types';
 import { GameId, parseGameId } from './ids';
 import { playerId } from './ids';

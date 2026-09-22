@@ -1,4 +1,4 @@
-import { ObjectType, v } from 'convex/values';
+import { ObjectType, v } from '../util/validators';
 import { Conversation, serializedConversation } from './conversation';
 import { Player, serializedPlayer } from './player';
 import { Agent, serializedAgent } from './agent';

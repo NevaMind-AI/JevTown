@@ -1,4 +1,4 @@
-import { v } from 'convex/values';
+import { v } from '../util/validators';
 import { inputHandler } from './inputHandler';
 import { Entity, EntityPhysics, EntityPhysicsPatch, entityPhysicsPatch } from './entity';
 import { Player } from './player';

@@ -1,4 +1,4 @@
-import { ObjectType, v } from 'convex/values';
+import { ObjectType, v } from '../util/validators';
 import { GameId, parseGameId, playerId } from './ids';
 
 export const serializedConversationMembership = {

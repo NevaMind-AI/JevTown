@@ -1,4 +1,4 @@
-import { Infer, ObjectType, v } from 'convex/values';
+import { Infer, ObjectType, v } from '../util/validators';
 
 // `layer[position.x][position.y]` is the tileIndex or -1 if empty.
 const tileLayer = v.array(v.array(v.number()));
