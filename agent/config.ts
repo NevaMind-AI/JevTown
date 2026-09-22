@@ -43,3 +43,20 @@ export function mysteryGiftEnabled(): boolean {
 export function decider(): 'llm' | 'jev' {
   return setting('ACTION_DECIDER') === 'jev' ? 'jev' : 'llm';
 }
+
+/**
+ * After how many consecutive idles the Jev decider starts leaning against another one
+ * (`SUPPRESS_IDLE_AFTER=6`, docs/12 §4). Unset -- the default -- means never: the gates in
+ * `decideJev.ts` stand wherever the answers put them.
+ *
+ * Read as a count rather than as a duration because that is what the decider can see: a streak is
+ * a property of the decisions, and how long each of them lasted is the model's business.
+ */
+export function suppressIdleAfter(): number | undefined {
+  const raw = setting('SUPPRESS_IDLE_AFTER');
+  if (raw === undefined || raw === '') {
+    return undefined;
+  }
+  const after = Number(raw);
+  return Number.isFinite(after) && after > 0 ? after : undefined;
+}

@@ -98,6 +98,14 @@ export const agentInputs = {
       }
       delete agent.inProgressOperation;
       agent.lastDecision = now;
+      // The streak the Jev decider leans against (docs/12 §4). Counted here rather than in the
+      // agent layer because this is the only place that knows a decision actually landed, and
+      // because a count kept in the engine replays with the world instead of drifting from it.
+      if (args.action === 'idle') {
+        agent.idleStreak = (agent.idleStreak ?? 0) + 1;
+      } else {
+        delete agent.idleStreak;
+      }
       const player = game.world.players.get(agent.playerId)!;
 
       switch (args.action) {

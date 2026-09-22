@@ -124,12 +124,56 @@ Score that is wrong in the middle of its range fails quietly.
 hard-coded in `agent/decideJev.ts`. The model is asked the only thing it can actually judge —
 whether anything nearby is about to change — and the durations stay a policy the code owns.
 
-`IDLE_SHORT_MS` is 5s, which is exactly `MIN_DECISION_INTERVAL` (`engine/constants.ts:35`). That is
-deliberate: a short idle means "ask me again as soon as you are allowed to", and the engine floor is
-what "as soon as" means. `09` §10 worried that a model always picking a 5-second idle would burn the
-budget without bound — under this decider that worry is smaller, because the floor still binds and a
-Jev decision costs about two thousandths of a chat completion (§7), but the floor is still what
-makes it bounded, not the model's restraint.
+Each is now a **centre rather than a value**: a short idle is uniform on [4s, 6s] and a long one on
+[25s, 35s]. Two exact durations meant every agent that picked the same option looked again on the
+same tick, so a room of five settled into deciding in lockstep — visible as a stutter, and a burst
+of calls that `MIN_DECISION_INTERVAL` spreads no further than one interval. The spread is cosmetic
+in intent and changes nothing about who owns what: the model still picks which of the two durations
+this is, the code still says what the two mean. It is the one impure thing in the file, so its
+source is a parameter (`DecisionOptions.random`) and the mapping stays testable without one.
+
+`IDLE_SHORT_MS` is centred on 5s, which is exactly `MIN_DECISION_INTERVAL`
+(`engine/constants.ts:35`). That is deliberate: a short idle means "ask me again as soon as you are
+allowed to", and the engine floor is what "as soon as" means — which is also why the low half of the
+range costs nothing, since a 4s idle still waits on the floor. `09` §10 worried that a model always
+picking a 5-second idle would burn the budget without bound — under this decider that worry is
+smaller, because the floor still binds and a Jev decision costs about two thousandths of a chat
+completion (§7), but the floor is still what makes it bounded, not the model's restraint.
+
+### 4.1 `SUPPRESS_IDLE_AFTER`, the other end of the same worry
+
+`09` §10 worried about an agent that never stops deciding. The opposite failure is the one a run
+actually shows: an agent the model never quite wants to move settles onto the last branch of §6 and
+stays there, because the gates are fixed and nothing in the request tells Jev this is the ninth idle
+in a row. The prompt cannot fix it — a System One question has no history — so the **composition**
+remembers instead.
+
+| variable              | default | meaning                                                      |
+| --------------------- | ------- | ------------------------------------------------------------ |
+| `SUPPRESS_IDLE_AFTER` | unset   | consecutive idles tolerated before idle starts losing weight |
+
+Unset means never, and the gates stand wherever §6 put them. Set to `x`, idle keeps a weight of `1`
+through the first `x` idles and `e^-((n - x) / x)` after that — halving about every `0.7x` idles,
+never reaching zero — and **both gates are multiplied by it**. Lowering the bar for seeking and
+roaming rather than raising one for idling is the only honest way to write it: idle has no number of
+its own to suppress, it is what happens when nothing else clears. `CHOICE_CONFIDENCE_FLOOR` is
+deliberately left alone, because it answers _which_ target rather than _whether_, and a coin toss
+between two people is still a coin toss on the tenth idle.
+
+The decay shape is a knob, not a finding. What it has to be is gradual — an agent that genuinely has
+nothing to do still mostly stands still — and unbounded, so one that has nothing to do for long
+enough eventually moves anyway. When it is active the weight joins the synthesized `reason`
+(`seek 0.30 · idle x0.37 · talk to Bob p=0.80 c=0.80`), so a run never has to guess whether a move
+was the model's judgment or the flag's patience.
+
+The count is `Agent.idleStreak`, incremented in the `agentDecideAction` handler and deleted by any
+other action. It lives in the engine rather than in the agent layer for the reason everything else
+does: it is world state, it replays with the world, and `agentDecide` carries it out to the decider
+the same way it carries the manifest. It is the only input to this decision that is not the manifest
+or the agent's own state, and the chat decider ignores it.
+
+One case is not rescued and should not be: with no targets and no places the request asks neither
+gated question, so there is nothing to lower and the agent idles on. There is nowhere to go.
 
 ---
 

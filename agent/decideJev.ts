@@ -2,6 +2,7 @@ import { DecisionManifest, ManifestPlace, ManifestTarget } from '../engine/aiTow
 import { Decision, idleFallback } from './decide';
 import { SystemOneAnswers, SystemOneQuestions } from './model/client';
 import { PromptContext, describe } from './promptContext';
+import { suppressIdleAfter } from './config';
 
 /**
  * The same decision as `decide.ts`, asked of a System One model instead of a chat model.
@@ -19,35 +20,63 @@ import { PromptContext, describe } from './promptContext';
  * (docs/12 §2 option c) and `idle` picks between two hard-coded durations rather than naming one
  * (docs/12 §3).
  *
- * The shape here mirrors `decide.ts` deliberately: everything in this file is pure. Building the
- * request and reading the answers are separable from making the call, which is what lets the whole
- * mapping be tested without a model — and the call itself stays in `operations.ts`, next to the
- * chat-model call it is an alternative to.
+ * The shape here mirrors `decide.ts` deliberately: building the request and reading the answers are
+ * separable from making the call, which is what lets the whole mapping be tested without a model —
+ * and the call itself stays in `operations.ts`, next to the chat-model call it is an alternative
+ * to. The one impurity is the idle duration's jitter, and its source is injectable for that
+ * reason.
  */
 
 // ---------------------------------------------------------------- policy
 
 /**
  * The two idle durations, and the descriptions that stand in for the prose the model used to
- * write. `IDLE_SHORT_MS` sits exactly on `MIN_DECISION_INTERVAL` on purpose: a short idle means
- * "ask me again as soon as you are allowed to", and the engine floor is what "as soon as" means.
+ * write. `IDLE_SHORT_MS` is centred exactly on `MIN_DECISION_INTERVAL` on purpose: a short idle
+ * means "ask me again as soon as you are allowed to", and the engine floor is what "as soon as"
+ * means. Each is a centre rather than the duration itself — see the spread below.
  */
 export const IDLE_SHORT_MS = 5_000;
 export const IDLE_LONG_MS = 30_000;
 
-const IDLE_OPTIONS: Record<string, { durationMs: number; description: string; criterion: string }> =
-  {
-    'pause for a moment': {
-      durationMs: IDLE_SHORT_MS,
-      description: 'pausing',
-      criterion: 'Something around you could change within seconds, and you want to see it change.',
-    },
-    'stay put for a while': {
-      durationMs: IDLE_LONG_MS,
-      description: 'standing still',
-      criterion: 'Nothing around you is about to change. There is no reason to look again soon.',
-    },
-  };
+/**
+ * How far either side of the nominal duration the actual one may fall: a short idle is uniform on
+ * [4s, 6s] and a long one on [25s, 35s].
+ *
+ * Two hard-coded durations meant every agent that picked the same option looked again on the same
+ * tick, and a room of five idling agents decided in lockstep — visibly so, and a burst of model
+ * calls the `MIN_DECISION_INTERVAL` floor spreads no further than one interval. The spread is
+ * cosmetic in intent and cheap: the option the model chose still decides which of the two
+ * durations it is, and the policy still owns what they mean.
+ *
+ * A short idle can now come back under `MIN_DECISION_INTERVAL` (docs/12 §4 wanted them equal). The
+ * floor is what actually gates the next decision, so a 4s idle means the same thing 5s did — ask
+ * again as soon as allowed — and the engine, not this number, still owns "as soon as".
+ */
+const IDLE_SHORT_SPREAD_MS = 1_000;
+const IDLE_LONG_SPREAD_MS = 5_000;
+
+const IDLE_OPTIONS: Record<
+  string,
+  { durationMs: number; spreadMs: number; description: string; criterion: string }
+> = {
+  'pause for a moment': {
+    durationMs: IDLE_SHORT_MS,
+    spreadMs: IDLE_SHORT_SPREAD_MS,
+    description: 'pausing',
+    criterion: 'Something around you could change within seconds, and you want to see it change.',
+  },
+  'stay put for a while': {
+    durationMs: IDLE_LONG_MS,
+    spreadMs: IDLE_LONG_SPREAD_MS,
+    description: 'standing still',
+    criterion: 'Nothing around you is about to change. There is no reason to look again soon.',
+  },
+};
+
+/** Uniform on [centre - spread, centre + spread], to the millisecond. */
+function jitter(centre: number, spread: number, random: () => number): number {
+  return Math.round(centre + (random() * 2 - 1) * spread);
+}
 
 const DEFAULT_IDLE_OPTION = 'stay put for a while';
 
@@ -61,6 +90,33 @@ const DEFAULT_IDLE_OPTION = 'stay put for a while';
 export const SEEK_THRESHOLD = 0.5;
 export const ROAM_THRESHOLD = 0.5;
 export const CHOICE_CONFIDENCE_FLOOR = 0.2;
+
+/**
+ * Standing still is the last branch of the policy, so an agent the model never quite wants to move
+ * can sit on it indefinitely: the gates are fixed, and nothing in the request tells Jev that this
+ * is the ninth idle in a row. `SUPPRESS_IDLE_AFTER=x` makes the *composition* remember instead.
+ *
+ * `idleWeight(n)` is the weight idle keeps after `n` consecutive idles — 1 through the first `x`,
+ * then `e^-((n - x) / x)`, so it halves about every 0.7x idles after that and never reaches zero.
+ * Both gates are multiplied by it, which lowers the bar for seeking and roaming rather than
+ * raising one for idling: idle has no number of its own to suppress, it is what happens when
+ * nothing else clears. The confidence floor is left alone — it answers *which* target, not
+ * *whether*, and a coin toss between two people is still a coin toss on the tenth idle.
+ *
+ * The decay shape is a knob, not a finding. What matters is that it is gradual (an agent that
+ * genuinely has nothing to do still mostly stands still) and unbounded (one that has nothing to do
+ * for long enough eventually moves anyway).
+ *
+ * Nothing rescues the degenerate case: with no targets and no places the request asks neither
+ * question, so there is no gate to lower and the agent idles on. That is correct — there is
+ * nowhere to go.
+ */
+export function idleWeight(streak: number, after = suppressIdleAfter()): number {
+  if (after === undefined || streak <= after) {
+    return 1;
+  }
+  return Math.exp(-(streak - after) / after);
+}
 
 // ---------------------------------------------------------------- the request
 
@@ -277,26 +333,46 @@ function reasonFor(parts: string[]): string {
   return parts.join(' · ');
 }
 
+/** What the composition knows that the answers do not. */
+export interface DecisionOptions {
+  /** Consecutive idles before this decision, from the engine. Feeds `idleWeight`. */
+  idleStreak?: number;
+  /** The only nondeterminism here, injectable so the mapping stays testable without a model. */
+  random?: () => number;
+}
+
 /**
  * Compose one decision out of the answers. Never throws, and never returns a target or anchor the
  * manifest did not contain.
  *
  * The order is the policy: seek someone out, else wander, else stand still. Each gate can fall
  * through to the next, so a low-confidence target does not become an idle when there was a place
- * worth walking to.
+ * worth walking to. Both gates are scaled by `idleWeight`, which is the one thing here that
+ * depends on decisions other than this one.
  */
 export function decisionFromAnswers(
   answers: SystemOneAnswers,
   request: JevDecisionRequest,
+  options: DecisionOptions = {},
 ): { decision: Decision; problems: string[] } {
   const problems: string[] = [];
   if (typeof answers !== 'object' || answers === null) {
     return { decision: idleFallback('The model returned no answers.'), problems: ['no answers'] };
   }
 
+  const random = options.random ?? Math.random;
+  // Both gates move together: an agent that has been standing still is readier to go somewhere,
+  // and no more particular about which of the two ways it does it.
+  const weight = idleWeight(options.idleStreak ?? 0);
+  const suppression = weight < 1 ? [`idle x${n(weight)}`] : [];
+
   const seek = noul(answers, 'seek');
   const target = choice(answers, 'target', request.targets, problems);
-  if (seek !== undefined && seek >= SEEK_THRESHOLD && committed(target, 'target', problems)) {
+  if (
+    seek !== undefined &&
+    seek >= SEEK_THRESHOLD * weight &&
+    committed(target, 'target', problems)
+  ) {
     return {
       decision: {
         action: 'approach',
@@ -306,6 +382,7 @@ export function decisionFromAnswers(
         intent: '',
         reason: reasonFor([
           `seek ${n(seek)}`,
+          ...suppression,
           `${target!.label} p=${n(target!.probability)} c=${n(target!.confidence)}`,
         ]),
       },
@@ -315,7 +392,11 @@ export function decisionFromAnswers(
 
   const roam = noul(answers, 'roam');
   const place = choice(answers, 'place', request.places, problems);
-  if (roam !== undefined && roam >= ROAM_THRESHOLD && committed(place, 'place', problems)) {
+  if (
+    roam !== undefined &&
+    roam >= ROAM_THRESHOLD * weight &&
+    committed(place, 'place', problems)
+  ) {
     return {
       decision: {
         action: 'wander',
@@ -323,6 +404,7 @@ export function decisionFromAnswers(
         reason: reasonFor([
           `seek ${n(seek)}`,
           `roam ${n(roam)}`,
+          ...suppression,
           `${place!.label} p=${n(place!.probability)} c=${n(place!.confidence)}`,
         ]),
       },
@@ -335,12 +417,13 @@ export function decisionFromAnswers(
   return {
     decision: {
       action: 'idle',
-      durationMs: option.durationMs,
+      durationMs: jitter(option.durationMs, option.spreadMs, random),
       description: option.description,
       // No emoji. Jev cannot write one and this branch will not invent one (docs/12 §2).
       reason: reasonFor([
         `seek ${n(seek)}`,
         `roam ${n(roam)}`,
+        ...suppression,
         `${length?.label ?? `${DEFAULT_IDLE_OPTION} (default)`}`,
       ]),
     },

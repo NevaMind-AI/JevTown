@@ -28,6 +28,13 @@ export class Agent {
   lastConversation?: number;
   lastInviteAttempt?: number;
   lastDecision?: number;
+  /**
+   * How many decisions in a row have come back `idle`, reset by anything else. Read only by the
+   * Jev decider, which uses it to lean against an agent that has settled into standing still
+   * (docs/12 §4); the engine itself does nothing with it, so a world that never sets
+   * `SUPPRESS_IDLE_AFTER` just carries a number nobody looks at.
+   */
+  idleStreak?: number;
   pendingInteraction?: { targetId: string; intent: string; startedWalking: number };
   inProgressOperation?: {
     name: string;
@@ -38,6 +45,7 @@ export class Agent {
   constructor(serialized: SerializedAgent) {
     const { id, lastConversation, lastInviteAttempt, inProgressOperation } = serialized;
     this.lastDecision = serialized.lastDecision;
+    this.idleStreak = serialized.idleStreak;
     this.pendingInteraction = serialized.pendingInteraction;
     const playerId = parseGameId('players', serialized.playerId);
     this.id = parseGameId('agents', id);
@@ -252,6 +260,7 @@ export class Agent {
       playerId: this.playerId,
       agentId: this.id,
       manifest: buildManifest(game, now, this, player),
+      idleStreak: this.idleStreak ?? 0,
     });
   }
 
@@ -326,6 +335,7 @@ export class Agent {
       lastConversation: this.lastConversation,
       lastInviteAttempt: this.lastInviteAttempt,
       lastDecision: this.lastDecision,
+      idleStreak: this.idleStreak,
       pendingInteraction: this.pendingInteraction,
       inProgressOperation: this.inProgressOperation,
     };
@@ -346,6 +356,7 @@ export const serializedAgent = {
   lastConversation: v.optional(v.number()),
   lastInviteAttempt: v.optional(v.number()),
   lastDecision: v.optional(v.number()),
+  idleStreak: v.optional(v.number()),
   pendingInteraction: v.optional(pendingInteraction),
   inProgressOperation: v.optional(
     v.object({
@@ -389,6 +400,8 @@ export type AgentOperationArgs = {
     playerId: GameId<'players'>;
     agentId: GameId<'agents'>;
     manifest: DecisionManifest;
+    /** Consecutive idles before this decision, for docs/12 §4's idle suppression. */
+    idleStreak: number;
   };
   agentInteract: {
     worldId: string;

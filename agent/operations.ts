@@ -144,6 +144,8 @@ export async function agentDecide(
     playerId: GameId<'players'>;
     agentId: GameId<'agents'>;
     manifest: DecisionManifest;
+    /** Consecutive idles before this one; only the Jev decider reads it (docs/12 §4). */
+    idleStreak?: number;
     operationId: string;
   },
 ) {
@@ -172,7 +174,9 @@ export async function agentDecide(
         worldId: ctx.world.worldId,
         trace: tracer.generation('agent.decide'),
       });
-      ({ decision, problems } = decisionFromAnswers(answers, request));
+      ({ decision, problems } = decisionFromAnswers(answers, request, {
+        idleStreak: args.idleStreak,
+      }));
     } else {
       const { content } = await chatCompletion({
         messages: [

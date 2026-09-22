@@ -3,6 +3,7 @@ import {
   IDLE_LONG_MS,
   IDLE_SHORT_MS,
   decisionFromAnswers,
+  idleWeight,
   jevDecisionRequest,
 } from './decideJev';
 import { DecisionManifest } from '../engine/aiTown/manifest';
@@ -93,6 +94,8 @@ describe('jevDecisionRequest', () => {
 
 describe('decisionFromAnswers', () => {
   const request = jevDecisionRequest(ALICE, MANIFEST);
+  /** Idle durations are jittered; 0.5 is the middle of the range, so the nominal value comes back. */
+  const unjittered = { random: () => 0.5 };
 
   test('approaches when seek clears the gate', () => {
     const { decision, problems } = decisionFromAnswers(
@@ -140,6 +143,7 @@ describe('decisionFromAnswers', () => {
         idle_length: chose('stay put for a while'),
       },
       request,
+      unjittered,
     );
 
     expect(decision).toMatchObject({ action: 'idle', durationMs: IDLE_LONG_MS });
@@ -171,6 +175,7 @@ describe('decisionFromAnswers', () => {
         idle_length: chose('pause for a moment'),
       },
       request,
+      unjittered,
     );
 
     expect(decision).toEqual({
@@ -200,8 +205,61 @@ describe('decisionFromAnswers', () => {
   });
 
   test('defaults to the long idle when the length question was not answered', () => {
-    const { decision } = decisionFromAnswers({} as SystemOneAnswers, request);
+    const { decision } = decisionFromAnswers({} as SystemOneAnswers, request, unjittered);
 
     expect(decision).toMatchObject({ action: 'idle', durationMs: IDLE_LONG_MS });
+  });
+
+  test('spreads each idle duration over its range, so a room does not decide in lockstep', () => {
+    const idleFor = (random: () => number, label: string) =>
+      (
+        decisionFromAnswers(
+          {
+            seek: { type: 'noul', noul: 0 },
+            roam: { type: 'noul', noul: 0 },
+            idle_length: chose(label),
+          },
+          request,
+          { random },
+        ).decision as { durationMs: number }
+      ).durationMs;
+
+    expect(idleFor(() => 0, 'pause for a moment')).toBe(4_000);
+    expect(idleFor(() => 1, 'pause for a moment')).toBe(6_000);
+    expect(idleFor(() => 0, 'stay put for a while')).toBe(25_000);
+    expect(idleFor(() => 1, 'stay put for a while')).toBe(35_000);
+  });
+
+  test('a long idle streak lowers the gates rather than inventing an urge to move', () => {
+    const settled = {
+      seek: { type: 'noul' as const, noul: 0.3 },
+      target: chose('talk to Bob'),
+      roam: { type: 'noul' as const, noul: 0.1 },
+      place: chose('walk to the mill yard'),
+      idle_length: chose('stay put for a while'),
+    };
+
+    // SUPPRESS_IDLE_AFTER unset: the gates stand where they are and 0.3 is not enough.
+    expect(decisionFromAnswers(settled, request, { idleStreak: 40 }).decision.action).toBe('idle');
+
+    process.env.SUPPRESS_IDLE_AFTER = '3';
+    try {
+      expect(decisionFromAnswers(settled, request, { idleStreak: 3 }).decision.action).toBe('idle');
+      // e^-(6-3)/3 = 0.37, so the seek gate is 0.18 and a 0.3 answer now clears it.
+      const { decision } = decisionFromAnswers(settled, request, { idleStreak: 6 });
+      expect(decision).toMatchObject({ action: 'approach', target: 'p:2' });
+      expect(decision.reason).toContain('idle x0.37');
+    } finally {
+      delete process.env.SUPPRESS_IDLE_AFTER;
+    }
+  });
+});
+
+describe('idleWeight', () => {
+  test('is 1 until the streak passes the flag, then decays without reaching zero', () => {
+    expect(idleWeight(9, undefined)).toBe(1);
+    expect(idleWeight(4, 4)).toBe(1);
+    expect(idleWeight(8, 4)).toBeCloseTo(Math.exp(-1), 5);
+    expect(idleWeight(100, 4)).toBeGreaterThan(0);
   });
 });
