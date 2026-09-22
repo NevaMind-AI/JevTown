@@ -8,6 +8,7 @@ import { AgenticRuntime } from '../sim/agenticRuntime';
 import { createAgenticWorld } from '../sim/createAgenticWorld';
 import { loadScene } from '../sim/demo/loadScene';
 import { SOLARIUM_SCENE_ID, solariumWorldSource } from '../sim/demo/solariumWorld';
+import { requestedAgentCount } from '../sim/demo/scaleCast';
 import AssetSprite from './AssetSprite';
 import { EntityMarker } from './Entity';
 import { Player } from './Player';
@@ -16,6 +17,13 @@ import TownViewport from './TownViewport';
 
 /**
  * Five agents on a `dev` room, with nobody playing.
+ *
+ * ## How many agents
+ *
+ * Five is what the world file authors and what an unset flag gives. `VITE_DEMO_AGENTS=n` builds
+ * `n` instead, clamped to [1, 50] -- fewer by dropping agents, more by duplicating them. That is
+ * a pressure test and not a demo: see `scaleCast.ts` for what it does and why the duplicates are
+ * allowed to be identical.
  *
  * ## Why this is its own mode and not a layer over `LocalGame`
  *
@@ -64,13 +72,19 @@ const BUBBLE_MS = 8_000;
 /** A bubble is a glance, not a transcript. The panel on the right has the whole thing. */
 const BUBBLE_CHARS = 110;
 
+/**
+ * Read once at module load, like every other flag here: the world is built in an effect, and a
+ * value that could change between renders would silently rebuild it.
+ */
+const requestedAgents = requestedAgentCount((import.meta as any).env?.VITE_DEMO_AGENTS);
+
 function RunningDemo({ scene }: { scene: Scene }) {
   const [runtime, setRuntime] = useState<AgenticRuntime | Error>();
   useEffect(() => {
     try {
       setRuntime(
         createAgenticWorld({
-          source: solariumWorldSource(scene),
+          source: solariumWorldSource(scene, { agents: requestedAgents }),
           worldId: 'solarium-demo',
           godEnabled: false,
         }),
@@ -100,7 +114,7 @@ function DemoStage({ scene, runtime }: { scene: Scene; runtime: AgenticRuntime }
    * Keep the crowd on screen.
    *
    * `PixiViewport` clamps zoom to *cover* the screen rather than to fit the map in it
-   * (`viewportScale`), so on this room there is always more world than viewport and five agents
+   * (`viewportScale`), so on this room there is always more world than viewport and the cast
    * will not stay in it on their own. Recentring on their midpoint once a second is enough to
    * follow them without the picture sliding continuously -- and it stops entirely when the
    * checkbox is off, because the viewport is draggable and a follow that cannot be switched off
@@ -286,14 +300,15 @@ function Transcript({
   const nameOf = (playerId: string) =>
     runtime.game.playerDescriptions.get(playerId as never)?.name ?? playerId;
   const live = new Set([...runtime.game.world.conversations.keys()]);
+  const agents = runtime.game.world.agents.size;
 
   return (
     <aside className="flex min-h-0 shrink-0 flex-col gap-3 overflow-y-auto border-brown-900 bg-brown-800 px-4 py-5 lg:w-96 lg:border-l-8">
       <header>
         <h1 className="text-lg">Solarium · agentic flow check</h1>
         <p className="text-sm opacity-70">
-          Five agents, no player, no god, nothing saved. {total} message{total === 1 ? '' : 's'} so
-          far.
+          {agents} agent{agents === 1 ? '' : 's'}, no player, no god, nothing saved. {total} message
+          {total === 1 ? '' : 's'} so far.
         </p>
         <label className="mt-2 flex items-center gap-2 text-sm">
           <input type="checkbox" checked={follow} onChange={(e) => onFollow(e.target.checked)} />

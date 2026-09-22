@@ -1,8 +1,10 @@
 import { Scene } from '../../../prototype/content';
+import { Rng } from '../../../engine/util/rng';
 import { WorldFile } from '../../../engine/aiTown/worldFile';
 import { characters } from '../../../data/characters';
 import { WorldSource } from '../createAgenticWorld';
 import { PlaceSpec, sceneAnchors, sceneWorldMap } from '../sceneWorldMap';
+import { scaleCast } from './scaleCast';
 import worldFileJson from './solarium.world.json';
 
 /**
@@ -26,6 +28,9 @@ import worldFileJson from './solarium.world.json';
  * Two of them, `the-long-bench` and `the-notice-board`, are where the world file's props live.
  * They are places *and* targets: an agent can wander to the bench or approach it, which is the
  * point of having them.
+ *
+ * One of them, `the-lift-queue`, is a nine-by-nine rect rather than a tile, because it is also
+ * where `scaleCast` puts a crowd. See the note on it below.
  */
 const PLACES: Record<string, PlaceSpec> = {
   // Inherited from the scene -- position comes from `solarium.json`, prose from here.
@@ -86,6 +91,20 @@ const PLACES: Record<string, PlaceSpec> = {
     description: 'A cramped service passage on the east side, smelling of machine oil.',
   },
 
+  // The one place that is a rect rather than a point, and the only one that is here for a
+  // mechanical reason as well as a fictional one. It is where `scaleCast` spawns copies: the
+  // other thirteen places are single tiles, a tile holds one player, and a crowded run needs
+  // somewhere that can take forty-five arrivals at once. Eighty-one free tiles, all of them
+  // reachable, and a description that the world's own common knowledge already implies.
+  'the-lift-queue': {
+    x: 11,
+    y: 12,
+    w: 9,
+    h: 9,
+    description:
+      'The open west end of the floor, where the queue for the service lift backs up and people stand about waiting for it.',
+  },
+
   // The props' anchors. A prop is fixed *at* a place, so its anchor is one.
   'the-long-bench': {
     x: 22,
@@ -101,13 +120,33 @@ const PLACES: Record<string, PlaceSpec> = {
 
 export const SOLARIUM_SCENE_ID = 'solarium';
 
+/** Where a duplicated agent arrives. See the note on the place itself. */
+export const SOLARIUM_CROWD_ANCHOR = 'the-lift-queue';
+
+export interface SolariumOptions {
+  /**
+   * How many mobile agents to build, clamped to [1, 50]. Omitted -- the default, and what an
+   * unset `VITE_DEMO_AGENTS` gives -- means the five the world file authors, untouched.
+   */
+  agents?: number;
+  /** Seeds the cast draw. Defaults to the world file's own seed, so a run repeats. */
+  seed?: number;
+}
+
 /** The demo world, over whichever scene the caller loaded. Throws if it is not the solarium. */
-export function solariumWorldSource(scene: Scene): WorldSource {
+export function solariumWorldSource(scene: Scene, options: SolariumOptions = {}): WorldSource {
   if (scene.id !== SOLARIUM_SCENE_ID) {
     throw new Error(`Expected scene "${SOLARIUM_SCENE_ID}", got "${scene.id}"`);
   }
+  const authored = worldFileJson as WorldFile;
   return {
-    worldFile: worldFileJson as WorldFile,
+    worldFile:
+      options.agents === undefined
+        ? authored
+        : scaleCast(authored, options.agents, {
+            spawnAnchor: SOLARIUM_CROWD_ANCHOR,
+            rng: Rng.fromSeed(options.seed ?? authored.meta?.seed ?? 0),
+          }),
     map: sceneWorldMap(scene, sceneAnchors(scene, PLACES)),
     // The same eight sheets the agentic world has always drawn from. `dev`'s own room sprites are
     // a different rig entirely (`RoomPlayer`, a 40x48 workwear sheet) and the world file's

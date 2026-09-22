@@ -2,8 +2,9 @@ import { jest } from '@jest/globals';
 import { readFile } from 'node:fs/promises';
 import { loadPackage } from '../../../prototype/package';
 import { Scene, mapBlocked } from '../../../prototype/content';
-import { createAgenticWorld } from '../createAgenticWorld';
+import { CreateAgenticWorldOptions, createAgenticWorld } from '../createAgenticWorld';
 import { solariumWorldSource, SOLARIUM_SCENE_ID, SOLARIUM_PLACES } from './solariumWorld';
+import { MAX_AGENTS } from './scaleCast';
 
 /**
  * The solarium demo, driven without a model.
@@ -52,6 +53,62 @@ async function loadSolarium(): Promise<Scene> {
   return scene;
 }
 
+/**
+ * The model, stood in for.
+ *
+ * Shared by the five-agent flow check and the crowded one, which is the point: a pressure test
+ * that drives the loop differently from the demo is not testing the demo. Choosing off
+ * `manifest.targets` is what a real decision does too -- the manifest is the engine's own
+ * filtered option set -- minus the judgement.
+ */
+function stubbedModel(spoken: string[]) {
+  const run: NonNullable<CreateAgenticWorldOptions['runOperation']> = async (ctx, name, args) => {
+    switch (name) {
+      case 'agentDecide': {
+        const someone = args.manifest.targets.find((t: any) => t.what === 'a person');
+        await ctx.inputs.send('agentDecideAction', {
+          agentId: args.agentId,
+          operationId: args.operationId,
+          ...(someone
+            ? { action: 'approach', target: someone.id, intent: 'say hello' }
+            : { action: 'wander', anchor: 'central-hall' }),
+          reason: 'stubbed',
+          problems: [],
+        } as never);
+        return;
+      }
+      case 'agentGenerateMessage': {
+        const text = `stub ${args.type} from ${args.playerId}`;
+        spoken.push(text);
+        await ctx.store.insertMessage({
+          conversationId: args.conversationId,
+          messageUuid: args.messageUuid,
+          author: args.playerId,
+          text,
+          createdAt: Date.now(),
+        });
+        await ctx.inputs.send('agentFinishSendingMessage', {
+          conversationId: args.conversationId,
+          agentId: args.agentId,
+          timestamp: Date.now(),
+          leaveConversation: args.type === 'leave',
+          operationId: args.operationId,
+        } as never);
+        return;
+      }
+      case 'agentRememberConversation':
+        await ctx.inputs.send('finishRememberConversation', {
+          agentId: args.agentId,
+          operationId: args.operationId,
+        } as never);
+        return;
+      default:
+        return;
+    }
+  };
+  return run;
+}
+
 describe('the solarium demo world', () => {
   let scene: Scene;
   beforeAll(async () => {
@@ -97,6 +154,84 @@ describe('the solarium demo world', () => {
     }
   });
 
+  /**
+   * The pressure test's own precondition.
+   *
+   * Every size has to actually *build* the cast it was asked for, and the way it would fail is
+   * quiet: `Player.join` throws when a spawn anchor has no free tile left, `engine/runtime.ts`
+   * fails that one input and keeps the world, and a run asking for fifty would come up with
+   * forty-one and look like nothing was wrong. So this counts.
+   */
+  test.each([1, 2, 5, 13, 30, MAX_AGENTS])(
+    'builds exactly %i agents, each on a free tile',
+    (agents) => {
+      const runtime = createAgenticWorld({
+        source: solariumWorldSource(scene, { agents }),
+        worldId: 'solarium-demo',
+        startTime: T0,
+        godEnabled: false,
+      });
+      runtime.advance(160);
+      expect(runtime.game.world.agents.size).toBe(agents);
+      expect(runtime.game.world.players.size).toBe(agents);
+      // Props are not part of the count, at either end of the range.
+      expect(runtime.game.world.entities.size).toBe(2);
+      const occupied = new Set<string>();
+      for (const player of runtime.game.world.sortedPlayers()) {
+        const { x, y } = player.position;
+        expect(mapBlocked(scene.map, x, y)).toBe(false);
+        // Nobody is standing inside anybody, which is the thing a shared spawn anchor risks.
+        expect(occupied.has(`${x},${y}`)).toBe(false);
+        occupied.add(`${x},${y}`);
+      }
+    },
+  );
+
+  test('a crowded world can still name everyone apart', () => {
+    const runtime = createAgenticWorld({
+      source: solariumWorldSource(scene, { agents: 20 }),
+      worldId: 'solarium-demo',
+      startTime: T0,
+      godEnabled: false,
+    });
+    runtime.advance(160);
+    const names = runtime.game.world
+      .sortedPlayers()
+      .map((p) => runtime.game.playerDescriptions.get(p.id)!.name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  /**
+   * The same chain, with the room full.
+   *
+   * Forty agents is not a demo, it is contention: for tiles at a shared spawn, for the
+   * conversation each of them is trying to start, and for the typing lock once one does. The
+   * check is only that the loop still gets a line out the other end -- if a crowd can deadlock
+   * it, this is where it shows up, and it shows up without spending anything.
+   */
+  test('a crowd still gets a line out of the loop', async () => {
+    const spoken: string[] = [];
+    const runtime = createAgenticWorld({
+      source: solariumWorldSource(scene, { agents: 40 }),
+      worldId: 'solarium-demo',
+      startTime: T0,
+      godEnabled: false,
+      runOperation: stubbedModel(spoken),
+    });
+    for (let i = 0; i < 3000 && spoken.length === 0; i++) {
+      runtime.advance(160);
+      await Promise.resolve();
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(spoken.length).toBeGreaterThan(0);
+    // Nobody has been pushed into a wall by the scrum.
+    for (const player of runtime.game.world.sortedPlayers()) {
+      expect(
+        mapBlocked(scene.map, Math.floor(player.position.x), Math.floor(player.position.y)),
+      ).toBe(false);
+    }
+  }, 30_000);
+
   test('the god never runs, because the demo world does not have one', () => {
     const runGod = jest.fn(async () => {});
     const runtime = createAgenticWorld({
@@ -117,53 +252,7 @@ describe('the solarium demo world', () => {
       worldId: 'solarium-demo',
       startTime: T0,
       godEnabled: false,
-      runOperation: async (ctx, name, args) => {
-        switch (name) {
-          case 'agentDecide': {
-            // Stand in for the model by taking the first person on offer. The manifest is the
-            // engine's own filtered option set, so choosing out of it is exactly what a real
-            // decision does -- minus the judgement.
-            const someone = args.manifest.targets.find((t: any) => t.what === 'a person');
-            await ctx.inputs.send('agentDecideAction', {
-              agentId: args.agentId,
-              operationId: args.operationId,
-              ...(someone
-                ? { action: 'approach', target: someone.id, intent: 'say hello' }
-                : { action: 'wander', anchor: 'central-hall' }),
-              reason: 'stubbed',
-              problems: [],
-            } as never);
-            return;
-          }
-          case 'agentGenerateMessage': {
-            const text = `stub ${args.type} from ${args.playerId}`;
-            spoken.push(text);
-            await ctx.store.insertMessage({
-              conversationId: args.conversationId,
-              messageUuid: args.messageUuid,
-              author: args.playerId,
-              text,
-              createdAt: Date.now(),
-            });
-            await ctx.inputs.send('agentFinishSendingMessage', {
-              conversationId: args.conversationId,
-              agentId: args.agentId,
-              timestamp: Date.now(),
-              leaveConversation: args.type === 'leave',
-              operationId: args.operationId,
-            } as never);
-            return;
-          }
-          case 'agentRememberConversation':
-            await ctx.inputs.send('finishRememberConversation', {
-              agentId: args.agentId,
-              operationId: args.operationId,
-            } as never);
-            return;
-          default:
-            return;
-        }
-      },
+      runOperation: stubbedModel(spoken),
     });
 
     const startPositions = new Map<string, string>();
