@@ -1,4 +1,4 @@
-import { LLMMessage, chatCompletion } from './model/llm';
+import { LLMMessage, chatCompletion } from './model/client';
 import { GameId } from '../engine/aiTown/ids';
 import { MAX_INTERACTION_TURNS } from '../engine/constants';
 import { ENVELOPE_INSTRUCTION, TARGET_ENVELOPE_INSTRUCTION } from '../engine/prose/contract';

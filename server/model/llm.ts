@@ -1,6 +1,9 @@
 // That's right! No dependencies 🤯 -- the one import is our own hand-rolled Langfuse exporter,
 // which is itself dependency-free for the same reason (see convex/util/langfuse.ts).
-import { LangfuseBatch, Observation, TraceRef, recordObservation } from './langfuse';
+import { LangfuseBatch, recordObservation } from './langfuse.ts';
+import type { ChatTrace, Observation, TraceRef } from '../../agent/model/trace.ts';
+
+export type { ChatTrace };
 
 const OPENAI_EMBEDDING_DIMENSION = 1536;
 const TOGETHER_EMBEDDING_DIMENSION = 768;
@@ -210,16 +213,12 @@ const authHeaders = (apiKey: string | undefined): Record<string, string> =>
  * Pass a `batch` when several completions happen inside one action (see `agent/interact.ts`) so
  * they leave as a single request; without one the span exports on its own.
  */
-export type ChatTrace = TraceRef & {
-  /** Name of the generation observation, e.g. `'conversation.start'`. */
-  name: string;
-  metadata?: Record<string, unknown>;
-  batch?: LangfuseBatch;
-};
+/** As `ChatTrace`, plus the in-process batch the proxy uses to coalesce its exports. */
+type ChatTraceWithBatch = ChatTrace & { batch?: LangfuseBatch };
 
 type ChatCompletionBody = Omit<CreateChatCompletionRequest, 'model'> & {
   model?: CreateChatCompletionRequest['model'];
-} & { trace?: ChatTrace };
+} & { trace?: ChatTraceWithBatch };
 
 export type LLMUsage = { input?: number; output?: number; total?: number };
 
@@ -351,7 +350,7 @@ export async function chatCompletion(body: ChatCompletionBody): Promise<{
 }
 
 async function reportGeneration(
-  trace: ChatTrace | undefined,
+  trace: ChatTraceWithBatch | undefined,
   details: {
     request: Omit<CreateChatCompletionRequest, 'model'> & { model?: string };
     output?: string;

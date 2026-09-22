@@ -21,15 +21,15 @@
 // Everything degrades to nothing when the keys are unset: `generation()` returns `undefined`,
 // which `chatCompletion` treats as "don't trace", and `close()` does no work.
 
-import { ChatTrace } from './llm';
+import { recordTrace } from './client';
 import {
-  LangfuseBatch,
+  ChatTrace,
+  TraceEntry,
   TraceRef,
-  langfuseEnabled,
   randomSpanId,
   spanIdForKey,
   traceIdForKey,
-} from './langfuse';
+} from './trace';
 
 type TracerInit = {
   traceId: string;
@@ -42,7 +42,7 @@ type TracerInit = {
 };
 
 export class Tracer {
-  private readonly batch = new LangfuseBatch();
+  private readonly entries: TraceEntry[] = [];
   private readonly init: TracerInit | null;
 
   private constructor(init: TracerInit | null) {
@@ -68,7 +68,6 @@ export class Tracer {
     startedAt?: number;
     metadata?: Record<string, unknown>;
   }): Promise<Tracer> {
-    if (!langfuseEnabled()) return Tracer.disabled();
     const key = `conversation:${opts.worldId}:${opts.conversationId}`;
     return new Tracer({
       traceId: await traceIdForKey(key),
@@ -96,7 +95,6 @@ export class Tracer {
     name: string;
     metadata?: Record<string, unknown>;
   }): Promise<Tracer> {
-    if (!langfuseEnabled()) return Tracer.disabled();
     const key = `interaction:${opts.worldId}:${opts.interactionId}`;
     return new Tracer({
       traceId: await traceIdForKey(key),
@@ -130,7 +128,6 @@ export class Tracer {
     tags?: string[];
     metadata?: Record<string, unknown>;
   }): Promise<Tracer> {
-    if (!langfuseEnabled()) return Tracer.disabled();
     return new Tracer({
       traceId: await traceIdForKey(`${opts.key}`),
       rootSpanId: randomSpanId(),
@@ -153,8 +150,9 @@ export class Tracer {
   /**
    * The `trace` to hand to `chatCompletion`, or `undefined` when tracing is off.
    *
-   * Spans accumulate in this tracer's batch and leave on `close()`, so a caller that makes several
-   * calls pays for one export rather than one per call.
+   * The proxy exports a generation as it serves the completion it belongs to; the wrapper span
+   * leaves on `close()`. Which is one more request than the old in-process batch made, and free:
+   * each completion was already a round trip.
    */
   generation(name: string, metadata?: Record<string, unknown>): ChatTrace | undefined {
     if (!this.init) return undefined;
@@ -164,7 +162,6 @@ export class Tracer {
       ...this.init.base,
       name,
       metadata,
-      batch: this.batch,
     };
   }
 
@@ -177,9 +174,9 @@ export class Tracer {
     statusMessage?: string;
   }): Promise<void> {
     if (!this.init) return;
-    this.batch.add(
-      { traceId: this.init.traceId, ...this.init.base },
-      {
+    this.entries.push({
+      trace: { traceId: this.init.traceId, ...this.init.base },
+      observation: {
         name: this.init.rootName,
         spanId: this.init.rootSpanId,
         type: 'span',
@@ -196,7 +193,7 @@ export class Tracer {
         level: summary?.level,
         statusMessage: summary?.statusMessage,
       },
-    );
-    await this.batch.flush();
+    });
+    await recordTrace(this.entries.splice(0));
   }
 }

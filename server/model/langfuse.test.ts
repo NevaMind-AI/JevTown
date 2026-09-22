@@ -1,12 +1,6 @@
 import { afterEach, describe, expect, jest, test } from '@jest/globals';
-import {
-  LangfuseBatch,
-  buildSpan,
-  langfuseConfig,
-  langfuseEnabled,
-  spanIdForKey,
-  traceIdForKey,
-} from './langfuse';
+import { LangfuseBatch, buildSpan, langfuseConfig, langfuseEnabled } from './langfuse';
+import { spanIdForKey, traceIdForKey } from '../../agent/model/trace';
 
 const KEYS = {
   LANGFUSE_PUBLIC_KEY: 'pk-lf-test',

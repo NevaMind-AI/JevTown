@@ -10,7 +10,7 @@ import { assertNever } from '../engine/util/assertNever';
 import { DecisionManifest } from '../engine/aiTown/manifest';
 import { decisionSystemPrompt, idleFallback, parseDecision } from './decide';
 import { interactWithEntity } from './interact';
-import { chatCompletion } from './model/llm';
+import { chatCompletion } from './model/client';
 import { Tracer } from './model/tracing';
 import { promptContextFor } from './promptContext';
 import { AgentContext } from './ports';
