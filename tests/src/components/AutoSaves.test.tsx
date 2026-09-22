@@ -4,12 +4,29 @@ import { readFileSync } from 'node:fs';
 import { loadPackage } from '../../../prototype/package';
 import { restoreSnapshot } from '../../../prototype/replay';
 import { MemoryWorld } from '../../../prototype/world';
-import { saveChunk, SaveHead } from '../../../src/lib/autosaves';
-import { useAutoSaves } from '../../../src/components/AutoSaves';
+import { jest } from '@jest/globals';
+import type { SaveHead } from '../../../src/lib/autosaves';
 
-jest.mock('../../../src/lib/autosaves', () => ({ saveChunk: jest.fn() }));
+// ESM mocks apply only to modules imported after registration.
+jest.unstable_mockModule('../../../src/lib/autosaves', () => ({
+  catalogue: jest.fn(),
+  continuePlayback: jest.fn(),
+  playSlot: jest.fn(),
+  replaceTimeline: jest.fn(),
+  restoreSlot: jest.fn(),
+  saveChunk: jest.fn(),
+}));
+// Collect the hook's effects so the test can run them without a DOM renderer.
+const effects: React.EffectCallback[] = [];
+jest.unstable_mockModule('react', () => ({
+  ...React,
+  default: React,
+  useEffect: (effect: React.EffectCallback) => void effects.push(effect),
+}));
 
 test('full room recordings save partial batches continuously and retain progress on write failure', async () => {
+  const { saveChunk } = await import('../../../src/lib/autosaves');
+  const { useAutoSaves } = await import('../../../src/components/AutoSaves');
   const read = async (path: string) =>
     JSON.parse(
       readFileSync(
@@ -25,13 +42,9 @@ test('full room recordings save partial batches continuously and retain progress
     () => 0,
   );
   world.load(content.scenes, content.story, content.npcs);
-  const effects: React.EffectCallback[] = [];
   const cleanups: (() => void)[] = [];
   const navigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
   jest.useFakeTimers();
-  jest.spyOn(React, 'useEffect').mockImplementation((effect) => {
-    effects.push(effect);
-  });
   Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { storage: {} } });
   const save = jest.mocked(saveChunk);
   let head: SaveHead = { revision: 'empty', slot: 0, sequence: 0 };
