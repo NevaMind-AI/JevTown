@@ -12,6 +12,7 @@ import {
 } from './promptContext';
 import { Tracer } from './model/tracing';
 import { AgentContext } from './ports';
+import { memoryDisabled, numMemoriesToSearch } from './config';
 
 export async function startConversationMessage(
   ctx: AgentContext,
@@ -25,18 +26,17 @@ export async function startConversationMessage(
     otherPlayerId,
     conversationId,
   );
-  const memories =
-    process.env.DISABLE_MEMORY === 'true'
-      ? []
-      : await memory.searchMemories(
+  const memories = memoryDisabled()
+    ? []
+    : await memory.searchMemories(
+        ctx,
+        player.id as GameId<'players'>,
+        await embeddingsCache.fetchEmbedding(
           ctx,
-          player.id as GameId<'players'>,
-          await embeddingsCache.fetchEmbedding(
-            ctx,
-            `${player.name} is talking to ${otherPlayer.name}`,
-          ),
-          Number(process.env.NUM_MEMORIES_TO_SEARCH) || NUM_MEMORIES_TO_SEARCH,
-        );
+          `${player.name} is talking to ${otherPlayer.name}`,
+        ),
+        numMemoriesToSearch(NUM_MEMORIES_TO_SEARCH),
+      );
 
   const memoryWithOtherPlayer = memories.find(
     (m) => m.data.type === 'conversation' && m.data.playerIds.includes(otherPlayerId),
@@ -100,15 +100,14 @@ export async function continueConversationMessage(
   );
   const now = Date.now();
   const started = new Date(conversation.created);
-  const memories =
-    process.env.DISABLE_MEMORY === 'true'
-      ? []
-      : await memory.searchMemories(
-          ctx,
-          player.id as GameId<'players'>,
-          await embeddingsCache.fetchEmbedding(ctx, `What do you think about ${otherPlayer.name}?`),
-          3,
-        );
+  const memories = memoryDisabled()
+    ? []
+    : await memory.searchMemories(
+        ctx,
+        player.id as GameId<'players'>,
+        await embeddingsCache.fetchEmbedding(ctx, `What do you think about ${otherPlayer.name}?`),
+        3,
+      );
   const prompt = [
     `You are ${player.name}, and you're currently in a conversation with ${otherPlayer.name}.`,
     `The conversation started at ${started.toLocaleString()}. It's now ${now.toLocaleString()}.`,

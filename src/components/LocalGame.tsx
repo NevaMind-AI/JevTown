@@ -26,6 +26,7 @@ import { sceneMap, localRoom } from '../../prototype/map';
 import { catalogue, restoreSlot, SaveHead, SavePlayback } from '../lib/autosaves';
 import { useAutoSaves, Restored, PlayHandler } from './AutoSaves';
 import { loadPackage, Package } from '../../prototype/package';
+import { useAgenticRuntime } from '../sim/useAgenticRuntime';
 type PlaybackSession = SavePlayback & { playing: boolean; speed: number };
 export default function LocalGame({ controlsBlocked }: { controlsBlocked: boolean }) {
   const gains = useGainNotifications();
@@ -173,6 +174,9 @@ function LoadedLocalGame({
     return runtime;
   });
   const [state, setState] = useState(() => world.inspect());
+  // The agentic world, when it is switched on. It rides the same clock as `world` below rather
+  // than keeping one of its own -- see `useAgenticRuntime` for why that matters.
+  const agentic = useAgenticRuntime();
   const gainCursor = useRef<{
     sequence: number;
     state: Pick<typeof state, 'tasks' | 'commerce' | 'clues' | 'balance' | 'storyTime'>;
@@ -561,7 +565,11 @@ function LoadedLocalGame({
         0,
         Math.min(elapsed, Math.floor(lastActivity.current + idleMs - (now - elapsed))),
       );
-      pendingTime.current += Math.min(activeElapsed, 160);
+      const quantum = Math.min(activeElapsed, 160);
+      pendingTime.current += quantum;
+      // Same budget, same cap, same bail conditions: this line is reached only when the loop has
+      // already decided this elapsed time should be simulated (docs/11 §4.5).
+      agentic?.advance(quantum);
       if (current.seated || current.dialogue) {
         keys.current.clear();
         sprint.current = false;

@@ -3,6 +3,7 @@ import { asyncMap } from '../engine/util/asyncMap';
 import { GameId } from '../engine/aiTown/ids';
 import { Tracer } from './model/tracing';
 import { AgentContext, ArchivedConversation, StoredMemory } from './ports';
+import { memoryDisabled } from './config';
 
 // How long to wait before updating a memory's last access time.
 export const MEMORY_ACCESS_THROTTLE = 300_000; // In ms
@@ -68,7 +69,7 @@ export async function rememberConversation(
   playerId: GameId<'players'>,
   conversationId: GameId<'conversations'>,
 ) {
-  if (process.env.DISABLE_MEMORY === 'true') return;
+  if (memoryDisabled()) return;
   const data = await loadConversation(ctx, playerId, conversationId);
   const { player, otherPlayer } = data;
   const messages = await ctx.store.listMessages(conversationId);

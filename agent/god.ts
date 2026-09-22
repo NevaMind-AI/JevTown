@@ -7,6 +7,7 @@ import {
 } from '../engine/prose/contract';
 import { Tracer } from './model/tracing';
 import { AgentContext } from './ports';
+import { mysteryGiftEnabled } from './config';
 
 /**
  * The overseer of docs/05 §7. Invisible, never rendered, no position, no entry in
@@ -77,7 +78,7 @@ only you can put it there.`;
  * on every god step, which both floods the audit and makes the next batch enormous — the probe
  * would then be measuring its own load.
  */
-export const MYSTERY_GIFT_ENABLED = process.env.GOD_MYSTERY_GIFT === '1';
+export const MYSTERY_GIFT_ENABLED = mysteryGiftEnabled();
 
 /** The item line the god must produce, exactly as `SHARED_RULES` spells items. */
 export const MYSTERY_GIFT_NAME = 'a mystery gift';
