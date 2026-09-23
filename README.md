@@ -128,6 +128,7 @@ Client flags need the `VITE_` prefix (Vite only exposes those to the bundle) and
 | `VITE_AGENTIC_DEMO=1`        | Runs the demo instead of the game                                |
 | `VITE_DEMO_AGENTS=n`         | Cast size, clamped to `[1, 50]`; five by default                 |
 | `VITE_ACTION_DECIDER=jev`    | Uses the typed System One decider instead of the chat model      |
+| `VITE_GOD_GATE_DECIDER=jev`  | Same, for the god's stage-one gate; its intervention stays chat  |
 | `VITE_DISABLE_MEMORY=true`   | Skips embeddings, for a backend with no embedding model          |
 | `VITE_SUPPRESS_IDLE_AFTER=n` | After n consecutive idles, the decider leans against another one |
 

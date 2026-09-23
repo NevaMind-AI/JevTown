@@ -69,6 +69,68 @@ export async function chatCompletion(body: ChatCompletionBody): Promise<ChatComp
   return await post<ChatCompletionResult>('/chat', body);
 }
 
+// ---------------------------------------------------------------- System One
+
+/**
+ * The other kind of model call: a typed decision rather than text (docs/12).
+ *
+ * A System One model takes a `state` and a map of named questions and answers each one with a
+ * typed, calibrated value. It is not a chat model with a different body — it has no messages, no
+ * completion and no streaming — so it gets its own endpoint here rather than a `provider` field on
+ * `chatCompletion`, and its own route on the proxy, which still holds the key.
+ */
+
+export type SystemOneQuestion =
+  | { type: 'noul'; instructions: string; criteria?: unknown }
+  /** `criteria` maps each option to its description. Both are sent to the model. */
+  | { type: 'choice'; instructions: string; criteria: Record<string, string> }
+  /** `criteria` is an ordered list of level descriptions, low end first. Two to ten of them. */
+  | { type: 'score'; instructions: string; criteria: string[] };
+
+export type SystemOneQuestions = Record<string, SystemOneQuestion>;
+
+export type SystemOneAnswer =
+  /** A probability that the statement is true. Carries no `confidence` of its own. */
+  | { type: 'noul'; noul: number; confidence?: number }
+  | {
+      type: 'choice';
+      choice: string;
+      confidence?: number;
+      probabilities?: Record<string, number>;
+    }
+  | {
+      type: 'score';
+      score: number;
+      confidence?: number;
+      legend?: Record<string, string>;
+      probabilities?: Record<string, number>;
+    };
+
+export type SystemOneAnswers = Record<string, SystemOneAnswer>;
+
+export interface SystemOneBody {
+  /** A string, or an object or array of text. Never an image (the model is text-only). */
+  state: unknown;
+  questions: SystemOneQuestions;
+  model?: string;
+  /** Lets the proxy charge this call to a world's quota, as `/chat` does. */
+  worldId?: string;
+  trace?: ChatTrace;
+}
+
+export interface SystemOneResult {
+  answers: SystemOneAnswers;
+  /** The versioned id that actually answered, which an alias hides. Worth logging. */
+  model?: string;
+  usage?: LLMUsage;
+  retries: number;
+  ms: number;
+}
+
+export async function systemOne(body: SystemOneBody): Promise<SystemOneResult> {
+  return await post<SystemOneResult>('/systemone', body);
+}
+
 export async function fetchEmbeddingBatch(
   texts: string[],
 ): Promise<{ embeddings: number[][]; ms: number }> {
