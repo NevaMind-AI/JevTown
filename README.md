@@ -17,6 +17,11 @@ Drop a cast of agents into a pixel-art room and watch what emerges — nobody is
 simulation runs in a single browser tab; a small local proxy holds your model keys so the browser
 never sees them. It is an MVP and still taking shape.
 
+## Coming soon
+
+We are building a game on top of this engine: a pixel-art narrative world where every character
+you meet is a Jev-driven agent with a life of its own. Star the repository to follow along.
+
 ## Installation
 
 > The Jev demo currently lives on `feat/jev-demo-solarium` until it merges to `main`.
@@ -59,11 +64,6 @@ Requires **Node.js 22 LTS (22.22.1 or a newer patch)** and npm.
 
 Every decision and every line of dialogue is a model call, so a large cast costs more. The proxy
 stops after 2000 model calls per run as a spend backstop; restart it to continue.
-
-## Coming soon
-
-We are building a game on top of this engine: a pixel-art narrative world where every character
-you meet is a Jev-driven agent with a life of its own. Star the repository to follow along.
 
 ## License and credits
 
