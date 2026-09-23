@@ -60,6 +60,11 @@ Requires **Node.js 22 LTS (22.22.1 or a newer patch)** and npm.
 Every decision and every line of dialogue is a model call, so a large cast costs more. The proxy
 stops after 2000 model calls per run as a spend backstop; restart it to continue.
 
+## Coming soon
+
+We are building a game on top of this engine: a pixel-art narrative world where every character
+you meet is a Jev-driven agent with a life of its own. Star the repository to follow along.
+
 ## License and credits
 
 This project started from [a16z-infra/ai-town](https://github.com/a16z-infra/ai-town) and is
