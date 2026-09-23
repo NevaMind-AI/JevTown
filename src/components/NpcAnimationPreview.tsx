@@ -136,12 +136,6 @@ export default function NpcAnimationPreview({
                 {animation.label ?? id}
               </button>
             ))}
-            <button disabled title="待补齐上、下、左、右四个朝向的站立素材">
-              四向站立（素材缺失）
-            </button>
-            <button disabled title="待补齐上、下、左、右四个朝向的行走动画">
-              移动动画（素材缺失）
-            </button>
           </div>
           <p className="my-3 text-sm">
             {loaded.asset.animations[group].frames.length} 帧 · 每帧{' '}

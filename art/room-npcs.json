@@ -2,6 +2,19 @@
   "schema": "handoff-npc-v1",
   "note": "Integration-neutral export, not a backend entity schema. Coordinates are source image pixels; asset paths resolve under source/imagegen-v2/.",
   "definitions": [
+    { "id": "alex", "name": "Alex", "presence": "live", "defaultVisible": true },
+    { "id": "bob", "name": "Bob", "presence": "live", "defaultVisible": true },
+    { "id": "lucky", "name": "Lucky", "presence": "live", "defaultVisible": true },
+    { "id": "pete", "name": "Pete", "presence": "live", "defaultVisible": true },
+    { "id": "kurt", "name": "Kurt", "presence": "live", "defaultVisible": true },
+    { "id": "rinai", "name": "莉奈", "presence": "live", "defaultVisible": true },
+    { "id": "hostess", "name": "老板娘", "presence": "live", "defaultVisible": true },
+    {
+      "id": "player-preview",
+      "name": "Player（展示）",
+      "presence": "live",
+      "defaultVisible": true
+    },
     {
       "id": "n07",
       "name": "N-07",
@@ -1335,9 +1348,119 @@
           "loop": true
         }
       ]
+    },
+    {
+      "id": "alice",
+      "name": "Alice",
+      "kind": "named",
+      "role": "广场上的陌生科学家",
+      "persona": "聪明、专注，习惯用谜语谈论世界的结构。",
+      "presence": "live",
+      "defaultVisible": true,
+      "image": "assets/npcs/alice.png",
+      "metadata": "assets/npcs/alice.json",
+      "movementAnimations": false,
+      "actions": [
+        {
+          "group": "idle",
+          "actionId": "idle",
+          "label": "待命",
+          "frameMs": 1000,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "talk",
+          "actionId": "talk",
+          "label": "回应",
+          "frameMs": 220,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-1",
+          "actionId": "observe",
+          "label": "观察广场",
+          "frameMs": 240,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        },
+        {
+          "group": "duty-2",
+          "actionId": "think",
+          "label": "思考",
+          "frameMs": 240,
+          "frames": ["idle-0", "idle-1", "idle-2", "idle-3"],
+          "loop": true
+        }
+      ]
     }
   ],
   "instances": [
+    {
+      "id": "alex",
+      "characterId": "alex",
+      "name": "Alex",
+      "map": "low-deck",
+      "at": [368, 464],
+      "movable": true
+    },
+    {
+      "id": "bob",
+      "characterId": "bob",
+      "name": "Bob",
+      "map": "low-deck",
+      "at": [560, 464],
+      "movable": true
+    },
+    {
+      "id": "lucky",
+      "characterId": "lucky",
+      "name": "Lucky",
+      "map": "low-deck",
+      "at": [944, 464],
+      "movable": true
+    },
+    {
+      "id": "pete",
+      "characterId": "pete",
+      "name": "Pete",
+      "map": "low-deck",
+      "at": [1136, 464],
+      "movable": true
+    },
+    {
+      "id": "kurt",
+      "characterId": "kurt",
+      "name": "Kurt",
+      "map": "low-deck",
+      "at": [368, 624],
+      "movable": true
+    },
+    {
+      "id": "rinai",
+      "characterId": "rinai",
+      "name": "莉奈",
+      "map": "low-deck",
+      "at": [560, 624],
+      "movable": true
+    },
+    {
+      "id": "hostess",
+      "characterId": "hostess",
+      "name": "老板娘",
+      "map": "low-deck",
+      "at": [752, 624],
+      "movable": true
+    },
+    {
+      "id": "player-preview",
+      "characterId": "player-preview",
+      "name": "Player（展示）",
+      "map": "low-deck",
+      "at": [944, 624],
+      "movable": true
+    },
     {
       "id": "n07",
       "characterId": "n07",
@@ -1370,6 +1493,18 @@
       "placement": "floor",
       "radius": 76,
       "phase": 2.8
+    },
+    {
+      "id": "alice",
+      "characterId": "alice",
+      "name": "Alice",
+      "map": "low-deck",
+      "at": [760, 450],
+      "approach": [760, 510],
+      "placement": "floor",
+      "radius": 76,
+      "phase": 1.2,
+      "movable": true
     },
     {
       "id": "milo",

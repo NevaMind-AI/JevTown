@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "content_version": "alice-plaza-preview-1",
+  "id": "alice-preview",
+  "vars": {},
+  "interactions": {
+    "alice": {
+      "text": "Alice 正在观察广场的动线。",
+      "choices": [
+        {
+          "id": "walk-plaza",
+          "text": "请她绕广场走一圈",
+          "effects": [
+            {
+              "op": "move_entity",
+              "entity": "alice",
+              "path": [
+                [24, 14],
+                [25, 14],
+                [25, 15],
+                [24, 15],
+                [23, 15],
+                [23, 14]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

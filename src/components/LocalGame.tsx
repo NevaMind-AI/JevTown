@@ -1301,6 +1301,8 @@ function LoadedLocalGame({
                   <SpriteComponent
                     key={entity.id}
                     time={visualTime}
+                    moving={!!actor.moving && !visualPaused}
+                    orientation={actor.orientation}
                     highlighted={highlightedEntities.has(entity.id)}
                     visual={visual}
                     position={[x * 32, y * 32]}

@@ -3,7 +3,7 @@
   "status": "scene-integrated",
   "coordinateSystem": "source pixels, top-left origin, x right, y down",
   "background": "background.png",
-  "contentVersion": "low-deck-s01-guided-2",
+  "contentVersion": "low-deck-plaza-cast-1",
   "objects": [
     {
       "id": "door-tag-317",

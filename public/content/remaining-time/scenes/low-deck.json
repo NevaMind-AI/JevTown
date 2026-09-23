@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "content_version": "low-deck-s01-guided-1",
+  "content_version": "low-deck-plaza-cast-1",
   "id": "low-deck",
   "name": "下层回廊",
   "map": {
@@ -176,6 +176,110 @@
       }
     },
     {
+      "id": "alex",
+      "name": "Alex",
+      "position": [11, 14],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/alex-idle.png",
+        "size": [45, 72],
+        "anchor": [0.5, 1.0],
+        "offset": [16, 16]
+      },
+      "movable": true
+    },
+    {
+      "id": "bob",
+      "name": "Bob",
+      "position": [17, 14],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/bob-idle.png",
+        "size": [45, 72],
+        "anchor": [0.5, 1.0],
+        "offset": [16, 16]
+      },
+      "movable": true
+    },
+    {
+      "id": "lucky",
+      "name": "Lucky",
+      "position": [29, 14],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/lucky-idle.png",
+        "size": [45, 72],
+        "anchor": [0.5, 1.0],
+        "offset": [16, 16]
+      },
+      "movable": true
+    },
+    {
+      "id": "pete",
+      "name": "Pete",
+      "position": [35, 14],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/pete-idle.png",
+        "size": [45, 72],
+        "anchor": [0.5, 1.0],
+        "offset": [16, 16]
+      },
+      "movable": true
+    },
+    {
+      "id": "kurt",
+      "name": "Kurt",
+      "position": [11, 19],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/kurt-idle.png",
+        "size": [45, 72],
+        "anchor": [0.5, 1.0],
+        "offset": [16, 16]
+      },
+      "movable": true
+    },
+    {
+      "id": "rinai",
+      "name": "莉奈",
+      "position": [17, 19],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/rinai-idle.png",
+        "size": [45, 72],
+        "anchor": [0.5, 1.0],
+        "offset": [16, 16]
+      },
+      "movable": true
+    },
+    {
+      "id": "hostess",
+      "name": "老板娘",
+      "position": [23, 19],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/hostess-idle.png",
+        "size": [45, 72],
+        "anchor": [0.5, 1.0],
+        "offset": [16, 16]
+      },
+      "movable": true
+    },
+    {
+      "id": "player-preview",
+      "name": "Player（展示）",
+      "position": [29, 19],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/player-preview-idle.png",
+        "size": [51, 82],
+        "anchor": [0.5, 0.96875],
+        "offset": [16, 16]
+      },
+      "movable": true
+    },
+    {
       "id": "ash",
       "name": "Ash",
       "position": [10, 12],
@@ -186,6 +290,19 @@
         "anchor": [0.5, 0.9375],
         "offset": [16, 16]
       }
+    },
+    {
+      "id": "alice",
+      "name": "Alice",
+      "position": [23, 14],
+      "character": "sprite",
+      "sprite": {
+        "image": "assets/room-npcs/alice-idle.png",
+        "size": [45, 72],
+        "anchor": [0.5, 1.0],
+        "offset": [16, 16]
+      },
+      "movable": true
     },
     {
       "id": "milo",

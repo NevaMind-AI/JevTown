@@ -5,8 +5,14 @@ import { RoomNpcAsset, loadRoomNpcAsset, roomNpcFrame, roomNpcId } from '../lib/
 
 export default function RoomNpc({
   time,
+  moving = false,
+  orientation = 0,
   ...props
-}: ComponentProps<typeof AssetSprite> & { time: number }) {
+}: ComponentProps<typeof AssetSprite> & {
+  time: number;
+  moving?: boolean;
+  orientation?: number;
+}) {
   const image = props.visual.image;
   const [loaded, setLoaded] = useState<{
     image: string;
@@ -58,7 +64,10 @@ export default function RoomNpc({
   }, [image]);
 
   if (!loaded || loaded.image !== image) return <AssetSprite {...props} />;
-  const name = roomNpcFrame(loaded.asset, 'idle', time);
+  const direction = (['right', 'front', 'left', 'back'] as const)[Math.floor(orientation / 90) % 4];
+  const preferred = `${moving ? 'walk' : 'idle'}-${direction}`;
+  const group = loaded.asset.animations[preferred] ? preferred : 'idle';
+  const name = roomNpcFrame(loaded.asset, group, time);
   const frame = loaded.asset.frames[name];
   return (
     <AssetSprite
