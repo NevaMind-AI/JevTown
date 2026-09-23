@@ -1,4 +1,4 @@
-import { chatCompletion } from './model/client';
+import { chatCompletion, systemOne } from './model/client';
 import { extractJsonObject } from '../engine/prose/envelope';
 import {
   BOTH_TIERS_STATE_CONTRACT,
@@ -7,7 +7,8 @@ import {
 } from '../engine/prose/contract';
 import { Tracer } from './model/tracing';
 import { AgentContext } from './ports';
-import { mysteryGiftEnabled } from './config';
+import { godGateDecider, mysteryGiftEnabled } from './config';
+import { gateFromAnswers, jevGateRequest } from './gateJev';
 
 /**
  * The overseer of docs/05 §7. Invisible, never rendered, no position, no entry in
@@ -337,7 +338,9 @@ export async function godStep(ctx: AgentContext) {
     worldId: ctx.world.worldId,
     key: `god:${ctx.world.worldId}:${batchId}`,
     name: 'god',
-    tags: ['god'],
+    // Which decider answered the gate is a tag, not metadata, for the reason docs/12 §2 gives:
+    // the two are only comparable if a run is never ambiguous about which one it was.
+    tags: ['god', `gate:${godGateDecider()}`],
     metadata: { batchId, throughInputNumber: through, events: batch.events.length },
   });
   // The formed batch is recorded before it is judged, so a verdict can always be traced to
@@ -353,11 +356,35 @@ export async function godStep(ctx: AgentContext) {
   // affordable, and it is why it exists in the first version rather than as an optimisation
   // (docs/05 §7.5).
   let gate: GateVerdict = { intervene: true, why: 'The gate is disabled for this world.' };
+  // Which documents stage two should be shown. Only the Jev gate can say: a chat gate returns one
+  // boolean for the whole batch, so under it this stays undefined and stage two sees everything,
+  // exactly as before.
+  let flagged: string[] | undefined;
+  let gateProblems: string[] = [];
   // MYSTERY GIFT: the probe needs stage two on every batch, and the gate exists to skip stage
   // two on most of them. While the probe is on it stands down, and the hit rate it reports is
   // meaningless for the duration -- which is the honest reason to keep the probe short-lived.
   if (MYSTERY_GIFT_ENABLED) {
     gate = { intervene: true, why: 'The mystery-gift probe is on; the gate stood down.' };
+  } else if (config.gateEnabled && godGateDecider() === 'jev') {
+    // The typed gate of docs/12 §11. Same evidence, same `GateVerdict` out, same trace slot --
+    // what differs is that there is no JSON to dig out of prose, the two questions no longer
+    // share one boolean, and the answer names the documents rather than describing them.
+    const request = jevGateRequest({
+      persona: config.persona,
+      commonKnowledge: batch.commonKnowledge,
+      documents: batch.events,
+    });
+    const { answers } = await systemOne({
+      state: request.state,
+      questions: request.questions,
+      worldId: ctx.world.worldId,
+      trace: tracer.generation('god.gate'),
+    });
+    const reading = gateFromAnswers(answers, request);
+    gate = { intervene: reading.intervene, why: reading.why };
+    flagged = reading.flagged;
+    gateProblems = reading.problems;
   } else if (config.gateEnabled) {
     const { content } = await chatCompletion({
       messages: [
@@ -403,14 +430,26 @@ export async function godStep(ctx: AgentContext) {
     await tracer.close({
       input: summary,
       output: gate,
-      metadata: { intervened: false, gateEnabled: config.gateEnabled },
+      metadata: {
+        intervened: false,
+        gateEnabled: config.gateEnabled,
+        gate: godGateDecider(),
+        ...(gateProblems.length ? { gateProblems } : {}),
+      },
     });
     return;
   }
 
   // Stage two: full transcript, current states, the rule. Only reached when the gate fires.
+  //
+  // `entityIds` is what the god may write to -- the whole batch, unchanged (docs/05 §7.6). `focus`
+  // is what it is shown. They are deliberately different: narrowing the batch to what the Jev gate
+  // flagged would turn a gate false negative into a document nothing can ever fix, whereas
+  // narrowing only the evidence makes the expensive call smaller and leaves the scope rule alone.
+  // When only common knowledge is stale, `focus` is empty and no document is sent at all.
   const entityIds = [...new Set(batch.events.map((event) => event.entityId))];
-  const states = await loadEntityStates(ctx, entityIds);
+  const focus = flagged ?? entityIds;
+  const states = await loadEntityStates(ctx, focus);
   const { content } = await chatCompletion({
     messages: [
       {
@@ -444,8 +483,10 @@ export async function godStep(ctx: AgentContext) {
         content: [
           `The gate flagged this: ${gate.why}`,
           '',
-          'Current state of the entities involved:',
-          ...entityIds.map((id) => `[${id}]\n${states[id] ?? '(none)'}`),
+          focus.length
+            ? 'Current state of the entities involved:'
+            : 'No document was flagged; only common knowledge needs attention.',
+          ...focus.map((id) => `[${id}]\n${states[id] ?? '(none)'}`),
           '',
           commonKnowledgeNow,
         ].join('\n'),
@@ -453,7 +494,7 @@ export async function godStep(ctx: AgentContext) {
     ],
     max_tokens: 1500,
     trace: tracer.generation('god.intervention', {
-      entityIds,
+      entityIds: focus,
       gateReason: gate.why,
       // MYSTERY GIFT: without this the probe's runs are indistinguishable from real ones.
       ...(MYSTERY_GIFT_ENABLED ? { mysteryGift: true } : {}),
@@ -473,7 +514,14 @@ export async function godStep(ctx: AgentContext) {
     await tracer.close({
       input: summary,
       output: { gate, writes, world, problems },
-      metadata: { intervened: true, writes: 0, commonKnowledge: false, problems },
+      metadata: {
+        intervened: true,
+        writes: 0,
+        commonKnowledge: false,
+        problems,
+        gate: godGateDecider(),
+        ...(gateProblems.length ? { gateProblems } : {}),
+      },
       level: 'ERROR',
       statusMessage: `Gate fired but changed nothing. ${problems.join('; ')}`,
     });
@@ -497,6 +545,12 @@ export async function godStep(ctx: AgentContext) {
   await tracer.close({
     input: summary,
     output: { gate, writes, world },
-    metadata: { intervened: true, writes: writes.length, commonKnowledge: !!world },
+    metadata: {
+      intervened: true,
+      writes: writes.length,
+      commonKnowledge: !!world,
+      gate: godGateDecider(),
+      ...(gateProblems.length ? { gateProblems } : {}),
+    },
   });
 }

@@ -1,0 +1,207 @@
+import {
+  CHOICE_CONFIDENCE_FLOOR,
+  IDLE_LONG_MS,
+  IDLE_SHORT_MS,
+  decisionFromAnswers,
+  jevDecisionRequest,
+} from './decideJev';
+import { DecisionManifest } from '../engine/aiTown/manifest';
+import { SystemOneAnswers } from './model/client';
+import { PromptContext } from './promptContext';
+
+const MANIFEST: DecisionManifest = {
+  targets: [
+    { id: 'p:2', name: 'Bob', what: 'a person', distance: 'close' },
+    {
+      id: 'e:1',
+      name: 'Mill door',
+      what: 'a thing you can act on',
+      description: 'A heavy oak door.',
+      distance: 'nearby',
+      where: 'mill_yard',
+    },
+  ],
+  places: [{ id: 'mill_yard', description: 'The packed-dirt yard beside the mill.' }],
+};
+
+const ALICE: PromptContext = {
+  entityId: 'p:1',
+  tier: 'actor',
+  name: 'Alice',
+  description: 'A cautious millwright.',
+  state: 'state: uneasy\n\nThe mill runs hot.\n\nShe means to ask.',
+  worldRules: 'Nobody can leave this town.',
+};
+
+/** A `choice` answer as the API returns one. */
+const chose = (choice: string, confidence = 0.8, probability = 0.8) => ({
+  type: 'choice' as const,
+  choice,
+  confidence,
+  probabilities: { [choice]: probability },
+});
+
+describe('jevDecisionRequest', () => {
+  test('phrases options as moves, never as ids', () => {
+    const request = jevDecisionRequest(ALICE, MANIFEST);
+    const target = request.questions.target as { criteria: Record<string, string> };
+
+    expect(Object.keys(target.criteria)).toEqual(['talk to Bob', 'go to Mill door']);
+    expect(request.targets).toEqual({ 'talk to Bob': 'p:2', 'go to Mill door': 'e:1' });
+    // The manifest ids are the mapping, not the prompt: an id must never reach the model as an
+    // option it is asked to pick between.
+    expect(JSON.stringify(target.criteria)).not.toContain('p:2');
+    expect(JSON.stringify(target.criteria)).not.toContain('e:1');
+  });
+
+  test('carries the manifest prose and the state, and never another entity state', () => {
+    const request = jevDecisionRequest(ALICE, MANIFEST);
+    const target = request.questions.target as { criteria: Record<string, string> };
+    const place = request.questions.place as { criteria: Record<string, string> };
+
+    expect(target.criteria['talk to Bob']).toBe('a person, close');
+    expect(target.criteria['go to Mill door']).toBe(
+      'a thing you can act on, nearby at the mill yard — A heavy oak door.',
+    );
+    expect(place.criteria['walk to the mill yard']).toContain('packed-dirt yard');
+    expect(request.state.you).toContain('A cautious millwright.');
+    expect(request.state.how_this_world_works).toBe('Nobody can leave this town.');
+    expect(request.state.your_state_right_now).toContain('The mill runs hot.');
+  });
+
+  test('numbers a repeated name rather than losing one of them', () => {
+    const request = jevDecisionRequest(ALICE, {
+      targets: [
+        { id: 'p:2', name: 'Bob', what: 'a person', distance: 'close' },
+        { id: 'p:3', name: 'Bob', what: 'a person', distance: 'far' },
+      ],
+      places: [],
+    });
+
+    expect(request.targets).toEqual({ 'talk to Bob': 'p:2', 'talk to Bob (2)': 'p:3' });
+  });
+
+  test('omits a question that would have no options, and always asks the idle length', () => {
+    const empty = jevDecisionRequest(ALICE, { targets: [], places: [] });
+
+    expect(Object.keys(empty.questions)).toEqual(['idle_length']);
+
+    const noPlaces = jevDecisionRequest(ALICE, { targets: MANIFEST.targets, places: [] });
+    expect(Object.keys(noPlaces.questions).sort()).toEqual(['idle_length', 'seek', 'target']);
+  });
+});
+
+describe('decisionFromAnswers', () => {
+  const request = jevDecisionRequest(ALICE, MANIFEST);
+
+  test('approaches when seek clears the gate', () => {
+    const { decision, problems } = decisionFromAnswers(
+      {
+        seek: { type: 'noul', noul: 0.83 },
+        target: chose('talk to Bob', 0.7, 0.62),
+        roam: { type: 'noul', noul: 0.9 },
+        place: chose('walk to the mill yard'),
+        idle_length: chose('pause for a moment'),
+      },
+      request,
+    );
+
+    expect(decision).toEqual({
+      action: 'approach',
+      target: 'p:2',
+      // docs/12 §2 option (c): no intent, and nothing invents one.
+      intent: '',
+      reason: 'seek 0.83 · talk to Bob p=0.62 c=0.70',
+    });
+    expect(problems).toEqual([]);
+  });
+
+  test('wanders when seek says no but roam says yes', () => {
+    const { decision } = decisionFromAnswers(
+      {
+        seek: { type: 'noul', noul: 0.2 },
+        target: chose('talk to Bob'),
+        roam: { type: 'noul', noul: 0.77 },
+        place: chose('walk to the mill yard', 1, 1),
+        idle_length: chose('pause for a moment'),
+      },
+      request,
+    );
+
+    expect(decision).toMatchObject({ action: 'wander', anchor: 'mill_yard' });
+  });
+
+  test('a target the model was not offered is not a legal move to validate later', () => {
+    const { decision, problems } = decisionFromAnswers(
+      {
+        seek: { type: 'noul', noul: 1 },
+        target: chose('talk to Carol'),
+        roam: { type: 'noul', noul: 0 },
+        idle_length: chose('stay put for a while'),
+      },
+      request,
+    );
+
+    expect(decision).toMatchObject({ action: 'idle', durationMs: IDLE_LONG_MS });
+    expect(problems.join(' ')).toContain('was not one of the options');
+  });
+
+  test('a coin-toss choice falls through to the next gate instead of committing', () => {
+    const { decision, problems } = decisionFromAnswers(
+      {
+        seek: { type: 'noul', noul: 0.9 },
+        target: chose('talk to Bob', CHOICE_CONFIDENCE_FLOOR - 0.01, 0.34),
+        roam: { type: 'noul', noul: 0.9 },
+        place: chose('walk to the mill yard', 0.9, 0.9),
+        idle_length: chose('pause for a moment'),
+      },
+      request,
+    );
+
+    // Not an idle: a target it cannot pick between does not mean there was nowhere to walk.
+    expect(decision).toMatchObject({ action: 'wander', anchor: 'mill_yard' });
+    expect(problems.join(' ')).toContain('under the floor');
+  });
+
+  test('idles at the length it chose, with a description and no emoji', () => {
+    const { decision } = decisionFromAnswers(
+      {
+        seek: { type: 'noul', noul: 0 },
+        roam: { type: 'noul', noul: 0 },
+        idle_length: chose('pause for a moment'),
+      },
+      request,
+    );
+
+    expect(decision).toEqual({
+      action: 'idle',
+      durationMs: IDLE_SHORT_MS,
+      description: 'pausing',
+      reason: 'seek 0.00 · roam 0.00 · pause for a moment',
+    });
+    expect(decision).not.toHaveProperty('emoji');
+  });
+
+  test('never throws, and idles on anything unusable', () => {
+    const rubbish: unknown[] = [
+      {},
+      null,
+      undefined,
+      { seek: { type: 'noul', noul: 1 } },
+      { seek: { type: 'score', score: 1 }, target: chose('talk to Bob') },
+      { target: { type: 'choice' }, idle_length: { type: 'choice', choice: 'nonsense' } },
+    ];
+    for (const answers of rubbish) {
+      expect(() => decisionFromAnswers(answers as SystemOneAnswers, request)).not.toThrow();
+      const { decision } = decisionFromAnswers(answers as SystemOneAnswers, request);
+      expect(decision.action).toBe('idle');
+      expect(decision.reason).not.toBe('');
+    }
+  });
+
+  test('defaults to the long idle when the length question was not answered', () => {
+    const { decision } = decisionFromAnswers({} as SystemOneAnswers, request);
+
+    expect(decision).toMatchObject({ action: 'idle', durationMs: IDLE_LONG_MS });
+  });
+});
