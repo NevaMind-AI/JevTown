@@ -48,8 +48,8 @@
 
 ## 提交与 PR 描述
 
-- 标题沿用 `<gitmoji> <type>: <subject>` 风格，PR 描述保留并填写
-  `.github/pull_request_template.md`。
+- 提交与 PR 标题使用 `<type>: <subject>` 风格，不加 gitmoji；可带 scope，例如
+  `fix(engine): resolve autosave corruption`。PR 描述保留并填写 `.github/pull_request_template.md`。
 - 每个 Agent 协助完成的提交必须在实际提交消息末尾保留对应的 `Co-authored-by` trailer。Codex 使用
   `Co-authored-by: Codex <codex@openai.com>`。
 - 可通过 `PI_MODEL` 确认模型 ID 时，在同一个 trailer 段落另写一行
