@@ -1,0 +1,54 @@
+name: Validate PR title
+
+# Squash merges use the pull request title as the commit subject on main.
+# This repo's titles follow the "<gitmoji> <type>: <subject>" style (see
+# AGENTS.md and .github/pull_request_template.md); reject invalid titles
+# before merge so main's history stays consistently parseable.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  conventional-pr-title:
+    name: pr-title
+    runs-on: [staging-access-runner]
+    steps:
+      # Do not check out or execute pull request code. The title is supplied by
+      # the event payload and validated entirely in the runner process.
+      - name: Validate PR title
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const title = context.payload.pull_request.title.trim();
+            // "<gitmoji> <type>: <subject>" per AGENTS.md; the gitmoji is
+            // optional so plain "fix: ..." titles still pass. Types come from
+            // .github/pull_request_template.md.
+            const types = '(feat|fix|docs|refactor|perf|dx|workflow|wip|test|types|ci|chore|deps|release|build)';
+            const emoji = '(?:\\p{Extended_Pictographic}(?:\\uFE0F|\\u200D\\p{Extended_Pictographic})*)?';
+            const pattern = new RegExp(
+              `^${emoji}\\s*${types}(\\([a-z0-9][a-z0-9._/-]*\\))?!?: \\S.*$`,
+              'u',
+            );
+
+            if (!pattern.test(title)) {
+              core.setFailed([
+                `Invalid pull request title: ${JSON.stringify(title)}`,
+                '',
+                'Use the "<gitmoji> <type>: <subject>" style from AGENTS.md (gitmoji optional).',
+                `Allowed types: ${types.slice(1, -1)}`,
+                'Examples:',
+                '  📝 docs: restructure the README around the two modes',
+                '  🐛 fix(engine): resolve autosave corruption',
+                '  feat: add commerce system',
+              ].join('\n'));
+              return;
+            }
+
+            core.info(`Valid PR title: ${title}`);
