@@ -1,11 +1,8 @@
 # Jev Town
 
+![Thirty seconds of Jev demo mode: five agents on the solarium room](assets/jev_30s.gif)
+
 **The first Jev-based AI simulation system.**
-
-<video src="https://github.com/NevaMind-AI/jev-town/raw/main/assets/jev_30s.mp4" controls muted playsinline width="100%"></video>
-
-Thirty seconds of Jev demo mode running, five agents on the solarium room. If the player does not
-load here, open [assets/jev_30s.mp4](assets/jev_30s.mp4) directly.
 
 **Jev Town** is a pixel-art narrative game by NevaMind-AI about relics, choices, and digital life.
 The whole world runs in a single browser tab — built with TypeScript, React, and PixiJS — so playing
