@@ -18,7 +18,7 @@ concurrency:
 jobs:
   conventional-pr-title:
     name: pr-title
-    runs-on: [staging-access-runner]
+    runs-on: [staging-access]
     steps:
       # Do not check out or execute pull request code. The title is supplied by
       # the event payload and validated entirely in the runner process.
