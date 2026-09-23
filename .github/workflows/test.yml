@@ -15,7 +15,7 @@ concurrency:
 jobs:
   unit-tests:
     name: unit-tests
-    runs-on: [staging-access-runner]
+    runs-on: [staging-access]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

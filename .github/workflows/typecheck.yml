@@ -15,7 +15,7 @@ concurrency:
 jobs:
   typecheck:
     name: tsc
-    runs-on: [staging-access-runner]
+    runs-on: [staging-access]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
