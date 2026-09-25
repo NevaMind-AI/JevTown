@@ -1,7 +1,12 @@
 {
   "contentVersion": "room-world-2-npc-menu",
-  "packageVersion": "room-world-7-s01-guided-2",
-  "stories": ["stories/unit-404.json", "stories/s01-door-tag.json"],
+  "packageVersion": "room-world-8-plaza-cast",
+  "stories": [
+    "stories/unit-404.json",
+    "stories/s01-door-tag.json",
+    "stories/alice-preview.json",
+    "stories/plaza-preview.json"
+  ],
   "start": { "scene": "unit-404", "anchor": "start" },
   "scenes": [
     "unit-404",

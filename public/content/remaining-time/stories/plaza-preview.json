@@ -1,0 +1,192 @@
+{
+  "schema_version": "1.0",
+  "content_version": "plaza-cast-preview-1",
+  "id": "plaza-preview",
+  "vars": {},
+  "interactions": {
+    "alex": {
+      "text": "Alex在广场上。",
+      "choices": [
+        {
+          "id": "walk-plaza",
+          "text": "走一圈",
+          "effects": [
+            {
+              "op": "move_entity",
+              "entity": "alex",
+              "path": [
+                [12, 14],
+                [13, 14],
+                [13, 15],
+                [12, 15],
+                [11, 15],
+                [11, 14]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "bob": {
+      "text": "Bob在广场上。",
+      "choices": [
+        {
+          "id": "walk-plaza",
+          "text": "走一圈",
+          "effects": [
+            {
+              "op": "move_entity",
+              "entity": "bob",
+              "path": [
+                [18, 14],
+                [19, 14],
+                [19, 15],
+                [18, 15],
+                [17, 15],
+                [17, 14]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "lucky": {
+      "text": "Lucky在广场上。",
+      "choices": [
+        {
+          "id": "walk-plaza",
+          "text": "走一圈",
+          "effects": [
+            {
+              "op": "move_entity",
+              "entity": "lucky",
+              "path": [
+                [30, 14],
+                [31, 14],
+                [31, 15],
+                [30, 15],
+                [29, 15],
+                [29, 14]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "pete": {
+      "text": "Pete在广场上。",
+      "choices": [
+        {
+          "id": "walk-plaza",
+          "text": "走一圈",
+          "effects": [
+            {
+              "op": "move_entity",
+              "entity": "pete",
+              "path": [
+                [36, 14],
+                [37, 14],
+                [37, 15],
+                [36, 15],
+                [35, 15],
+                [35, 14]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "kurt": {
+      "text": "Kurt在广场上。",
+      "choices": [
+        {
+          "id": "walk-plaza",
+          "text": "走一圈",
+          "effects": [
+            {
+              "op": "move_entity",
+              "entity": "kurt",
+              "path": [
+                [12, 19],
+                [13, 19],
+                [13, 20],
+                [12, 20],
+                [11, 20],
+                [11, 19]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "rinai": {
+      "text": "莉奈在广场上。",
+      "choices": [
+        {
+          "id": "walk-plaza",
+          "text": "走一圈",
+          "effects": [
+            {
+              "op": "move_entity",
+              "entity": "rinai",
+              "path": [
+                [18, 19],
+                [19, 19],
+                [19, 20],
+                [18, 20],
+                [17, 20],
+                [17, 19]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "hostess": {
+      "text": "老板娘在广场上。",
+      "choices": [
+        {
+          "id": "walk-plaza",
+          "text": "走一圈",
+          "effects": [
+            {
+              "op": "move_entity",
+              "entity": "hostess",
+              "path": [
+                [24, 19],
+                [25, 19],
+                [25, 20],
+                [24, 20],
+                [23, 20],
+                [23, 19]
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "player-preview": {
+      "text": "Player（展示）在广场上。",
+      "choices": [
+        {
+          "id": "walk-plaza",
+          "text": "走一圈",
+          "effects": [
+            {
+              "op": "move_entity",
+              "entity": "player-preview",
+              "path": [
+                [30, 19],
+                [31, 19],
+                [31, 20],
+                [30, 20],
+                [29, 20],
+                [29, 19]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

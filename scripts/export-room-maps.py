@@ -201,6 +201,7 @@ def export():
                     # Match the occupied tile: source pixels may land on a reserved arrival tile.
                     'offset': [TILE // 2, TILE // 2],
                 },
+                **({'movable': True} if npc.get('movable') else {}),
             })
         npc_cells = {tuple(e['position']) for e in entities if not e.get('portal')}
         walking_grid = [''.join('#' if (x, y) in npc_cells else cell for x, cell in enumerate(row))

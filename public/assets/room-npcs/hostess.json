@@ -1,0 +1,460 @@
+{
+  "frames": {
+    "idle-front-0": {
+      "x": 0,
+      "y": 0,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-front-1": {
+      "x": 80,
+      "y": 0,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-front-2": {
+      "x": 160,
+      "y": 0,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-front-3": {
+      "x": 240,
+      "y": 0,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-front-0": {
+      "x": 0,
+      "y": 128,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-front-1": {
+      "x": 80,
+      "y": 128,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-front-2": {
+      "x": 160,
+      "y": 128,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-front-3": {
+      "x": 240,
+      "y": 128,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-back-0": {
+      "x": 0,
+      "y": 256,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-back-1": {
+      "x": 80,
+      "y": 256,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-back-2": {
+      "x": 160,
+      "y": 256,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-back-3": {
+      "x": 240,
+      "y": 256,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-back-0": {
+      "x": 0,
+      "y": 384,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-back-1": {
+      "x": 80,
+      "y": 384,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-back-2": {
+      "x": 160,
+      "y": 384,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-back-3": {
+      "x": 240,
+      "y": 384,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-left-0": {
+      "x": 0,
+      "y": 512,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-left-1": {
+      "x": 80,
+      "y": 512,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-left-2": {
+      "x": 160,
+      "y": 512,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-left-3": {
+      "x": 240,
+      "y": 512,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-left-0": {
+      "x": 0,
+      "y": 640,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-left-1": {
+      "x": 80,
+      "y": 640,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-left-2": {
+      "x": 160,
+      "y": 640,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-left-3": {
+      "x": 240,
+      "y": 640,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-right-0": {
+      "x": 0,
+      "y": 768,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-right-1": {
+      "x": 80,
+      "y": 768,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-right-2": {
+      "x": 160,
+      "y": 768,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "idle-right-3": {
+      "x": 240,
+      "y": 768,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-right-0": {
+      "x": 0,
+      "y": 896,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-right-1": {
+      "x": 80,
+      "y": 896,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-right-2": {
+      "x": 160,
+      "y": 896,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    },
+    "walk-right-3": {
+      "x": 240,
+      "y": 896,
+      "w": 80,
+      "h": 128,
+      "anchor": [
+        40,
+        128
+      ]
+    }
+  },
+  "animations": {
+    "idle-front": {
+      "frames": [
+        "idle-front-0",
+        "idle-front-1",
+        "idle-front-2",
+        "idle-front-3"
+      ],
+      "duration": 300,
+      "loop": true,
+      "label": "正面待机"
+    },
+    "walk-front": {
+      "frames": [
+        "walk-front-0",
+        "walk-front-1",
+        "walk-front-2",
+        "walk-front-3"
+      ],
+      "duration": 140,
+      "loop": true,
+      "label": "正面行走"
+    },
+    "idle-back": {
+      "frames": [
+        "idle-back-0",
+        "idle-back-1",
+        "idle-back-2",
+        "idle-back-3"
+      ],
+      "duration": 300,
+      "loop": true,
+      "label": "背面待机"
+    },
+    "walk-back": {
+      "frames": [
+        "walk-back-0",
+        "walk-back-1",
+        "walk-back-2",
+        "walk-back-3"
+      ],
+      "duration": 140,
+      "loop": true,
+      "label": "背面行走"
+    },
+    "idle-left": {
+      "frames": [
+        "idle-left-0",
+        "idle-left-1",
+        "idle-left-2",
+        "idle-left-3"
+      ],
+      "duration": 300,
+      "loop": true,
+      "label": "朝左待机"
+    },
+    "walk-left": {
+      "frames": [
+        "walk-left-0",
+        "walk-left-1",
+        "walk-left-2",
+        "walk-left-3"
+      ],
+      "duration": 140,
+      "loop": true,
+      "label": "朝左行走"
+    },
+    "idle-right": {
+      "frames": [
+        "idle-right-0",
+        "idle-right-1",
+        "idle-right-2",
+        "idle-right-3"
+      ],
+      "duration": 300,
+      "loop": true,
+      "label": "朝右待机"
+    },
+    "walk-right": {
+      "frames": [
+        "walk-right-0",
+        "walk-right-1",
+        "walk-right-2",
+        "walk-right-3"
+      ],
+      "duration": 140,
+      "loop": true,
+      "label": "朝右行走"
+    },
+    "idle": {
+      "frames": [
+        "idle-front-0",
+        "idle-front-1",
+        "idle-front-2",
+        "idle-front-3"
+      ],
+      "duration": 300,
+      "loop": true,
+      "label": "idle（正面待机占位）"
+    },
+    "talk": {
+      "frames": [
+        "idle-front-0",
+        "idle-front-1",
+        "idle-front-2",
+        "idle-front-3"
+      ],
+      "duration": 300,
+      "loop": true,
+      "label": "talk（正面待机占位）"
+    },
+    "duty-1": {
+      "frames": [
+        "idle-front-0",
+        "idle-front-1",
+        "idle-front-2",
+        "idle-front-3"
+      ],
+      "duration": 300,
+      "loop": true,
+      "label": "duty-1（正面待机占位）"
+    },
+    "duty-2": {
+      "frames": [
+        "idle-front-0",
+        "idle-front-1",
+        "idle-front-2",
+        "idle-front-3"
+      ],
+      "duration": 300,
+      "loop": true,
+      "label": "duty-2（正面待机占位）"
+    }
+  },
+  "id": "hostess",
+  "displayScale": 0.35
+}
