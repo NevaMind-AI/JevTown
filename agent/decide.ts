@@ -2,7 +2,7 @@ import { DecisionManifest } from '../engine/aiTown/manifest';
 import { extractJsonObject } from '../engine/prose/envelope';
 import {
   PromptContext,
-  commonKnowledgeSection,
+  worldStateSection,
   identitySection,
   worldRulesSection,
 } from './promptContext';
@@ -149,7 +149,7 @@ export function decisionSystemPrompt(context: PromptContext, manifest: DecisionM
     '',
     ...worldRulesSection(context),
     '',
-    ...commonKnowledgeSection(context),
+    ...worldStateSection(context),
     '',
     ...(context.state ? ['Your state right now:', context.state] : []),
     '',

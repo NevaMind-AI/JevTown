@@ -1,5 +1,10 @@
-import { COMMON_KNOWLEDGE_ID, STATE_WORD_BUDGET } from '../prose/contract';
-import { wordCount } from '../prose/stateDocument';
+import { WORLD_STATE_ID, STATE_WORD_BUDGET } from '../prose/contract';
+import { budgetedText, wordCount } from '../prose/stateDocument';
+
+/** docs/13 §1.8 item E: `world_state` is the field; `common_knowledge` is what it used to be. */
+export function worldStateOf(file: WorldFile): string | undefined {
+  return file.world_state ?? file.common_knowledge;
+}
 
 /**
  * The `a1.0` world file, its validation rules, and the load-time repairs docs/07 §5.2 requires.
@@ -34,9 +39,11 @@ export interface WorldFile {
   meta?: { id?: string; title?: string; description?: string; authored_by?: string; seed?: number };
   world_rules?: string;
   /**
-   * The world's common knowledge at load (docs/05 §5.3). Authored once and thereafter the god's
-   * to rewrite — unlike `world_rules`, which never changes.
+   * The world's state document at load (docs/05 §5.3, docs/13 §1.4). Authored once and thereafter
+   * rewritten by the god and by agents — unlike `world_rules`, which never changes.
    */
+  world_state?: string;
+  /** What `world_state` was called before docs/13 §1.4. Read, never written. */
   common_knowledge?: string;
   entities: WorldFileEntity[];
   god?: {
@@ -82,10 +89,19 @@ export function validateWorldFile(file: WorldFile, map: MapContext): ValidationR
   if (file.world_rules !== undefined && file.world_rules.trim() === '') {
     warnings.push('world_rules is empty');
   }
+  if (file.world_state !== undefined && file.common_knowledge !== undefined) {
+    errors.push('world_state and common_knowledge are the same field; write only world_state');
+  }
   // docs/05 §5.3: the same budget every state document gets, checked at authoring time as
-  // `initial_state` is, since nothing at runtime will re-ask on the author's behalf.
-  if (file.common_knowledge !== undefined && wordCount(file.common_knowledge) > STATE_WORD_BUDGET) {
-    errors.push(`common_knowledge is over ${STATE_WORD_BUDGET} words`);
+  // `initial_state` is, since nothing at runtime will re-ask on the author's behalf. The record
+  // blocks are excluded here as they are at runtime (docs/13 §1.7), so an authored world with a
+  // long task list is not rejected for prose it does not have.
+  const authoredWorldState = worldStateOf(file);
+  if (
+    authoredWorldState !== undefined &&
+    wordCount(budgetedText(authoredWorldState)) > STATE_WORD_BUDGET
+  ) {
+    errors.push(`world_state is over ${STATE_WORD_BUDGET} words`);
   }
 
   const seen = new Set<string>();
@@ -101,12 +117,10 @@ export function validateWorldFile(file: WorldFile, map: MapContext): ValidationR
     if (seen.has(entity.id)) {
       errors.push(`${where}: duplicate id`);
     }
-    if (entity.id === COMMON_KNOWLEDGE_ID) {
+    if (entity.id === WORLD_STATE_ID) {
       // The reserved key of docs/05 §5.3. An entity holding it would share a row namespace with
-      // common knowledge and the two would overwrite each other's versions.
-      errors.push(
-        `${where}: "${COMMON_KNOWLEDGE_ID}" is reserved for the world's common knowledge`,
-      );
+      // the world-state document and the two would overwrite each other's versions.
+      errors.push(`${where}: "${WORLD_STATE_ID}" is reserved for the world's state document`);
     }
     seen.add(entity.id);
 

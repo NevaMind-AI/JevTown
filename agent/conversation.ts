@@ -5,7 +5,7 @@ import { GameId } from '../engine/aiTown/ids';
 import { NUM_MEMORIES_TO_SEARCH } from '../engine/constants';
 import {
   PromptContext,
-  commonKnowledgeSection,
+  worldStateSection,
   describe,
   promptContextFor,
   worldRulesSection,
@@ -237,7 +237,7 @@ function proseStatePrompts(context: PromptContext | null): string[] {
   if (!context) {
     return [];
   }
-  const prompt = [...worldRulesSection(context), ...commonKnowledgeSection(context)];
+  const prompt = [...worldRulesSection(context), ...worldStateSection(context)];
   if (context.state) {
     prompt.push('Your state right now, which only you can see:', context.state);
   }

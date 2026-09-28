@@ -1,5 +1,5 @@
 import { AgentContext } from './ports';
-import { COMMON_KNOWLEDGE_ID, EntityTier, stateContractFor } from '../engine/prose/contract';
+import { WORLD_STATE_ID, EntityTier, stateContractFor } from '../engine/prose/contract';
 
 /**
  * Everything a state-writing prompt needs about one entity, and the sections that assemble it.
@@ -27,7 +27,7 @@ export interface PromptContext {
    * What everyone in this world knows (docs/05 §5.3). Unlike every other piece of prose here it
    * is not about this entity at all, and unlike `worldRules` it changes — the god rewrites it.
    */
-  commonKnowledge?: string;
+  worldState?: string;
 }
 
 /**
@@ -43,7 +43,7 @@ export async function promptContextFor(
 ): Promise<PromptContext | null> {
   const worldRules = ctx.world.worldDescription().worldRules;
   const state = await ctx.store.readEntityState(entityId);
-  const commonKnowledge = await ctx.store.readEntityState(COMMON_KNOWLEDGE_ID);
+  const worldState = await ctx.store.readEntityState(WORLD_STATE_ID);
 
   if (entityId.startsWith('p:')) {
     const playerDescription = ctx.world.playerDescription(entityId);
@@ -60,7 +60,7 @@ export async function promptContextFor(
       behavior: agentDescription?.behavior,
       state,
       worldRules,
-      commonKnowledge,
+      worldState,
     };
   }
 
@@ -78,7 +78,7 @@ export async function promptContextFor(
     state,
     physics: entity?.physics,
     worldRules,
-    commonKnowledge,
+    worldState,
   };
 }
 
@@ -133,11 +133,11 @@ export function worldRulesSection(context: PromptContext): string[] {
  * write invalidates only the part of the prompt that was per-entity and changing anyway — the
  * cached prefix through the system text and `world_rules` survives it.
  */
-export function commonKnowledgeSection(context: PromptContext): string[] {
-  if (!context.commonKnowledge?.trim()) {
+export function worldStateSection(context: PromptContext): string[] {
+  if (!context.worldState?.trim()) {
     return [];
   }
-  return ['What everyone here knows to be true right now:', context.commonKnowledge];
+  return ['How this world stands right now:', context.worldState];
 }
 
 /**
@@ -175,7 +175,7 @@ export function stateWritingSystemPrompt(context: PromptContext, envelope: strin
     '',
     ...worldRulesSection(context),
     '',
-    ...commonKnowledgeSection(context),
+    ...worldStateSection(context),
     '',
     ...currentStateSection(context),
     '',

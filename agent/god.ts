@@ -2,8 +2,8 @@ import { chatCompletion, systemOne } from './model/client';
 import { extractJsonObject } from '../engine/prose/envelope';
 import {
   BOTH_TIERS_STATE_CONTRACT,
-  COMMON_KNOWLEDGE_CONTRACT,
-  COMMON_KNOWLEDGE_ID,
+  WORLD_STATE_CONTRACT,
+  WORLD_STATE_ID,
 } from '../engine/prose/contract';
 import { Tracer } from './model/tracing';
 import { AgentContext } from './ports';
@@ -53,11 +53,13 @@ variant, and never against the other one.`;
  * cheap call with no transcript; it just now has two reasons to fire instead of one, and its `why`
  * says which.
  */
-const COMMON_KNOWLEDGE_RULE = `${COMMON_KNOWLEDGE_CONTRACT}
+const WORLD_STATE_RULE = `${WORLD_STATE_CONTRACT}
 
-You are the only writer of this document. Nobody else can add to it and nothing else keeps it
-current, so if something has become true that everyone should know and it is not written there,
-only you can put it there.`;
+You are not the only writer of this document; the people in this world write to it too, and the
+record blocks are usually theirs. What you write is merged into what is already there, so write
+only what you are changing: the paragraph when something has become true that everyone should know
+and it is not written there, and a record line when you know that line is wrong. Everything you
+leave out keeps standing on its own.`;
 
 // ======================================================================================
 // TEMPORARY PROBE — the mystery gift. Delete this block and the three call sites marked
@@ -139,9 +141,7 @@ export async function loadGodBatch(ctx: AgentContext, maxTranscriptTurns: number
   // this filter the god's own write would come back as evidence in its next batch — a document
   // with no `entityDescriptions` row, labelled a prop by the fallback below, judged against a
   // contract it was never written to, and rewritten. It is the god's output, not its input.
-  for (const audit of audits.filter(
-    (a) => a.field === 'state' && a.entityId !== COMMON_KNOWLEDGE_ID,
-  )) {
+  for (const audit of audits.filter((a) => a.field === 'state' && a.entityId !== WORLD_STATE_ID)) {
     events.push({
       entityId: audit.entityId,
       tier: audit.entityId.startsWith('p:')
@@ -153,9 +153,9 @@ export async function loadGodBatch(ctx: AgentContext, maxTranscriptTurns: number
       source: audit.source,
     });
   }
-  const commonKnowledge = await ctx.store.readEntityState(COMMON_KNOWLEDGE_ID);
+  const worldState = await ctx.store.readEntityState(WORLD_STATE_ID);
   return {
-    commonKnowledge,
+    worldState,
     events: events.sort((a, b) => a.inputNumber - b.inputNumber),
     transcript: transcript.reverse().map((row) => ({ role: row.role, content: row.content })),
     seq: transcript.length ? Math.max(...transcript.map((r) => r.seq)) : 0,
@@ -327,9 +327,9 @@ export async function godStep(ctx: AgentContext) {
   const summary = renderBatch(batch.events);
   // docs/05 §5.3. Both stages see the current document: the gate so it can notice the world has
   // moved past what is written there, the intervention so it rewrites rather than reinvents.
-  const commonKnowledgeNow = [
-    'What everyone in this world currently knows, as it is written now:',
-    batch.commonKnowledge?.trim() ? batch.commonKnowledge : '(nothing has been written there yet)',
+  const worldStateNow = [
+    "The world's state, as it is written now:",
+    batch.worldState?.trim() ? batch.worldState : '(nothing has been written there yet)',
   ].join('\n');
   // The god never joins a conversation's trace. It judges what several exchanges left behind,
   // so attaching it to any one of them would be a lie about what it looked at -- and its cost
@@ -372,7 +372,7 @@ export async function godStep(ctx: AgentContext) {
     // share one boolean, and the answer names the documents rather than describing them.
     const request = jevGateRequest({
       persona: config.persona,
-      commonKnowledge: batch.commonKnowledge,
+      worldState: batch.worldState,
       documents: batch.events,
     });
     const { answers } = await systemOne({
@@ -400,16 +400,17 @@ export async function godStep(ctx: AgentContext) {
             FORMAT_RULE,
             '',
             'Two: whether anything in them has become true that everyone in this world should',
-            'know, and is not written in the common knowledge below yet.',
+            "know, and is not written in the world's paragraph below yet — or whether a line in",
+            'its record blocks is now wrong.',
             '',
-            COMMON_KNOWLEDGE_RULE,
+            WORLD_STATE_RULE,
             '',
             'Reply with one JSON object: { "intervene": true|false, "why": "<one sentence>" }.',
             'Say true if a document breaks the rule badly enough that it should be rewritten, or',
-            'if common knowledge needs updating. Say which of the two in "why".',
+            'if the world state needs updating. Say which of the two in "why".',
           ].join('\n'),
         },
-        { role: 'user', content: `${summary}\n\n---\n\n${commonKnowledgeNow}` },
+        { role: 'user', content: `${summary}\n\n---\n\n${worldStateNow}` },
       ],
       max_tokens: 200,
       trace: tracer.generation('god.gate'),
@@ -459,15 +460,17 @@ export async function godStep(ctx: AgentContext) {
           '',
           FORMAT_RULE,
           '',
-          COMMON_KNOWLEDGE_RULE,
+          WORLD_STATE_RULE,
           '',
           'Rewrite only the documents that break the rule. Leave the meaning alone — you are',
-          'fixing the shape, not the story. Separately, rewrite common knowledge only if',
-          'something everyone should know has become true and is missing from it; write the',
-          'whole document out, not a diff, and leave it out entirely if it is already correct.',
+          "fixing the shape, not the story. Separately, change the world's state only if",
+          'something everyone should know has become true and is missing from its paragraph, or a',
+          'line in its record blocks is wrong. Send only the parts you are changing — the whole',
+          'paragraph if you change it, and only the record lines you are correcting — and leave',
+          '"world" out entirely if nothing there needs changing.',
           'Reply with one JSON object:',
           '{ "writes": [ { "entityId": "...", "state": "<the corrected document>", "reason": "<one sentence>" } ],',
-          '  "world": { "state": "<the whole common-knowledge document>", "reason": "<one sentence>" } }',
+          '  "world": { "state": "<only the parts of the world state you are changing>", "reason": "<one sentence>" } }',
           // MYSTERY GIFT: the probe always writes, so the escape hatch would contradict it.
           ...(MYSTERY_GIFT_ENABLED
             ? ['', MYSTERY_GIFT_INSTRUCTION]
@@ -488,7 +491,7 @@ export async function godStep(ctx: AgentContext) {
             : 'No document was flagged; only common knowledge needs attention.',
           ...focus.map((id) => `[${id}]\n${states[id] ?? '(none)'}`),
           '',
-          commonKnowledgeNow,
+          worldStateNow,
         ].join('\n'),
       },
     ],
@@ -517,7 +520,7 @@ export async function godStep(ctx: AgentContext) {
       metadata: {
         intervened: true,
         writes: 0,
-        commonKnowledge: false,
+        worldState: false,
         problems,
         gate: godGateDecider(),
         ...(gateProblems.length ? { gateProblems } : {}),
@@ -548,7 +551,7 @@ export async function godStep(ctx: AgentContext) {
     metadata: {
       intervened: true,
       writes: writes.length,
-      commonKnowledge: !!world,
+      worldState: !!world,
       gate: godGateDecider(),
       ...(gateProblems.length ? { gateProblems } : {}),
     },

@@ -6,6 +6,7 @@ import {
   createEntityArgs,
   subtractEntityAnchors,
   validateWorldFile,
+  worldStateOf,
 } from './aiTown/worldFile';
 import { CollisionLayer } from './aiTown/worldMap';
 
@@ -33,7 +34,7 @@ export interface WorldPlan {
     | 'players'
     | 'agents'
     | 'entities'
-    | 'commonKnowledgeVersion'
+    | 'worldStateVersion'
   >;
   /** World-level prose the prompt layer reads. Written once, like the map (docs/05 §2, §7). */
   description: {
@@ -50,7 +51,7 @@ export interface WorldPlan {
    * and seeding it through an input would give a document whose whole guarantee is one writer a
    * second one. `undefined` when the file declares none.
    */
-  commonKnowledge?: string;
+  worldState?: string;
   /** The map's collision with every fixed entity's anchor subtracted (docs/07 §5.2). */
   collision: CollisionLayer;
   /** One `createEntity` input per entity in the file, in file order. */
@@ -88,7 +89,7 @@ export function createWorldPlan(
 
   const subtracted = subtractEntityAnchors(staticCollision, worldFile, mapContext);
   const seed = worldFile.meta?.seed ?? options.fallbackSeed;
-  const commonKnowledge = worldFile.common_knowledge?.trim() || undefined;
+  const worldState = worldStateOf(worldFile)?.trim() || undefined;
 
   const entityInputs = [];
   let mobileCreated = 0;
@@ -116,7 +117,7 @@ export function createWorldPlan(
       players: [],
       agents: [],
       entities: [],
-      commonKnowledgeVersion: commonKnowledge ? 1 : 0,
+      worldStateVersion: worldState ? 1 : 0,
     },
     description: {
       worldRules: worldFile.world_rules ?? '',
@@ -125,7 +126,7 @@ export function createWorldPlan(
       maxTranscriptTurns: worldFile.god?.max_transcript_turns,
       godGateEnabled: worldFile.god?.gate?.enabled ?? true,
     },
-    commonKnowledge,
+    worldState,
     collision: subtracted.collision,
     entityInputs,
     warnings: [...warnings, ...subtracted.warnings],

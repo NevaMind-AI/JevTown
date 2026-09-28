@@ -24,9 +24,11 @@ export const serializedWorld = {
   agents: v.array(v.object(serializedAgent)),
   // Fixed entities: tiers (b) and (c). Optional so worlds created before A4 load.
   entities: v.optional(v.array(v.object(serializedEntity))),
-  // Points at the current common-knowledge row in `entityState`, exactly as `stateVersion` points
-  // at an entity's (docs/05 §5.3, §8). The prose itself is never in the world document; this
-  // integer is the change signal, and it is the only thing common knowledge costs per step.
+  // Points at the current world-state row in `entityState`, exactly as `stateVersion` points at
+  // an entity's (docs/05 §5.3, §8). The prose itself is never in the world document; this integer
+  // is the change signal, and it is the only thing world state costs per step.
+  worldStateVersion: v.optional(v.number()),
+  // Read on load only, never written: worlds serialized before docs/13 §1.4 spell it this way.
   commonKnowledgeVersion: v.optional(v.number()),
 };
 export type SerializedWorld = ObjectType<typeof serializedWorld>;
@@ -39,7 +41,7 @@ export class World {
   players: Map<GameId<'players'>, Player>;
   agents: Map<GameId<'agents'>, Agent>;
   entities: Map<GameId<'entities'>, Entity>;
-  commonKnowledgeVersion: number;
+  worldStateVersion: number;
 
   constructor(serialized: SerializedWorld) {
     const { nextId } = serialized;
@@ -51,7 +53,7 @@ export class World {
     this.players = parseMap(serialized.players, Player, (p) => p.id);
     this.agents = parseMap(serialized.agents, Agent, (a) => a.id);
     this.entities = parseMap(serialized.entities ?? [], Entity, (e) => e.id);
-    this.commonKnowledgeVersion = serialized.commonKnowledgeVersion ?? 0;
+    this.worldStateVersion = serialized.worldStateVersion ?? serialized.commonKnowledgeVersion ?? 0;
   }
 
   playerConversation(player: Player): Conversation | undefined {
@@ -86,7 +88,7 @@ export class World {
       players: this.sortedPlayers().map((p) => p.serialize()),
       agents: this.sortedAgents().map((a) => a.serialize()),
       entities: this.sortedEntities().map((e) => e.serialize()),
-      commonKnowledgeVersion: this.commonKnowledgeVersion,
+      worldStateVersion: this.worldStateVersion,
     };
   }
 }

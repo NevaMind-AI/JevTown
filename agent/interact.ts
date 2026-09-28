@@ -6,7 +6,7 @@ import { parseEnvelope } from '../engine/prose/envelope';
 import { parseStateDocument } from '../engine/prose/stateDocument';
 import {
   PromptContext,
-  commonKnowledgeSection,
+  worldStateSection,
   describe,
   promptContextFor,
   stateWritingSystemPrompt,
@@ -148,7 +148,7 @@ async function interactWithFixedActor(
       `You are ${speaker.name}. ${describe(speaker)}`,
       ...(speaker.state ? [speaker.state] : []),
       ...worldRulesSection(speaker),
-      ...commonKnowledgeSection(speaker),
+      ...worldStateSection(speaker),
       `You are speaking with ${other.name}.`,
       'Say one thing. Keep it under 200 characters. Reply with the words you say and nothing else.',
     ].join('\n');

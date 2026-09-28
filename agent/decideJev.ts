@@ -137,8 +137,8 @@ export function decisionState(context: PromptContext): Record<string, string> {
   if (context.worldRules.trim()) {
     state.how_this_world_works = context.worldRules;
   }
-  if (context.commonKnowledge?.trim()) {
-    state.what_everyone_here_knows = context.commonKnowledge;
+  if (context.worldState?.trim()) {
+    state.the_world_right_now = context.worldState;
   }
   if (context.state) {
     state.your_state_right_now = context.state;

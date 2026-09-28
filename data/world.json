@@ -8,7 +8,7 @@
     "seed": 1
   },
   "world_rules": "An ordinary river town. Nothing supernatural happens in the open, and nobody in town can leave it.",
-  "common_knowledge": "state: ordinary\n\nThe river is low for the season and the ferry is running short days because of it. A boat went out last week and has not come back, and the whole town knows it; nobody knows what became of it. Nothing else out of the ordinary has happened here.",
+  "world_state": "state: ordinary\n\nThe river is low for the season and the ferry is running short days because of it. A boat went out last week and has not come back, and the whole town knows it; nobody knows what became of it. Nothing else out of the ordinary has happened here.",
   "entities": [
     {
       "id": "lucky",
@@ -22,9 +22,7 @@
       "description": "Lucky is always happy and curious, and he loves cheese. He spends most of his time reading about the history of science and travelling on whatever ship will take him. He is articulate and infinitely patient, except when he sees a squirrel. He has just come back from a long journey and is bursting to tell someone about it.",
       "behavior": "You have the following available states: excited, curious, content, put out, bored.",
       "initial_state": "state: excited\n\nI am fresh off the road and I have told nobody where I have been. My boots are still dusty and I keep starting sentences I do not finish.\n\nI mean to find someone who will sit still long enough to hear the whole thing. I want to hear all the gossip.",
-      "initial_memory": [
-        "I came back into town by the north road at first light."
-      ],
+      "initial_memory": ["I came back into town by the north road at first light."],
       "physics": {
         "blocks_movement": false
       }

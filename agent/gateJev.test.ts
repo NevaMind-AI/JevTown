@@ -24,7 +24,7 @@ const DOCUMENTS: GateDocument[] = [
 
 const ARGS = {
   persona: 'You are the quiet overseer of this valley.',
-  commonKnowledge: 'state: quiet\n\nThe mill has run all week.',
+  worldState: 'state: quiet\n\nThe mill has run all week.',
   documents: DOCUMENTS,
 };
 
@@ -70,17 +70,17 @@ describe('jevGateRequest', () => {
     expect(state.document_1).toContain('Reason for the write: She was surprised.');
     expect(state.document_1).toContain('Breathing hard.');
     expect(state.how_documents_must_be_written).toContain('Every entity writes its state');
-    expect(state.what_common_knowledge_is_for).toContain('Common knowledge is one document');
-    expect(state.what_everyone_here_knows).toContain('The mill has run all week.');
+    expect(state.what_the_world_state_is_for).toContain("The world's state is one document");
+    expect(state.the_world_right_now).toContain('The mill has run all week.');
     expect(state.who_you_are).toBe(ARGS.persona);
   });
 
   test('states an empty common knowledge rather than omitting the field', () => {
-    for (const commonKnowledge of [undefined, '', '   ']) {
-      const { state } = jevGateRequest({ ...ARGS, commonKnowledge });
+    for (const worldState of [undefined, '', '   ']) {
+      const { state } = jevGateRequest({ ...ARGS, worldState });
       // A missing field and a field saying "nothing yet" are different questions. The gate is
       // being asked whether something is missing from it, so it has to be shown as empty.
-      expect(state.what_everyone_here_knows).toBe('(nothing has been written there yet)');
+      expect(state.the_world_right_now).toBe('(nothing has been written there yet)');
     }
   });
 
