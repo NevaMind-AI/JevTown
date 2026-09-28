@@ -3,6 +3,7 @@ import { validateMapRender, type MapRender } from './mapData.js';
 import type { NpcSchedule } from './schedules.js';
 import { npcPath } from './pathfinding.js';
 import { validateVisual, Visual } from './assets.js';
+import { placedAppearance } from './entities.js';
 import { factFields, TaskCondition } from './taskFacts.js';
 export type Entity = {
   id: string;
@@ -14,6 +15,12 @@ export type Entity = {
   seat?: { table?: string; orientation: number; depth: number; playerSprite: Visual };
   interactionOffsets?: number[][];
   movable?: boolean;
+  /**
+   * Occupies its tile without blocking it (docs/13 §2). `movable` already exempts a walker from
+   * static collision, but it also advertises a movement capability, so a notice board that is
+   * merely walked past needs a word of its own.
+   */
+  passable?: boolean;
   portal?: { scene: string; anchor: string };
   portalTiles?: number[][];
 };
@@ -172,10 +179,99 @@ export type Story = {
     DialogueText & { firstText?: string; topics?: Record<string, DialogueText>; choices: Choice[] }
   >;
 };
-export type Content = { scenes: Scene[]; story: Story; npcs?: Record<string, Npc> };
+export type Content = {
+  scenes: Scene[];
+  story: Story;
+  npcs?: Record<string, Npc>;
+  world?: WorldEntities;
+};
+
+/**
+ * The agentic world file, as the map-owning side needs to read it (docs/13 §2).
+ *
+ * Spelled structurally rather than imported from `engine/aiTown/worldFile.ts`: `engine/` is the
+ * authority on this format and validates it in full, and the prototype compiles standalone. What
+ * is here is only what placing something on a map requires.
+ */
+export type WorldPlacement = {
+  id: string;
+  kind: 'actor' | 'prop';
+  mobile?: boolean;
+  name?: string;
+  character?: string;
+  sprite?: string;
+  scene?: string;
+  anchor?: string;
+  spawn?: { anchor: string };
+  physics?: { blocks_movement?: boolean };
+};
+export type WorldEntities = { entities: WorldPlacement[] };
+
+/**
+ * Resolve the world file's entities onto the scenes that own the ground (docs/13 §2 J).
+ *
+ * They become ordinary scene entities, which is what makes the rest free: `initialEntities`
+ * picks them up, `getEntity` finds a definition, `nearby()` and `fixedBlocked` see them,
+ * `validateEntities` counts them, and the same validator that checks authored placement checks
+ * these. Nothing downstream learns that a world file exists.
+ *
+ * It runs before scene validation for that reason, and it is idempotent by id: a recording
+ * embeds the *resolved* content, so a replay re-enters here with the placements already in the
+ * scene and must leave them exactly as they were rather than placing them twice.
+ */
+function placeWorldEntities(scenes: Scene[], story: any, world: WorldEntities | undefined) {
+  if (world === undefined) return;
+  if (!world || typeof world !== 'object' || !Array.isArray(world.entities))
+    throw new Error('Invalid world entities');
+  for (const placement of world.entities) {
+    if (!placement || typeof placement !== 'object') throw new Error('Invalid world placement');
+    const { id, kind, mobile } = placement;
+    if (typeof id !== 'string' || !id) throw new Error('Invalid world placement');
+    if (kind !== 'actor' && kind !== 'prop') throw new Error('Invalid world placement kind');
+    const sceneId = placement.scene ?? story.start?.scene;
+    const scene = scenes.find((candidate) => candidate.id === sceneId);
+    if (!scene) throw new Error(`Unknown placement scene: ${String(sceneId)}`);
+    // Already resolved, by an earlier load of the same content. See the note above.
+    if (scenes.some((candidate) => candidate.entities.some((e) => e?.id === id))) continue;
+
+    const mobileActor = kind === 'actor' && mobile === true;
+    const anchorId = mobileActor ? placement.spawn?.anchor : placement.anchor;
+    if (typeof anchorId !== 'string' || !anchorId)
+      throw new Error(`Placement "${id}" needs an anchor`);
+    const anchor = Object.hasOwn(scene.anchors, anchorId) ? scene.anchors[anchorId] : undefined;
+    if (!anchor) throw new Error(`Unknown placement anchor "${anchorId}" in scene "${scene.id}"`);
+    const taken = new Set(scene.entities.map((e) => e.position?.join()));
+    const tile = anchorTiles(anchor).find(
+      (p) => !mapBlocked(scene.map, p[0], p[1]) && !taken.has(p.join()),
+    );
+    if (!tile) throw new Error(`Placement anchor "${anchorId}" has no free tile`);
+
+    const appearance = placedAppearance(placement, story.sprites ?? {});
+    if (!appearance) throw new Error(`Placement "${id}" has nothing to draw`);
+    scene.entities.push({
+      id,
+      name: placement.name ?? id,
+      position: tile,
+      character: appearance.character,
+      ...(appearance.sprite ? { sprite: appearance.sprite } : {}),
+      // A walker is exempt from static collision; where it actually stands is live occupancy,
+      // which `npcObstacles` supplies. A fixed thing blocks unless its file says it does not.
+      ...(mobileActor
+        ? { movable: true }
+        : placement.physics?.blocks_movement === false
+          ? { passable: true }
+          : {}),
+    });
+  }
+}
 
 // Strict, bounded demo contract. Unknown keys fail instead of being silently ignored.
-export function loadContent(rawScenes: unknown[], rawStory: unknown, rawNpcs?: unknown): Content {
+export function loadContent(
+  rawScenes: unknown[],
+  rawStory: unknown,
+  rawNpcs?: unknown,
+  world?: WorldEntities,
+): Content {
   const object = (v: any, required: string[], optional: string[] = []) => {
     if (
       !v ||
@@ -448,7 +544,50 @@ export function loadContent(rawScenes: unknown[], rawStory: unknown, rawNpcs?: u
   }
   const sceneIds = new Set(),
     entityIds = new Set();
+  if (story.sprites !== undefined) {
+    if (
+      !story.sprites ||
+      typeof story.sprites !== 'object' ||
+      Array.isArray(story.sprites) ||
+      Object.keys(story.sprites).length > 256
+    )
+      throw new Error('Invalid sprites');
+    for (const [name, visual] of Object.entries(story.sprites)) {
+      text(name);
+      object(visual, ['image'], ['size', 'anchor', 'offset']);
+      validateVisual(visual as Visual);
+    }
+  }
+
+  /**
+   * Anchors something arrives at, per scene: the story's start, every portal's destination, and
+   * every `move_entity` landing. Only these have to stay clear — an anchor that exists to be
+   * placed on may hold what is placed there (docs/13 §2).
+   */
+  const arrivalAnchors = new Map<string, Set<string>>();
+  const addArrival = (sceneId: unknown, anchorId: unknown) => {
+    if (typeof sceneId !== 'string' || typeof anchorId !== 'string') return;
+    if (!arrivalAnchors.has(sceneId)) arrivalAnchors.set(sceneId, new Set());
+    arrivalAnchors.get(sceneId)!.add(anchorId);
+  };
+  addArrival(story.start?.scene, story.start?.anchor);
+  const portals = new Map<string, any>();
+  for (const candidate of scenes as any[])
+    for (const entity of candidate?.entities ?? [])
+      if (entity?.portal) {
+        portals.set(entity.id, entity.portal);
+        addArrival(entity.portal.scene, entity.portal.anchor);
+      }
+  for (const interaction of Object.values(story.interactions ?? {}) as any[])
+    for (const choice of interaction?.choices ?? [])
+      for (const effect of choice?.effects ?? [])
+        if (effect?.op === 'move_entity' && effect.via)
+          addArrival(portals.get(effect.via)?.scene, effect.arrival);
+
+  placeWorldEntities(scenes as Scene[], story, world);
+
   for (const scene of scenes) {
+    const arrivals = arrivalAnchors.get(scene.id) ?? new Set<string>();
     object(
       scene,
       ['schema_version', 'content_version', 'id', 'name', 'map', 'anchors', 'entities'],
@@ -563,7 +702,16 @@ export function loadContent(rawScenes: unknown[], rawStory: unknown, rawNpcs?: u
       object(
         entity,
         ['id', 'name', 'position', 'character'],
-        ['portal', 'portalTiles', 'movable', 'sprite', 'interactionOffsets', 'seat', 'seatedOn'],
+        [
+          'portal',
+          'portalTiles',
+          'movable',
+          'passable',
+          'sprite',
+          'interactionOffsets',
+          'seat',
+          'seatedOn',
+        ],
       );
       if (entity.interactionOffsets !== undefined) {
         list(entity.interactionOffsets);
@@ -588,6 +736,8 @@ export function loadContent(rawScenes: unknown[], rawStory: unknown, rawNpcs?: u
         throw new Error('Sprite visual required');
       if (entity.movable !== undefined && typeof entity.movable !== 'boolean')
         throw new Error('Invalid movable property');
+      if (entity.passable !== undefined && typeof entity.passable !== 'boolean')
+        throw new Error('Invalid passable property');
       if (entity.portal && entity.movable) throw new Error('Movable portals are not supported');
       text(entity.id);
       text(entity.name);
@@ -690,23 +840,13 @@ export function loadContent(rawScenes: unknown[], rawStory: unknown, rawNpcs?: u
       )
         throw new Error('Travel requires portal');
     }
-    for (const pos of Object.values(scene.anchors) as number[][])
-      for (const tile of anchorTiles(pos))
-        if (occupied.has(tile.join())) throw new Error('Anchor is occupied');
-  }
-  if (story.sprites !== undefined) {
-    if (
-      !story.sprites ||
-      typeof story.sprites !== 'object' ||
-      Array.isArray(story.sprites) ||
-      Object.keys(story.sprites).length > 256
-    )
-      throw new Error('Invalid sprites');
-    for (const [name, visual] of Object.entries(story.sprites)) {
-      text(name);
-      object(visual, ['image'], ['size', 'anchor', 'offset']);
-      validateVisual(visual as Visual);
-    }
+    // Only an anchor something arrives at: a portal's destination, the story's start, a travel
+    // effect's landing. An anchor that is only ever a placement target (docs/13 §2) may hold the
+    // thing placed there, which is the whole point of naming it.
+    for (const [id, pos] of Object.entries(scene.anchors) as [string, number[]][])
+      if (arrivals.has(id))
+        for (const tile of anchorTiles(pos))
+          if (occupied.has(tile.join())) throw new Error('Anchor is occupied');
   }
   const itemIds = new Set<string>();
   if (story.items !== undefined) {
@@ -1023,7 +1163,7 @@ export function loadContent(rawScenes: unknown[], rawStory: unknown, rawNpcs?: u
   if (npcs !== undefined) {
     for (const id of Object.keys(npcs))
       if (!entityIds.has(id)) throw new Error('NPC has no initial placement');
-    return { scenes, story: authoredStory, npcs };
+    return { scenes, story: authoredStory, npcs, ...(world ? { world } : {}) };
   }
-  return { scenes, story };
+  return { scenes, story, ...(world ? { world } : {}) };
 }

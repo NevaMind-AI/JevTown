@@ -27,8 +27,13 @@ export function npcResting(content: Content, state: State, id: string) {
 }
 // Reserve both ends of a step, including the player's seat exit.
 export function npcObstacles(content: Content, state: State, scene: string, except?: string) {
+  // A passable entity stands on its tile without reserving it (docs/13 §2), so it is absent
+  // here for the same reason it is absent from static collision.
+  const passable = new Set(
+    content.scenes.flatMap((s) => s.entities.filter((e) => e.passable).map((e) => e.id)),
+  );
   const tiles = scriptedEntities(state)
-    .filter(([id, a]) => id !== except && a.sceneId === scene)
+    .filter(([id, a]) => id !== except && a.sceneId === scene && !passable.has(id))
     .flatMap(([, a]) => [
       a.position,
       ...(a.moving ? [[a.moving.target.x, a.moving.target.y]] : []),

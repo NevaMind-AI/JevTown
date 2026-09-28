@@ -26,6 +26,7 @@ import {
   DialogueText,
   anchorCovers,
   loadContent,
+  WorldEntities,
   mapBlocked,
   mapEdgeBlocked,
   portalAt,
@@ -185,8 +186,8 @@ export class MemoryWorld {
   }
 
   private content?: Content;
-  load(scenes: unknown[], story: unknown, npcs?: unknown) {
-    const content = loadContent(scenes, story, npcs);
+  load(scenes: unknown[], story: unknown, npcs?: unknown, world?: WorldEntities) {
+    const content = loadContent(scenes, story, npcs, world);
     if (this.content) throw new Error('Content already loaded; create a new run');
     this.content = content;
     this.reset();
@@ -746,9 +747,12 @@ export class MemoryWorld {
             (mapBlocked(scene.map, target.x, target.y) ||
               scene.entities.some(
                 (e) =>
-                  (e.position[0] === target.x && e.position[1] === target.y) ||
-                  (draft.entities[e.id]?.moving?.target.x === target.x &&
-                    draft.entities[e.id]?.moving?.target.y === target.y),
+                  // A passable entity occupies its tile without blocking it (docs/13 §2), and it
+                  // has to read the same way for the player as it does for a router.
+                  !e.passable &&
+                  ((e.position[0] === target.x && e.position[1] === target.y) ||
+                    (draft.entities[e.id]?.moving?.target.x === target.x &&
+                      draft.entities[e.id]?.moving?.target.y === target.y)),
               ));
           if (
             sceneBlocked ||

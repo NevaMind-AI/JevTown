@@ -9,7 +9,7 @@ const neighbors = ([x, y]: number[]) => [
 ];
 const fixedBlocked = (scene: Scene, p: number[]) =>
   mapBlocked(scene.map, p[0], p[1]) ||
-  scene.entities.some((e) => !e.movable && !e.portal && same(e.position, p));
+  scene.entities.some((e) => !e.movable && !e.portal && !e.passable && same(e.position, p));
 
 /**
  * A search budget (docs/13 §2.6, `MAX_PATHFINDS_PER_STEP`'s sibling).
