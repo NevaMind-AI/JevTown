@@ -18,7 +18,7 @@ export async function loadPackage(
   read: (path: string) => Promise<unknown>,
 ): Promise<Package> {
   const m: any = manifest;
-  keys(m, ['schema_version', 'content_version', 'scenes', 'stories', 'start'], ['npcs']);
+  keys(m, ['schema_version', 'content_version', 'scenes', 'stories', 'start'], ['npcs', 'world']);
   if (m.schema_version !== '1.0' || typeof m.content_version !== 'string')
     throw new Error('Unsupported package version');
   const paths = (value: any): string[] => {
@@ -78,7 +78,7 @@ export async function loadPackage(
     keys(
       story,
       ['schema_version', 'content_version', 'id', 'vars', 'interactions'],
-      ['tasks', 'items', 'shops', 'clues', 'clock', 'schedules'],
+      ['tasks', 'items', 'shops', 'clues', 'clock', 'schedules', 'sprites'],
     );
     if (
       story.schema_version !== '1.0' ||
@@ -88,8 +88,8 @@ export async function loadPackage(
     )
       throw new Error('Invalid story version/id');
     storyIds.add(story.id);
-    for (const field of ['vars', 'interactions', 'shops', 'schedules']) {
-      if (field === 'shops' || field === 'schedules') {
+    for (const field of ['vars', 'interactions', 'shops', 'schedules', 'sprites']) {
+      if (field !== 'vars' && field !== 'interactions') {
         if (story[field] === undefined) continue;
         combined[field] ??= {};
       }
@@ -142,5 +142,18 @@ export async function loadPackage(
       npcs[npc.id] = definition;
     }
   }
-  return loadContent(scenes, combined, npcs);
+  /**
+   * The agentic world file, when the package ships one (docs/13 §2 J).
+   *
+   * One path rather than a list: a package describes one world, and two files claiming the same
+   * entity id would have no rule to resolve it by. `loadContent` places its entities onto the
+   * scenes; `engine/aiTown/worldFile.ts` validates everything else about it.
+   */
+  let world: any;
+  if (m.world !== undefined) {
+    world = await read(paths([m.world])[0]);
+    keys(world, ['format_version', 'entities'], ['meta', 'world_rules', 'world_state', 'god']);
+    if (!Array.isArray(world.entities)) throw new Error('Invalid world entities');
+  }
+  return loadContent(scenes, combined, npcs, world && { entities: world.entities });
 }

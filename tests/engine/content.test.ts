@@ -184,9 +184,14 @@ describe('anchors are points or rectangles (docs/13 §2)', () => {
     expect(load({ bar: [2, 4, 2, 6] })).toThrow('Anchor must be on walkable interior');
   });
 
-  test('a rect anchor may not cover an entity, as a point anchor may not stand on one', () => {
-    // n07 is at (5, 5); the rect covers (4, 4) through (5, 5).
-    expect(load({ bar: [4, 4, 2, 2] })).toThrow('Anchor is occupied');
+  test('an anchor something arrives at must stay clear', () => {
+    // `start` is where the story begins, and n07 is at (5, 5). The rect reaches it.
+    expect(load({ start: [3, 5, 3, 1] })).toThrow('Anchor is occupied');
+  });
+
+  test('an anchor nothing arrives at may hold what is placed there (docs/13 §2)', () => {
+    // Nothing travels to `bar`, so it is free to name a tile an entity stands on.
+    expect(load({ bar: [4, 4, 2, 2] })).not.toThrow();
   });
 
   test('anything but a pair or a quad is refused', () => {

@@ -493,10 +493,31 @@ stops being something the engine polls by distance and becomes what the init wor
 `nearby()`, on the tile grid the content was authored against. And retry is free, because
 `advanceState` re-attempts every entity's step every tick, which is what narrows §2.7.
 
-**One thing J changes that is worth knowing before it lands.** A recording embeds its own content
-(`replay.ts:89`), so editing scenes has never invalidated a save — the save keeps playing the old
-content. Reconciliation only does anything once something loads a save against the _current_
-package, and that path does not exist yet. Which content wins is a decision, not an oversight.
+**What J turned out to be.** Not a second kind of entity, and not a parallel path. A world-file
+entity is resolved onto its scene at load and becomes an ordinary scene entity — which is what makes
+everything else free: `initialEntities` picks it up, `getEntity` finds a definition, `nearby()` and
+`fixedBlocked` see it, `validateEntities` counts it, and the validator that checks authored
+placement checks this one. Nothing downstream learns that a world file exists. It is idempotent by
+id because a recording embeds the _resolved_ content, so a replay re-enters the pass with the
+placements already there and must leave them alone.
+
+Two things the scenes had to learn to receive them:
+
+- **An anchor only has to stay clear if something arrives at it.** The occupancy rule refused any
+  entity standing on any anchor, which is exactly what placing something at an anchor does. It now
+  applies to arrival anchors — the story's start, a portal's destination, a `move_entity` landing —
+  and an anchor authored to be placed on may hold what is placed there.
+- **`passable`.** A world file says `blocks_movement: false`; the scene format had no way to say it.
+  `movable` was the near-miss and is wrong: it also advertises a movement capability, so a notice
+  board would have claimed it could walk. `passable` means occupies its tile without blocking it,
+  and it reads the same way for static collision, for live occupancy and for the player — three
+  places, because a thing that blocks one mover and not another is worse than a thing that blocks
+  nobody.
+
+**One thing to settle now that J has landed.** A recording embeds its own content (`replay.ts:89`),
+so editing scenes has never invalidated a save — the save keeps playing the old content.
+Reconciliation only does anything once something loads a save against the _current_ package, and
+that path does not exist yet. Which content wins is a decision, not an oversight.
 
 ---
 
