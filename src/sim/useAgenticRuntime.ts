@@ -6,9 +6,10 @@ import { IndexedDbOutbox, SyncClient } from './syncClient';
 /**
  * The agentic world, attached to the tab that is already running a simulation.
  *
- * **Off unless `VITE_AGENTIC=1`.** The client drives the bill now (docs/11 §4.4), so a world full
- * of deciding agents is not something an ordinary play session should start by accident. The
- * proxy's call cap is the backstop; this is the switch.
+ * **On by default.** It was behind `VITE_AGENTIC` while the agentic world was an experiment
+ * running beside the game; it is the game now. The client still drives the bill (docs/11 §4.4),
+ * and the proxy's call cap is what bounds it — a flag never did, since a session that wanted
+ * agents simply set it.
  *
  * `advance` is deliberately not a `useEffect` with its own interval. It takes the quantum
  * `LocalGame` has already computed, which is what keeps docs/11 §4.5 true for both worlds at
@@ -46,25 +47,21 @@ export interface HostClock {
 export function useAgenticRuntime(host?: HostClock): AgenticRuntime | undefined {
   const runtime = useRef<AgenticRuntime | null | undefined>(undefined);
   if (runtime.current === undefined) {
-    if (!(import.meta as any).env?.VITE_AGENTIC) {
+    try {
+      runtime.current = createAgenticWorld(
+        host && {
+          // One counter for both worlds (docs/13 §3.2). `MemoryWorld` starts at 0, which the
+          // falsy start-of-step test in `engine/runtime.ts` used to discard; that test is now
+          // `undefined`, so 0 is a legal start and no offset is needed to dodge it.
+          startTime: host.time,
+          storyTime: host.storyTime,
+        },
+      );
+    } catch (error) {
+      // A world file that will not load is worth reporting, and is never worth taking the game
+      // down with: the scenes, the story and the player are all still there without it.
+      console.error('The agentic world failed to start:', error);
       runtime.current = null;
-    } else {
-      try {
-        runtime.current = createAgenticWorld(
-          host && {
-            // One counter for both worlds (docs/13 §3.2). `MemoryWorld` starts at 0, which the
-            // falsy start-of-step test in `engine/runtime.ts` used to discard; that test is now
-            // `undefined`, so 0 is a legal start and no offset is needed to dodge it.
-            startTime: host.time,
-            storyTime: host.storyTime,
-          },
-        );
-      } catch (error) {
-        // A world file that will not load is worth reporting, and is never worth taking the game
-        // down with: the agentic world is an addition to a session that works without it.
-        console.error('The agentic world failed to start:', error);
-        runtime.current = null;
-      }
     }
   }
   useAgenticSync(runtime.current ?? undefined);

@@ -38,10 +38,13 @@ export function npcPath(
   options: PathOptions = {},
 ): number[][] | null {
   const targets = new Set(goals.filter((p) => !fixedBlocked(scene, p)).map((p) => p.join()));
-  if (!targets.size) return null;
-  const goalTiles = [...targets].map((key) => key.split(',').map(Number));
+  // Standing on a goal and merely heading toward one are different questions. A blocked goal can
+  // never be arrived at, but `partial` is about getting as close as the map allows, so it keeps
+  // the blocked tiles as something to measure against.
+  const reference = options.partial ? goals : [...targets].map((k) => k.split(',').map(Number));
+  if (!reference.length || (!targets.size && !options.partial)) return null;
   const toGoal = (p: number[]) =>
-    Math.min(...goalTiles.map((g) => Math.abs(g[0] - p[0]) + Math.abs(g[1] - p[1])));
+    Math.min(...reference.map((g) => Math.abs(g[0] - p[0]) + Math.abs(g[1] - p[1])));
 
   const queue = [start],
     parents = new Map<string, number[] | null>([[start.join(), null]]);
