@@ -25,6 +25,8 @@ import {
   Content,
   DialogueText,
   anchorCovers,
+  anchorTiles,
+  arrivalAnchorsOf,
   loadContent,
   WorldEntities,
   mapBlocked,
@@ -190,7 +192,24 @@ export class MemoryWorld {
     const content = loadContent(scenes, story, npcs, world);
     if (this.content) throw new Error('Content already loaded; create a new run');
     this.content = content;
+    // Derived from the content, never authored, and shared with the load-time rule so the two
+    // cannot drift (docs/13 §2).
+    this.arrivals = arrivalAnchorsOf(content.scenes, content.story);
     this.reset();
+  }
+
+  /** Anchors something arrives at, per scene. Empty until content is loaded. */
+  private arrivals = new Map<string, Set<string>>();
+
+  /** The tiles of this scene's arrival anchors, which a walker may not stop on. */
+  private arrivalTiles(sceneId: string): number[][] {
+    const scene = this.content?.scenes.find((s) => s.id === sceneId);
+    if (!scene) return [];
+    const named = this.arrivals.get(sceneId);
+    if (!named?.size) return [];
+    return Object.entries(scene.anchors)
+      .filter(([id]) => named.has(id))
+      .flatMap(([, anchor]) => anchorTiles(anchor));
   }
 
   getEntity(id: string) {
@@ -1155,9 +1174,18 @@ export class MemoryWorld {
     const route =
       from[0] === x && from[1] === y
         ? []
-        : (npcPath(scene, from, [[x, y]], npcObstacles(this.content!, draft, actor.sceneId, id), {
-            partial: true,
-          }) ?? null);
+        : (npcPath(
+            scene,
+            from,
+            [[x, y]],
+            [
+              ...npcObstacles(this.content!, draft, actor.sceneId, id),
+              // An arrival tile is refused by `startEntityStep`, so routing through one would
+              // hand the mover a path it will not walk.
+              ...this.arrivalTiles(actor.sceneId),
+            ],
+            { partial: true },
+          ) ?? null);
     if (route === null) throw new Error('No route toward that tile');
     actor.path = actor.moving ? [[...from], ...route] : route;
     this.startEntityStep(draft, id, draft.time);
@@ -1178,7 +1206,10 @@ export class MemoryWorld {
           ((e.position[0] === x && e.position[1] === y) ||
             (e.moving?.target.x === x && e.moving?.target.y === y)),
       ) ||
-      (Object.values(scene.anchors).some((p) => anchorCovers(p, x, y)) &&
+      (Object.entries(scene.anchors).some(
+        ([anchorId, p]) =>
+          (this.arrivals.get(scene.id)?.has(anchorId) ?? false) && anchorCovers(p, x, y),
+      ) &&
         !(actor.transit && actor.path.length === 1) &&
         npcOnDuty(draft, id)) ||
       (!!abilitySettings(this.content).schedules?.[id] &&
@@ -1189,7 +1220,45 @@ export class MemoryWorld {
         ((draft.seated?.returnPosition.x === x && draft.seated.returnPosition.y === y) ||
           (draft.player.x === x && draft.player.y === y) ||
           (draft.moving?.target.x === x && draft.moving?.target.y === y)));
-    if (blocked) return;
+    if (blocked) {
+      this.swapStep(draft, id, x, y, time);
+      return;
+    }
+    this.commitStep(draft, id, x, y, time);
+  }
+
+  /**
+   * The one deadlock reservation cannot resolve on its own (docs/13 §2.7).
+   *
+   * Two walkers in a one-tile corridor, each standing on the other's next tile: both refuse, and
+   * neither can re-route, because in a corridor there is nowhere to re-route to. They swap.
+   *
+   * Committed as a pair, inside one call, which is the part that makes it safe: reserving one
+   * step and hoping the other follows would leave two actors on a tile the moment the second one
+   * is refused for a reason of its own. There is no PRNG here and no backoff, so a replay makes
+   * the same swap — which is what §2.7 was holding open, and this closes.
+   */
+  private swapStep(draft: State, id: string, x: number, y: number, time: number) {
+    const actor = draft.entities[id];
+    const [ax, ay] = actor.position;
+    const partner = scriptedEntities(draft).find(
+      ([other, e]) =>
+        other !== id &&
+        e.sceneId === actor.sceneId &&
+        !e.moving &&
+        !e.transit &&
+        e.position[0] === x &&
+        e.position[1] === y &&
+        e.path[0]?.[0] === ax &&
+        e.path[0]?.[1] === ay,
+    );
+    if (!partner) return;
+    this.commitStep(draft, id, x, y, time);
+    this.commitStep(draft, partner[0], ax, ay, time);
+  }
+
+  private commitStep(draft: State, id: string, x: number, y: number, time: number) {
+    const actor = draft.entities[id];
     if (!Number.isSafeInteger(time + this.map.stepMs)) throw new Error('Simulation time overflow');
     actor.orientation = movementOrientation(
       { x: actor.position[0], y: actor.position[1] },

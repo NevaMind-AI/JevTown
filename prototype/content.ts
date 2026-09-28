@@ -208,6 +208,40 @@ export type WorldPlacement = {
 export type WorldEntities = { entities: WorldPlacement[] };
 
 /**
+ * Anchors something arrives at, per scene: the story's start, every portal's destination, and
+ * every `move_entity` landing (docs/13 §2).
+ *
+ * These are the anchors that have to stay clear, at load and at every step. An anchor nothing
+ * arrives at is just a named place — somewhere to be placed, or to be sent — and a walker may
+ * stand on it.
+ *
+ * Derived rather than authored, and derived in one place, because the load-time rule and the
+ * per-step rule disagreeing is exactly how you get a route the mover then refuses to walk.
+ */
+export function arrivalAnchorsOf(scenes: unknown[], story: any): Map<string, Set<string>> {
+  const arrivals = new Map<string, Set<string>>();
+  const add = (sceneId: unknown, anchorId: unknown) => {
+    if (typeof sceneId !== 'string' || typeof anchorId !== 'string') return;
+    if (!arrivals.has(sceneId)) arrivals.set(sceneId, new Set());
+    arrivals.get(sceneId)!.add(anchorId);
+  };
+  add(story?.start?.scene, story?.start?.anchor);
+  const portals = new Map<string, any>();
+  for (const candidate of scenes as any[])
+    for (const entity of candidate?.entities ?? [])
+      if (entity?.portal) {
+        portals.set(entity.id, entity.portal);
+        add(entity.portal.scene, entity.portal.anchor);
+      }
+  for (const interaction of Object.values(story?.interactions ?? {}) as any[])
+    for (const choice of interaction?.choices ?? [])
+      for (const effect of choice?.effects ?? [])
+        if (effect?.op === 'move_entity' && effect.via)
+          add(portals.get(effect.via)?.scene, effect.arrival);
+  return arrivals;
+}
+
+/**
  * Resolve the world file's entities onto the scenes that own the ground (docs/13 §2 J).
  *
  * They become ordinary scene entities, which is what makes the rest free: `initialEntities`
@@ -559,30 +593,7 @@ export function loadContent(
     }
   }
 
-  /**
-   * Anchors something arrives at, per scene: the story's start, every portal's destination, and
-   * every `move_entity` landing. Only these have to stay clear — an anchor that exists to be
-   * placed on may hold what is placed there (docs/13 §2).
-   */
-  const arrivalAnchors = new Map<string, Set<string>>();
-  const addArrival = (sceneId: unknown, anchorId: unknown) => {
-    if (typeof sceneId !== 'string' || typeof anchorId !== 'string') return;
-    if (!arrivalAnchors.has(sceneId)) arrivalAnchors.set(sceneId, new Set());
-    arrivalAnchors.get(sceneId)!.add(anchorId);
-  };
-  addArrival(story.start?.scene, story.start?.anchor);
-  const portals = new Map<string, any>();
-  for (const candidate of scenes as any[])
-    for (const entity of candidate?.entities ?? [])
-      if (entity?.portal) {
-        portals.set(entity.id, entity.portal);
-        addArrival(entity.portal.scene, entity.portal.anchor);
-      }
-  for (const interaction of Object.values(story.interactions ?? {}) as any[])
-    for (const choice of interaction?.choices ?? [])
-      for (const effect of choice?.effects ?? [])
-        if (effect?.op === 'move_entity' && effect.via)
-          addArrival(portals.get(effect.via)?.scene, effect.arrival);
+  const arrivalAnchors = arrivalAnchorsOf(scenes, story);
 
   placeWorldEntities(scenes as Scene[], story, world);
 

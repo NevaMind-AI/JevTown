@@ -390,13 +390,28 @@ design, and the 26 shipped scenes were drawn against a mover that already had th
 The part that is _not_ free: reservation alone does not solve deadlock. Two agents stepping into
 each other's target tile both refuse and both stop, and `startEntityStep` simply returns.
 
-**Narrowed by §2.9.** "There is no retry" was wrong: `advanceState` calls `startEntityStep` for
-every entity on every step, so a refused step is retried next tick and a blocked walker resumes the
-moment the blocker moves. Nothing needs backoff jitter, and the question of whether a
-`game.rng.random()` draw survives replay does not arise. What is left is the narrow case — two
-entities holding each other's target tile, refusing each other forever — and for that a
-deterministic tiebreak, **lowest entity id yields**, is the whole fix. Still to be written, no
-longer a decision.
+**Settled, and not the way this section guessed.** Two corrections.
+
+"There is no retry" was wrong: `advanceState` calls `startEntityStep` for every entity on every
+step, so a refused step is retried next tick and a blocked walker resumes the moment the blocker
+moves. Nothing needs backoff jitter, and whether a `game.rng.random()` draw survives replay never
+arises.
+
+"Lowest entity id yields" was also wrong, and wrong in an instructive way: **a yield resolves
+nothing here, because there is nowhere to yield to.** Clearing the loser's path leaves it standing
+exactly where it was, which is the tile the winner is trying to reach. The two are not competing for
+a tile — they are each standing on the other's — so the only resolution that moves anybody is to let
+them **swap**, and to commit both steps in the same call. Reserving one and hoping the other follows
+would put two actors on a tile the moment the second is refused for a reason of its own. No PRNG, so
+a replay makes the same swap.
+
+Only an authored `move_entity` path can produce the case. A routed destination cannot: §2.10 K
+computes against live occupancy and live reservations, so it never hands out a path through
+somebody.
+
+What is left, and is rarer: a cycle of three or more. A swap is the two-body case; a ring of walkers
+each holding the next one's tile still stalls, and if it ever shows up the fix is the same shape —
+rotate the ring in one commit.
 
 ### 2.8 Consequences accepted
 
@@ -506,7 +521,11 @@ Two things the scenes had to learn to receive them:
 - **An anchor only has to stay clear if something arrives at it.** The occupancy rule refused any
   entity standing on any anchor, which is exactly what placing something at an anchor does. It now
   applies to arrival anchors — the story's start, a portal's destination, a `move_entity` landing —
-  and an anchor authored to be placed on may hold what is placed there.
+  and an anchor authored to be placed on may hold what is placed there. The same narrowing had to
+  reach the per-step rule, from the same derivation, because a load-time rule and a per-step rule
+  that disagree are how you get a route the mover then refuses to walk. Routing excludes arrival
+  tiles for that reason too: `npcPath` was handing back paths through tiles `startEntityStep` would
+  reject on arrival.
 - **`passable`.** A world file says `blocks_movement: false`; the scene format had no way to say it.
   `movable` was the near-miss and is wrong: it also advertises a movement capability, so a notice
   board would have claimed it could walk. `passable` means occupies its tile without blocking it,
