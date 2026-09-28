@@ -1,6 +1,5 @@
 import { Infer, v } from '../util/validators';
 import { World, serializedWorld } from './world';
-import { CollisionOverlay } from './collisionOverlay';
 import { WorldMap, serializedWorldMap } from './worldMap';
 import { PlayerDescription, serializedPlayerDescription } from './playerDescription';
 import { GameId, IdTypes, allocGameId } from './ids';
@@ -15,7 +14,15 @@ export const gameState = v.object({
   playerDescriptions: v.array(v.object(serializedPlayerDescription)),
   agentDescriptions: v.array(v.object(serializedAgentDescription)),
   entityDescriptions: v.array(v.object(serializedEntityDescription)),
-  worldMap: v.object(serializedWorldMap),
+  /**
+   * The ground, one map per scene (docs/13 §2). Derived by the host from the content it loaded
+   * and never persisted: it is the scenes, and the client already holds those.
+   */
+  scenes: v.optional(v.array(v.object({ scene: v.string(), map: v.object(serializedWorldMap) }))),
+  /** Where anything that names no scene stands. Required alongside `scenes`. */
+  defaultScene: v.optional(v.string()),
+  /** A world on one unnamed map — a test, or the stock format. Read only when `scenes` is absent. */
+  worldMap: v.optional(v.object(serializedWorldMap)),
 });
 export type GameState = Infer<typeof gameState>;
 
@@ -58,6 +65,22 @@ export const proseWrite = v.object({
 });
 export type ProseWrite = Infer<typeof proseWrite>;
 
+/**
+ * Where an agent wants its body to go, in the language of the side that owns the ground
+ * (docs/13 §2).
+ *
+ * The engine no longer moves anything. It says what an agent wants and the host carries it to
+ * `MemoryWorld`, which resolves it against who is standing where — something the engine cannot
+ * know and should not guess. Ids are authored ids (`sourceId`), because those are the only ones
+ * the map-owning side has.
+ */
+export const bodyMove = v.union(
+  v.object({ kind: v.literal('approach'), body: v.string(), target: v.string() }),
+  v.object({ kind: v.literal('wander'), body: v.string(), anchor: v.string() }),
+  v.object({ kind: v.literal('stop'), body: v.string() }),
+);
+export type BodyMove = Infer<typeof bodyMove>;
+
 export const gameStateDiff = v.object({
   world: v.object(serializedWorld),
   playerDescriptions: v.optional(v.array(v.object(serializedPlayerDescription))),
@@ -65,6 +88,7 @@ export const gameStateDiff = v.object({
   entityDescriptions: v.optional(v.array(v.object(serializedEntityDescription))),
   agentOperations: v.array(v.object({ name: v.string(), args: v.any() })),
   proseWrites: v.optional(v.array(proseWrite)),
+  bodyMoves: v.optional(v.array(bodyMove)),
 });
 export type GameStateDiff = Infer<typeof gameStateDiff>;
 
@@ -88,20 +112,19 @@ export class Game {
   world: World;
 
   descriptionsModified: boolean;
-  worldMap: WorldMap;
-  // Derived from entity physics, rebuilt on load, never persisted. See docs/07 §5.3.
-  collisionOverlay: CollisionOverlay;
+  /** The scene registry (docs/13 §2). One entry, keyed `''`, for a world on a single map. */
+  maps: Map<string, WorldMap>;
+  defaultScene: string;
   playerDescriptions: Map<GameId<'players'>, PlayerDescription>;
   agentDescriptions: Map<GameId<'agents'>, AgentDescription>;
   entityDescriptions: Map<GameId<'entities'>, EntityDescription>;
 
   pendingOperations: Array<{ name: string; args: any }> = [];
   pendingProseWrites: ProseWrite[] = [];
+  pendingMoves: BodyMove[] = [];
 
   /** The input number currently being applied, so a handler can stamp its audit rows. */
   currentInputNumber = -1;
-
-  numPathfinds: number;
 
   constructor(
     public worldId: string,
@@ -110,9 +133,18 @@ export class Game {
     this.world = new World(state.world);
 
     this.descriptionsModified = false;
-    this.worldMap = new WorldMap(state.worldMap);
-    this.collisionOverlay = new CollisionOverlay(this.worldMap.width);
-    this.rebuildCollisionOverlay();
+    if (state.scenes?.length) {
+      this.maps = new Map(state.scenes.map(({ scene, map }) => [scene, new WorldMap(map)]));
+      this.defaultScene = state.defaultScene ?? state.scenes[0].scene;
+    } else if (state.worldMap) {
+      this.maps = new Map([['', new WorldMap(state.worldMap)]]);
+      this.defaultScene = '';
+    } else {
+      throw new Error('A game needs ground: a scene registry or a single map');
+    }
+    if (!this.maps.has(this.defaultScene)) {
+      throw new Error(`The default scene "${this.defaultScene}" has no map`);
+    }
     this.agentDescriptions = parseMap(state.agentDescriptions, AgentDescription, (a) => a.agentId);
     this.playerDescriptions = parseMap(
       state.playerDescriptions,
@@ -124,28 +156,44 @@ export class Game {
       EntityDescription,
       (e) => e.entityId,
     );
-
-    this.numPathfinds = 0;
   }
 
-  /** Rebuilt from entity physics on load, and after any change to it. Never persisted. */
-  rebuildCollisionOverlay() {
-    this.collisionOverlay.clear();
-    for (const entity of this.world.sortedEntities()) {
-      if (entity.physics.blocksMovement) {
-        this.collisionOverlay.add(this.worldMap.anchorTiles(entity.anchor));
-      }
+  /** The map a scene stands on. Anything that names no scene stands on the default one. */
+  mapFor(scene?: string): WorldMap {
+    const map = this.maps.get(scene ?? this.defaultScene);
+    if (!map) {
+      throw new Error(`No map for scene "${scene}"`);
     }
+    return map;
   }
 
+  /** Which scene something is in, with the default filled in. The one way to compare two. */
+  sceneOf(thing: { scene?: string }): string {
+    return thing.scene ?? this.defaultScene;
+  }
+
+  /**
+   * Record a physics change.
+   *
+   * Collision itself is no longer the engine's (docs/13 §2): nothing here walks, so there is
+   * nothing for a blocking entity to block. The value is kept, because prose writes it and the
+   * audit reads it. Carrying a change across to the ground the scenes own is not done yet.
+   */
   setEntityPhysics(entity: Entity, physics: EntityPhysics) {
-    const tiles = this.worldMap.anchorTiles(entity.anchor);
-    if (entity.physics.blocksMovement && !physics.blocksMovement) {
-      this.collisionOverlay.remove(tiles);
-    } else if (!entity.physics.blocksMovement && physics.blocksMovement) {
-      this.collisionOverlay.add(tiles);
-    }
     entity.physics = { ...physics };
+  }
+
+  /** Ask the host to move a body (docs/13 §2). Drained by `takeDiff`. */
+  queueMove(move: BodyMove) {
+    this.pendingMoves.push(move);
+  }
+
+  /**
+   * Stop a body after its step in flight, which is the only place a tile walker can stop. A body
+   * the world file did not create has no counterpart to stop, and nothing here moves it anyway.
+   */
+  stopBody(body: { sourceId?: string }) {
+    if (body.sourceId !== undefined) this.queueMove({ kind: 'stop', body: body.sourceId });
   }
 
   queueProseWrite(write: Omit<ProseWrite, 'inputNumber'>) {
@@ -185,22 +233,12 @@ export class Game {
     return this.world.rng;
   }
 
-  beginStep(_now: number) {
-    this.numPathfinds = 0;
-  }
-
   tick(now: number) {
     // Sorted once per tick: every loop below can mutate the world, and they must all see the same
-    // deterministic order (docs/05 §10).
-    const players = this.world.sortedPlayers();
-    for (const player of players) {
+    // deterministic order (docs/05 §10). There is no movement pass: bodies are moved by the world
+    // that owns the ground and arrive here through `syncBodies` (docs/13 §2).
+    for (const player of this.world.sortedPlayers()) {
       player.tick(this, now);
-    }
-    for (const player of players) {
-      player.tickPathfinding(this, now);
-    }
-    for (const player of players) {
-      player.tickPosition(this, now);
     }
     for (const agent of this.world.sortedAgents()) {
       agent.tick(this, now);
@@ -217,9 +255,11 @@ export class Game {
       world: this.world.serialize(),
       agentOperations: this.pendingOperations,
       proseWrites: this.pendingProseWrites.length > 0 ? this.pendingProseWrites : undefined,
+      bodyMoves: this.pendingMoves.length > 0 ? this.pendingMoves : undefined,
     };
     this.pendingOperations = [];
     this.pendingProseWrites = [];
+    this.pendingMoves = [];
     if (this.descriptionsModified) {
       result.playerDescriptions = serializeMap(this.playerDescriptions);
       result.agentDescriptions = serializeMap(this.agentDescriptions);

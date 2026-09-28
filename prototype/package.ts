@@ -155,5 +155,7 @@ export async function loadPackage(
     keys(world, ['format_version', 'entities'], ['meta', 'world_rules', 'world_state', 'god']);
     if (!Array.isArray(world.entities)) throw new Error('Invalid world entities');
   }
-  return loadContent(scenes, combined, npcs, world && { entities: world.entities });
+  // The whole file, not just its entities: placement reads `entities`, and the agentic world
+  // (`createAgenticWorld`) reads the rest from the same object — one file, read twice.
+  return loadContent(scenes, combined, npcs, world);
 }

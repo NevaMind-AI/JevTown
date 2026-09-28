@@ -1,39 +1,12 @@
 import { Infer, ObjectType, v } from '../util/validators';
-import { Point, Vector, path, point, vector } from '../util/types';
+import { Point, Vector, point, vector } from '../util/types';
 import { GameId, parseGameId } from './ids';
 import { playerId } from './ids';
-import {
-  PATHFINDING_TIMEOUT,
-  PATHFINDING_BACKOFF,
-  HUMAN_IDLE_TOO_LONG,
-  MAX_HUMAN_PLAYERS,
-  MAX_PATHFINDS_PER_STEP,
-} from '../constants';
-import { pointsEqual, pathPosition } from '../util/geometry';
+import { HUMAN_IDLE_TOO_LONG, MAX_HUMAN_PLAYERS } from '../constants';
 import { Game } from './game';
-import { stopPlayer, findRoute, blocked, movePlayer } from './movement';
 import { inputHandler } from './inputHandler';
 import { characters } from '../../data/characters';
 import { PlayerDescription } from './playerDescription';
-
-const pathfinding = v.object({
-  destination: point,
-  started: v.number(),
-  state: v.union(
-    v.object({
-      kind: v.literal('needsPath'),
-    }),
-    v.object({
-      kind: v.literal('waiting'),
-      until: v.number(),
-    }),
-    v.object({
-      kind: v.literal('moving'),
-      path,
-    }),
-  ),
-});
-export type Pathfinding = Infer<typeof pathfinding>;
 
 export const activity = v.object({
   description: v.string(),
@@ -45,7 +18,6 @@ export type Activity = Infer<typeof activity>;
 export const serializedPlayer = {
   id: playerId,
   human: v.optional(v.string()),
-  pathfinding: v.optional(pathfinding),
   activity: v.optional(activity),
 
   // The last time they did something.
@@ -58,6 +30,8 @@ export const serializedPlayer = {
   /** The id the world file gave this actor, when it came from one (docs/13 §2). */
   sourceId: v.optional(v.string()),
   facing: vector,
+  // Whether the body is walking, as a unit rate: 1 while the map-owning side has it on a path, 0
+  // otherwise (docs/13 §2). The engine no longer knows how fast anything moves, only whether.
   speed: v.number(),
 
   // Points at the current row in `entityState` for tier (a) actors. Absent for humans, who write
@@ -69,7 +43,6 @@ export type SerializedPlayer = ObjectType<typeof serializedPlayer>;
 export class Player {
   id: GameId<'players'>;
   human?: string;
-  pathfinding?: Pathfinding;
   activity?: Activity;
 
   lastInput: number;
@@ -82,11 +55,10 @@ export class Player {
   stateVersion?: number;
 
   constructor(serialized: SerializedPlayer) {
-    const { id, human, pathfinding, activity, lastInput, position, facing, speed } = serialized;
+    const { id, human, activity, lastInput, position, facing, speed } = serialized;
     this.stateVersion = serialized.stateVersion;
     this.id = parseGameId('players', id);
     this.human = human;
-    this.pathfinding = pathfinding;
     this.activity = activity;
     this.lastInput = lastInput;
     this.position = position;
@@ -100,84 +72,6 @@ export class Player {
     if (this.human && this.lastInput < now - HUMAN_IDLE_TOO_LONG) {
       this.leave(game, now);
     }
-  }
-
-  tickPathfinding(game: Game, now: number) {
-    // There's nothing to do if we're not moving.
-    const { pathfinding, position } = this;
-    if (!pathfinding) {
-      return;
-    }
-
-    // Stop pathfinding if we've reached our destination.
-    if (pathfinding.state.kind === 'moving' && pointsEqual(pathfinding.destination, position)) {
-      stopPlayer(this);
-    }
-
-    // Stop pathfinding if we've timed out.
-    if (pathfinding.started + PATHFINDING_TIMEOUT < now) {
-      console.warn(`Timing out pathfinding for ${this.id}`);
-      stopPlayer(this);
-    }
-
-    // Transition from "waiting" to "needsPath" if we're past the deadline.
-    if (pathfinding.state.kind === 'waiting' && pathfinding.state.until < now) {
-      pathfinding.state = { kind: 'needsPath' };
-    }
-
-    // Perform pathfinding if needed.
-    if (pathfinding.state.kind === 'needsPath' && game.numPathfinds < MAX_PATHFINDS_PER_STEP) {
-      game.numPathfinds++;
-      if (game.numPathfinds === MAX_PATHFINDS_PER_STEP) {
-        console.warn(`Reached max pathfinds for this step`);
-      }
-      const route = findRoute(game, now, this, pathfinding.destination);
-      if (route === null) {
-        console.log(`Failed to route to ${JSON.stringify(pathfinding.destination)}`);
-        stopPlayer(this);
-      } else {
-        if (route.newDestination) {
-          console.warn(
-            `Updating destination from ${JSON.stringify(
-              pathfinding.destination,
-            )} to ${JSON.stringify(route.newDestination)}`,
-          );
-          pathfinding.destination = route.newDestination;
-        }
-        pathfinding.state = { kind: 'moving', path: route.path };
-      }
-    }
-  }
-
-  tickPosition(game: Game, now: number) {
-    // There's nothing to do if we're not moving.
-    if (!this.pathfinding || this.pathfinding.state.kind !== 'moving') {
-      this.speed = 0;
-      return;
-    }
-
-    // Compute a candidate new position and check if it collides
-    // with anything.
-    const candidate = pathPosition(this.pathfinding.state.path as any, now);
-    if (!candidate) {
-      console.warn(`Path out of range of ${now} for ${this.id}`);
-      return;
-    }
-    const { position, facing, velocity } = candidate;
-    const collisionReason = blocked(game, now, position, this.id);
-    if (collisionReason !== null) {
-      const backoff = game.rng.random() * PATHFINDING_BACKOFF;
-      console.warn(`Stopping path for ${this.id}, waiting for ${backoff}ms: ${collisionReason}`);
-      this.pathfinding.state = {
-        kind: 'waiting',
-        until: now + backoff,
-      };
-      return;
-    }
-    // Update the player's location.
-    this.position = position;
-    this.facing = facing;
-    this.speed = velocity;
   }
 
   static join(
@@ -205,25 +99,27 @@ export class Player {
         throw new Error(`Only ${MAX_HUMAN_PLAYERS} human players allowed at once.`);
       }
     }
-    // An anchor narrows the search to a named place (docs/07 §4.2); without one this falls back
-    // to the original whole-map sample. Both draw from the seeded PRNG.
-    const candidates = spawnAnchor ? game.worldMap.anchorTiles(spawnAnchor) : undefined;
-    let position;
-    for (let attempt = 0; attempt < 10; attempt++) {
-      const candidate = candidates
-        ? candidates[game.rng.int(candidates.length)]
-        : { x: game.rng.int(game.worldMap.width), y: game.rng.int(game.worldMap.height) };
-      if (!candidate || blocked(game, now, candidate)) {
-        continue;
+    // An anchor narrows the search to a named place (docs/07 §4.2), swept in tile order so the
+    // choice is the one `MemoryWorld` makes when it places the same entity: the first free tile.
+    // It matters little — the first `syncBodies` overwrites it — but a body that starts where its
+    // counterpart stands has nothing to reconcile. Without an anchor this is the original
+    // whole-map sample from the seeded PRNG.
+    const map = game.mapFor(spawnScene);
+    const scene = spawnScene ?? game.defaultScene;
+    const taken = (tile: Point) =>
+      map.blockedStatic(tile.x, tile.y) ||
+      [...game.world.players.values()].some(
+        (p) => game.sceneOf(p) === scene && p.position.x === tile.x && p.position.y === tile.y,
+      );
+    let position: Point | undefined;
+    if (spawnAnchor) {
+      const tile = map.anchorTiles(spawnAnchor).find((t) => !taken(t));
+      position = tile && { ...tile };
+    } else {
+      for (let attempt = 0; attempt < 10 && !position; attempt++) {
+        const tile = { x: game.rng.int(map.width), y: game.rng.int(map.height) };
+        if (!taken(tile)) position = tile;
       }
-      position = { ...candidate };
-      break;
-    }
-    if (!position && candidates) {
-      // A small anchor can lose a random draw ten times over. Sweep it before giving up, so a
-      // 1x1 anchor is not a coin flip.
-      position = candidates.find((tile) => !blocked(game, now, tile));
-      position = position && { ...position };
     }
     if (!position) {
       throw new Error(
@@ -279,12 +175,10 @@ export class Player {
   }
 
   serialize(): SerializedPlayer {
-    const { id, human, pathfinding, activity, lastInput, position, facing, speed, stateVersion } =
-      this;
+    const { id, human, activity, lastInput, position, facing, speed, stateVersion } = this;
     return {
       id,
       human,
-      pathfinding,
       activity,
       lastInput,
       position,
@@ -322,21 +216,39 @@ export const playerInputs = {
       return null;
     },
   }),
-  moveTo: inputHandler({
+  /**
+   * Where the bodies are, as the world that owns the ground reports it (docs/13 §2).
+   *
+   * The engine stopped moving anything; `MemoryWorld` walks every body and this carries the
+   * result in. An input rather than a write from outside, so a replay of this log puts every body
+   * where it was — positions are part of what decides who is close enough to talk. The host sends
+   * only bodies that changed, which is most frames none of them.
+   */
+  syncBodies: inputHandler({
     args: {
-      playerId,
-      destination: v.union(point, v.null()),
+      bodies: v.array(
+        v.object({
+          sourceId: v.string(),
+          scene: v.string(),
+          x: v.number(),
+          y: v.number(),
+          walking: v.boolean(),
+          facing: vector,
+        }),
+      ),
     },
     handler: (game, now, args) => {
-      const playerId = parseGameId('players', args.playerId);
-      const player = game.world.players.get(playerId);
-      if (!player) {
-        throw new Error(`Invalid player ID ${playerId}`);
+      const bySource = new Map<string, Player>();
+      for (const player of game.world.players.values()) {
+        if (player.sourceId !== undefined) bySource.set(player.sourceId, player);
       }
-      if (args.destination) {
-        movePlayer(game, now, player, args.destination);
-      } else {
-        stopPlayer(player);
+      for (const body of args.bodies) {
+        const player = bySource.get(body.sourceId);
+        if (!player) continue;
+        player.position = { x: body.x, y: body.y };
+        player.scene = body.scene;
+        player.facing = { dx: body.facing.dx, dy: body.facing.dy };
+        player.speed = body.walking ? 1 : 0;
       }
       return null;
     },

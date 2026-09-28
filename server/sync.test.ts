@@ -2,6 +2,7 @@ import { spawn, ChildProcess } from 'node:child_process';
 import { createAgenticWorld } from '../src/sim/createAgenticWorld';
 import { MemoryOutbox, SyncClient } from '../src/sim/syncClient';
 import type { BatchRequest } from './protocol';
+import { fixtureContent } from '../tests/fixtures/agenticWorld';
 
 /**
  * The four things docs/11 §4 promises, against a real database.
@@ -46,6 +47,7 @@ async function session(
     body: JSON.stringify({ id: worldId, name: worldId }),
   });
   const runtime = createAgenticWorld({
+    content: fixtureContent(),
     worldId,
     startTime: T0,
     godEnabled: false,

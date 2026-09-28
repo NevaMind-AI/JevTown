@@ -7,7 +7,6 @@ import { inputHandler } from './inputHandler';
 import { TYPING_TIMEOUT, CONVERSATION_DISTANCE } from '../constants';
 import { distance, normalize, vector } from '../util/geometry';
 import { Game } from './game';
-import { stopPlayer } from './movement';
 import { ConversationMembership, serializedConversationMembership } from './conversationMembership';
 import { parseMap, serializeMap } from '../util/object';
 
@@ -63,7 +62,11 @@ export class Conversation {
     // docs/13 §2: a conversation is what arrival produces, so the approach has already
     // happened by the time this runs. Refusing at range is what keeps that true — there is no
     // longer any machinery that would walk these two together afterwards.
-    if (distance(player.position, invitee.position) > CONVERSATION_DISTANCE) {
+    // Close means close within one scene (docs/13 §2): two bodies at (4, 7) in two rooms are not.
+    if (
+      game.sceneOf(player) !== game.sceneOf(invitee) ||
+      distance(player.position, invitee.position) > CONVERSATION_DISTANCE
+    ) {
       const reason = `Player ${player.id} is too far from ${invitee.id} to start talking`;
       console.log(reason);
       return { error: reason };
@@ -92,8 +95,8 @@ export class Conversation {
       // stored state and make two identical worlds compare unequal.
       invitee.facing = { dx: -facing.dx || 0, dy: -facing.dy || 0 };
     }
-    stopPlayer(player);
-    stopPlayer(invitee);
+    game.stopBody(player);
+    game.stopBody(invitee);
     return { conversationId };
   }
 

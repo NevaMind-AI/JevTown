@@ -159,9 +159,6 @@ export const entityInputs = {
         }),
       );
       game.descriptionsModified = true;
-      if (entity.physics.blocksMovement) {
-        game.collisionOverlay.add(game.worldMap.anchorTiles(entity.anchor));
-      }
       if (args.initialState) {
         game.queueProseWrite({
           entityId: id,

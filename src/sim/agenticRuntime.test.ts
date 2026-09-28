@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import { InMemoryAgentStore } from '../../agent/store/memoryStore';
 import { createAgenticWorld } from './createAgenticWorld';
+import { fixtureContent } from '../../tests/fixtures/agenticWorld';
 
 /**
  * The loop, driven without a model.
@@ -17,7 +18,12 @@ const T0 = 1_700_000_000_000;
 
 describe('AgenticRuntime', () => {
   test('creates the authored world from its file, through the log', () => {
-    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const runtime = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     // Entities arrive as inputs, so nothing exists until the first tick applies them.
     expect(runtime.game.world.entities.size + runtime.game.world.players.size).toBe(0);
     expect(runtime.events().length).toBeGreaterThan(0);
@@ -29,7 +35,12 @@ describe('AgenticRuntime', () => {
   });
 
   test('assigns idx and game time itself, in order', () => {
-    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const runtime = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     runtime.advance(160);
     const idxs = runtime.events().map((e) => e.idx);
     expect(idxs).toEqual([...idxs].sort((a, b) => a - b));
@@ -39,7 +50,12 @@ describe('AgenticRuntime', () => {
   });
 
   test('advances game time by what it is given, and only by that', () => {
-    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const runtime = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     runtime.advance(160);
     const after = runtime.time;
     expect(after).toBeGreaterThan(T0);
@@ -58,7 +74,12 @@ describe('AgenticRuntime', () => {
     // shipped 600x16 -- so taking its result as the new clock without looping moved a seven-day
     // fast-forward by 9.6 seconds and dropped the rest, silently. A night's sleep at the shipped
     // 20x is 1,080,000ms of game time, which is the case this has to survive (docs/13 §3.4).
-    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const runtime = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     const sleep = 6 * 3600 * 50; // six fiction hours, at 50ms of game time per story second
     runtime.advance(sleep);
     expect(runtime.time).toBeGreaterThanOrEqual(T0 + sleep);
@@ -71,6 +92,7 @@ describe('AgenticRuntime', () => {
     // the same game time holding different story times.
     let story = 64_800;
     const withClock = createAgenticWorld({
+      content: fixtureContent(),
       worldId: 'w',
       startTime: T0,
       godEnabled: false,
@@ -87,14 +109,24 @@ describe('AgenticRuntime', () => {
     expect(last.storyTime).toBe(68_400);
     expect(last.gameTime).toBe(before);
 
-    const without = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const without = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     expect(without.events().every((e) => e.storyTime === undefined)).toBe(true);
   });
 
   test('a world may start at game time zero', () => {
     // `MemoryWorld` starts at 0 and docs/13 §3.2 seeds the agentic clock from it. The falsy
     // start-of-step test this replaces sent such a world to `now` and dropped the first interval.
-    const runtime = createAgenticWorld({ worldId: 'w', startTime: 0, godEnabled: false });
+    const runtime = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: 0,
+      godEnabled: false,
+    });
     runtime.advance(160);
     expect(runtime.time).toBeGreaterThan(0);
     expect(runtime.time).toBeLessThanOrEqual(160);
@@ -103,6 +135,7 @@ describe('AgenticRuntime', () => {
   test('runs the operations the simulation asks for, and takes their result back as input', async () => {
     const ran: string[] = [];
     const runtime = createAgenticWorld({
+      content: fixtureContent(),
       worldId: 'w',
       startTime: T0,
       godEnabled: false,
@@ -139,6 +172,7 @@ describe('AgenticRuntime', () => {
 
   test('an operation that throws is contained, and the world keeps ticking', async () => {
     const runtime = createAgenticWorld({
+      content: fixtureContent(),
       worldId: 'w',
       startTime: T0,
       godEnabled: false,
@@ -158,7 +192,12 @@ describe('AgenticRuntime', () => {
   });
 
   test('a world and its memories come back together from one snapshot', async () => {
-    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const runtime = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     runtime.advance(160);
     await runtime.store.insertMemory({
       playerId: 'p:1' as never,
@@ -174,7 +213,12 @@ describe('AgenticRuntime', () => {
     // A world rebuilt from its file, then restored: the same entities standing in the same
     // places, and the same memories behind them. Memory and state travel in one document on
     // purpose — a world restored without its memories is a different world.
-    const fresh = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const fresh = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     fresh.restore(saved);
     expect(fresh.game.world.entities.size + fresh.game.world.players.size).toBe(populated);
     expect(fresh.time).toBe(runtime.time);
@@ -210,7 +254,12 @@ describe('AgenticRuntime', () => {
 describe("an entity's patch to the world's record (docs/13 §4)", () => {
   /** The world file ships a paragraph, so `__world__` already has a version before any patch. */
   const started = () => {
-    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const runtime = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     runtime.advance(160);
     // An actor keeps its prose under its player id (`applyStateUpdate`), so a state write from one
     // has to be addressed that way — the entity name is not an id anything holds.

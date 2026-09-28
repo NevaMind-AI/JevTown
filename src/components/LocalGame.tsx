@@ -27,6 +27,7 @@ import { catalogue, restoreSlot, SaveHead, SavePlayback } from '../lib/autosaves
 import { useAutoSaves, Restored, PlayHandler } from './AutoSaves';
 import { loadPackage, Package } from '../../prototype/package';
 import { useAgenticRuntime } from '../sim/useAgenticRuntime';
+import { BodyBridge } from '../sim/bodyBridge';
 import {
   currentProseStep,
   readWorldStateDocument,
@@ -177,7 +178,9 @@ function LoadedLocalGame({
     if (replay) return replay.world;
     if (initialWorld) return initialWorld;
     const runtime = new MemoryWorld(Date.now, Math.random, localRoom);
-    runtime.load(content.scenes, content.story, content.npcs);
+    // The world file rides with the content so a recording carries it: a save restored later must
+    // be able to stand the agentic world up again from what it embedded (docs/13 §2).
+    runtime.load(content.scenes, content.story, content.npcs, content.world);
     return runtime;
   });
   const [state, setState] = useState(() => world.inspect());
@@ -192,7 +195,10 @@ function LoadedLocalGame({
   const agentic = useAgenticRuntime({
     time: world.inspect().time,
     storyTime: () => Math.floor(world.gameTime()),
+    content,
   });
+  // The seam for bodies (docs/13 §2): positions in before the agentic step, intents out after.
+  const bridge = useMemo(() => agentic && new BodyBridge(agentic, world), [agentic, world]);
   const gainCursor = useRef<{
     sequence: number;
     state: Pick<typeof state, 'tasks' | 'commerce' | 'clues' | 'balance' | 'storyTime'>;
@@ -585,7 +591,12 @@ function LoadedLocalGame({
       pendingTime.current += quantum;
       // Same budget, same cap, same bail conditions: this line is reached only when the loop has
       // already decided this elapsed time should be simulated (docs/11 §4.5).
+      //
+      // Bodies first, so the agents decide on where everyone stands this frame; their moves after,
+      // so the stepping below walks them in the same frame (docs/13 §2).
+      bridge?.syncIn();
       agentic?.advance(quantum);
+      bridge?.applyMoves();
       if (current.seated || current.dialogue) {
         keys.current.clear();
         sprint.current = false;

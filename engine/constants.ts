@@ -8,12 +8,10 @@ export const MAX_STEP = 10 * 60 * 1000;
 export const TICK = 16;
 export const STEP_INTERVAL = 1000;
 
-export const PATHFINDING_TIMEOUT = 60 * 1000;
-export const PATHFINDING_BACKOFF = 1000;
+// Movement is `MemoryWorld`'s (docs/13 §2): the pathfinding timeout and backoff, the collision
+// disc and the midpoint chase went with the engine's mover.
 export const CONVERSATION_DISTANCE = 1.3;
-export const MIDPOINT_THRESHOLD = 4;
 export const TYPING_TIMEOUT = 15 * 1000;
-export const COLLISION_THRESHOLD = 0.75;
 
 // How many human players can be in a world at once.
 export const MAX_HUMAN_PLAYERS = 8;
@@ -29,6 +27,11 @@ export const INTERACTION_DISTANCE = 1.5;
 // or the path may be blocked by something that is not going to move (docs/09 §6).
 export const APPROACH_TIMEOUT = 60_000;
 
+// How long an approach that ended short waits before it is aimed again at where the target is
+// now (docs/13 §2). Long enough that a sync not yet arrived is not mistaken for a walk that
+// ended; short against APPROACH_TIMEOUT, so a target that walks away is followed.
+export const REAPPROACH_INTERVAL = 1_000;
+
 // The one piece of pacing policy the model must not own: `idle`'s duration is its own throttle,
 // but a model that always picks a five-second idle would burn the budget without bound. Set well
 // below the natural cadence so it only catches the pathological case (docs/09 §10).
@@ -39,12 +42,6 @@ export const MAX_INTERACTION_TURNS = 6;
 
 // Don't talk to a player within 60s of talking to them.
 export const PLAYER_CONVERSATION_COOLDOWN = 60000;
-
-// Invite 80% of invites that come from other agents.
-export const INVITE_ACCEPT_PROBABILITY = 0.8;
-
-// Wait for 1m for invites to be accepted.
-export const INVITE_TIMEOUT = 60000;
 
 // Wait for another player to say something before jumping in.
 export const AWKWARD_CONVERSATION_TIMEOUT = 60_000; // more time locally
@@ -82,8 +79,5 @@ export const HUMAN_IDLE_TOO_LONG = 5 * 60 * 1000;
 // rather than one of eight fixed options (docs/09 §4, §11).
 
 export const ENGINE_ACTION_DURATION = 30000;
-
-// Bound the number of pathfinding searches we do per game step.
-export const MAX_PATHFINDS_PER_STEP = 16;
 
 export const DEFAULT_NAME = 'Me';

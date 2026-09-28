@@ -5,12 +5,18 @@ import type { Game } from './game';
 import type { Player } from './player';
 import { World } from './world';
 import worldFile from '../../data/world.json';
+import { fixtureContent } from '../../tests/fixtures/agenticWorld';
 
 const T0 = 1_700_000_000_000;
 
 /** A populated world, then two mobile actors out of it. */
 function twoActors(): { game: Game; a: Player; b: Player } {
-  const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+  const runtime = createAgenticWorld({
+    content: fixtureContent(),
+    worldId: 'w',
+    startTime: T0,
+    godEnabled: false,
+  });
   runtime.advance(160);
   const game = runtime.game;
   const [a, b] = game.world.sortedPlayers();
@@ -54,14 +60,23 @@ describe('a conversation is what arrival produces (docs/13 §2)', () => {
     expect(b.facing).toEqual({ dx: -1, dy: 0 });
   });
 
-  test('starting one stops both walkers, so neither wanders out of it', () => {
+  test('starting one asks the world that owns the ground to stop both bodies', () => {
     const { game, a, b } = twoActors();
     a.position = { x: 5, y: 5 };
     b.position = { x: 6, y: 5 };
-    a.pathfinding = { destination: { x: 9, y: 9 }, started: T0, state: { kind: 'needsPath' } };
     Conversation.start(game, T0, a, b);
-    expect(a.pathfinding).toBeUndefined();
-    expect(b.pathfinding).toBeUndefined();
+    expect(game.takeDiff().bodyMoves).toEqual([
+      { kind: 'stop', body: a.sourceId },
+      { kind: 'stop', body: b.sourceId },
+    ]);
+  });
+
+  test('two bodies at the same coordinates in different scenes are not close', () => {
+    const { game, a, b } = twoActors();
+    a.position = { x: 5, y: 5 };
+    b.position = { x: 6, y: 5 };
+    b.scene = 'corridor';
+    expect(Conversation.start(game, T0, a, b).error).toMatch(/too far/);
   });
 
   test('the engine no longer walks anybody on a conversation tick', () => {
@@ -129,7 +144,12 @@ describe('membership states that no longer exist', () => {
 
 describe('the authored id survives into the engine (docs/13 §2)', () => {
   test('every body created from the world file carries the id the file gave it', () => {
-    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const runtime = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     runtime.advance(160);
     const authored = worldFile.entities.map((e) => e.id).sort();
     const carried = [
@@ -142,7 +162,12 @@ describe('the authored id survives into the engine (docs/13 §2)', () => {
   });
 
   test('it survives a round trip through serialization', () => {
-    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const runtime = createAgenticWorld({
+      content: fixtureContent(),
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+    });
     runtime.advance(160);
     const before = runtime.game.world.sortedPlayers().map((p) => p.sourceId);
     const after = new World(runtime.game.world.serialize()).sortedPlayers().map((p) => p.sourceId);

@@ -49,6 +49,12 @@ function band(tiles: number): ManifestTarget['distance'] {
 
 export function buildManifest(game: Game, now: number, agent: Agent, player: Player): DecisionManifest {
   const targets: ManifestTarget[] = [];
+  // docs/13 §2: only what shares this agent's scene, and only what the map-owning side can find.
+  // A target in another room is not "far", it is unreachable — agents do not take portals — and
+  // one with no authored id has no body over there to walk up to. Both are filtered out rather
+  // than offered and refused, per the rule above.
+  const here = game.sceneOf(player);
+  const map = game.mapFor(here);
 
   // Tier (a). Excluded when already occupied, or when either cooldown says this agent may not
   // start a conversation right now — the cooldowns of docs/09 §2, expressed as filters.
@@ -59,6 +65,9 @@ export function buildManifest(game: Game, now: number, agent: Agent, player: Pla
   if (!justLeftConversation && !recentlyAttemptedInvite) {
     for (const other of game.world.sortedPlayers()) {
       if (other.id === player.id) {
+        continue;
+      }
+      if (game.sceneOf(other) !== here || other.sourceId === undefined) {
         continue;
       }
       if (game.world.playerConversation(other)) {
@@ -78,7 +87,10 @@ export function buildManifest(game: Game, now: number, agent: Agent, player: Pla
     if (!entity.physics.interactable) {
       continue;
     }
-    const anchor = game.worldMap.anchor(entity.anchor);
+    if (game.sceneOf(entity) !== here || entity.sourceId === undefined) {
+      continue;
+    }
+    const anchor = map.anchor(entity.anchor);
     const entityDescription = game.entityDescriptions.get(entity.id);
     targets.push({
       id: entity.id,
@@ -96,11 +108,25 @@ export function buildManifest(game: Game, now: number, agent: Agent, player: Pla
 
   return {
     targets,
-    places: [...game.worldMap.anchors.values()].map((anchor) => ({
+    places: [...map.anchors.values()].map((anchor) => ({
       id: anchor.id,
       description: anchor.description,
     })),
   };
+}
+
+/**
+ * The authored id of whatever an engine target id names (docs/13 §2) — the name the map-owning
+ * side knows it by. `undefined` for anything the world file did not create.
+ */
+export function sourceOfTarget(game: Game, targetId: string): string | undefined {
+  try {
+    return targetId.startsWith('p:')
+      ? game.world.players.get(parseGameId('players', targetId))?.sourceId
+      : game.world.entities.get(parseGameId('entities', targetId))?.sourceId;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
