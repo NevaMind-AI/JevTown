@@ -1,5 +1,10 @@
 import { AgentContext } from './ports';
-import { WORLD_STATE_ID, EntityTier, stateContractFor } from '../engine/prose/contract';
+import {
+  WORLD_RECORD_CONTRACT,
+  WORLD_STATE_ID,
+  EntityTier,
+  stateContractFor,
+} from '../engine/prose/contract';
 
 /**
  * Everything a state-writing prompt needs about one entity, and the sections that assemble it.
@@ -24,8 +29,8 @@ export interface PromptContext {
   physics?: { blocksMovement: boolean; interactable: boolean };
   worldRules: string;
   /**
-   * What everyone in this world knows (docs/05 §5.3). Unlike every other piece of prose here it
-   * is not about this entity at all, and unlike `worldRules` it changes — the god rewrites it.
+   * How this world stands right now (docs/05 §5.3, docs/13 §1.4). Unlike every other piece of
+   * prose here it is not about this entity at all, and unlike `worldRules` it changes.
    */
   worldState?: string;
 }
@@ -168,6 +173,22 @@ export function currentStateSection(context: PromptContext): string[] {
   return ['Your state right now:', context.state];
 }
 
+/**
+ * How to write the world's record (docs/13 §4), shown to every entity that writes state.
+ *
+ * Shown to every one of them on purpose, for now. The alternative was to gate it on a world-file
+ * flag, the way the physics tag is effectively gated by an entity's own `behavior` — and that is
+ * probably where this ends up, once there is a run's worth of evidence about whether an entity with
+ * no business here writes anyway. Until then the guard is textual: the contract's first rule is
+ * that writing nothing is the normal case, and what would make this entity write something lives in
+ * its own `description` and `behavior`, which is a fact about a world rather than about the engine.
+ *
+ * Gating it later is a condition on this one line.
+ */
+export function worldRecordSection(_context: PromptContext): string[] {
+  return [WORLD_RECORD_CONTRACT];
+}
+
 /** The full system prompt for a call that rewrites this entity's own state. */
 export function stateWritingSystemPrompt(context: PromptContext, envelope: string): string {
   return [
@@ -182,6 +203,8 @@ export function stateWritingSystemPrompt(context: PromptContext, envelope: strin
     ...physicsSection(context),
     '',
     stateContractFor(context.tier),
+    '',
+    ...worldRecordSection(context),
     '',
     envelope,
   ]

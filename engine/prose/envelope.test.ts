@@ -103,7 +103,9 @@ describe('parseEnvelope', () => {
   });
 
   test('non-string memory entries are dropped, not fatal', () => {
-    const { self } = parseEnvelope(JSON.stringify({ state: 'x', memory: ['ok', 7, null], reason: 'r' }));
+    const { self } = parseEnvelope(
+      JSON.stringify({ state: 'x', memory: ['ok', 7, null], reason: 'r' }),
+    );
 
     expect(self.memory).toEqual(['ok']);
     expect(self.problems).toContain('dropped a non-string memory entry');
@@ -113,6 +115,67 @@ describe('parseEnvelope', () => {
     for (const input of ['', 'I refuse.', '{', 'null', '[1,2,3]']) {
       expect(() => parseEnvelope(input)).not.toThrow();
     }
-    expect(parseEnvelope('I refuse.').self.problems).toContain('no JSON object found in the response');
+    expect(parseEnvelope('I refuse.').self.problems).toContain(
+      'no JSON object found in the response',
+    );
+  });
+});
+
+describe('a world-record patch in the envelope (docs/13 §4)', () => {
+  test('rides alongside the state document and keeps only its record lines', () => {
+    const { self } = parseEnvelope(
+      JSON.stringify({
+        state: 'state: pleased\n\nI handed the tag over.',
+        reason: 'the player brought me the tag',
+        world: '<tasks>\ns01-door-tag = store\n</tasks>',
+      }),
+    );
+
+    expect(self.world).toContain('s01-door-tag = store');
+    expect(self.problems).toEqual([]);
+  });
+
+  test('prose in the patch is dropped and recorded — the paragraph is the god’s', () => {
+    const { self } = parseEnvelope(
+      JSON.stringify({
+        reason: 'r',
+        world:
+          'state: uneasy\n\nThe whole town is talking.\n\n<player_items>\n"door tag" = 1\n</player_items>',
+      }),
+    );
+
+    expect(self.world).toBe('<player_items>\n"door tag" = 1\n</player_items>');
+    expect(self.problems).toContain(
+      'world patch carried prose, which was dropped — the record blocks were kept',
+    );
+  });
+
+  test('a patch with no record lines is ignored rather than written', () => {
+    const { self } = parseEnvelope(
+      JSON.stringify({ reason: 'r', world: 'Nothing much happened.' }),
+    );
+
+    expect(self.world).toBeUndefined();
+    expect(self.problems).toContain('world patch had no record lines, ignored');
+  });
+
+  test('absent is the normal case and says nothing', () => {
+    const { self } = parseEnvelope(JSON.stringify({ state: 'state: x\n\nfine', reason: 'r' }));
+
+    expect(self.world).toBeUndefined();
+    expect(self.problems).toEqual([]);
+  });
+
+  test('a patch under "target" is ignored, because one call writes one record', () => {
+    const { self, target } = parseEnvelope(
+      JSON.stringify({
+        self: { state: 'state: a\n\nmine', reason: 'r' },
+        target: { state: 'state: b\n\ntheirs', reason: 'r', world: '<tasks>\nt = s\n</tasks>' },
+      }),
+    );
+
+    expect(target?.world).toBeUndefined();
+    expect(target?.problems).toContain('world patch under "target" ignored; write it in "self"');
+    expect(self.world).toBeUndefined();
   });
 });

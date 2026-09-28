@@ -9,6 +9,7 @@ import { parseGameId } from './ids';
 import { Game } from './game';
 import { parseStateDocument, physicsPatchFrom } from '../prose/stateDocument';
 import { WORLD_STATE_ID } from '../prose/contract';
+import { recordPatchOnly } from '../prose/worldState';
 
 /**
  * Inputs that create and mutate entities and their prose state.
@@ -170,11 +171,16 @@ export const entityInputs = {
       memory: v.optional(v.array(v.string())),
       reason: v.string(),
       tags: v.optional(v.any()),
+      // docs/13 §4: a patch to the world's record, riding the same input as the entity's own state
+      // so that one model call lands as one write at one step boundary. Absent in the normal case.
+      world: v.optional(v.string()),
       operationId: v.optional(v.string()),
     },
     handler: (game, now, args) => {
       refuseWorldStateAsEntity(args.entityId);
-      return applyStateUpdate(game, args, 'self');
+      const applied = applyStateUpdate(game, args, 'self');
+      if (args.world) applyWorldRecordPatch(game, args.entityId, args.world, args.reason);
+      return applied;
     },
   }),
 
@@ -239,7 +245,7 @@ export const entityInputs = {
       }
       let world = false;
       if (args.world) {
-        applyWorldStateUpdate(game, args.world, args.batchId);
+        applyWorldStateUpdate(game, args.world, { source: 'god', batchId: args.batchId });
         world = true;
       }
       return { applied, world };
@@ -348,15 +354,35 @@ function applyStateUpdate(
 function applyWorldStateUpdate(
   game: Game,
   write: { state: string; reason: string },
-  batchId: string,
+  by: { source: 'god' | 'record'; writtenBy?: string; batchId?: string },
 ) {
   game.world.worldStateVersion += 1;
   game.queueProseWrite({
     entityId: WORLD_STATE_ID,
     version: game.world.worldStateVersion,
     state: write.state,
-    source: 'god',
+    source: by.source,
+    writtenBy: by.writtenBy,
     reason: write.reason,
-    batchId,
+    batchId: by.batchId,
   });
+}
+
+/**
+ * An entity's patch to the world's record (docs/13 §4).
+ *
+ * Two guards, both of which belong here rather than in the caller that happens to be an agent
+ * today: the paragraph is stripped, because §4.2 leaves it to the god, and an empty patch is
+ * dropped rather than allocating a version for a write that says nothing. Both are silent —
+ * `recordPatchOnly`'s droppedProse already reached the audit through the envelope's `problems`,
+ * and a version that exists for nothing is worse than one that never happened.
+ */
+function applyWorldRecordPatch(game: Game, entityId: string, patch: string, reason: string) {
+  const { patch: records } = recordPatchOnly(patch);
+  if (records === '') return;
+  applyWorldStateUpdate(
+    game,
+    { state: records, reason },
+    { source: 'record', writtenBy: entityId },
+  );
 }

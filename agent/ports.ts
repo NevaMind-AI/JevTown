@@ -115,7 +115,9 @@ export interface TranscriptRow {
 export interface AuditRow {
   entityId: string;
   field: 'state' | 'memory' | 'physics';
-  source: 'self' | 'interaction' | 'god';
+  source: 'self' | 'interaction' | 'god' | 'record';
+  /** The writer, when it is not the entity being written (docs/13 §4). */
+  writtenBy?: string;
   before: string;
   after: string;
   reason: string;

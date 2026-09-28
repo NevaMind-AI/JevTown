@@ -184,10 +184,13 @@ export const ENVELOPE_INSTRUCTION = `Reply with one JSON object and nothing else
 {
   "state": "<your whole state document, in the shape above>",
   "memory": ["<one sentence you will remember>", "..."],
-  "reason": "<one sentence on why your state changed>"
+  "reason": "<one sentence on why your state changed>",
+  "world": "<the record lines you are changing, or leave this out>"
 }
 
 - "state" is the complete document, not a diff. Write it out in full every time.
+- "world" is the opposite: only what you are changing, and left out entirely unless your own
+  instructions tell you to write it.
 - "reason" is required. It is the only record of why this happened.`;
 
 /** The nested shape of docs/05 §6.2, where one call updates the actor and the prop it acted on. */
@@ -203,6 +206,40 @@ export const TARGET_ENVELOPE_INSTRUCTION = `Reply with one JSON object and nothi
   "target.state" is what tells the world it changed: a door that is now open must carry
   <unblocked/>, or nobody will be able to walk through it.
 - Both "reason" fields are required.`;
+
+/**
+ * What an entity is told about writing the world's record (docs/13 §4, §1.8 item 2).
+ *
+ * Deliberately narrower than `WORLD_STATE_CONTRACT`: the paragraph is the god's, so an entity is
+ * never shown the rules for writing it and never invited to. What is left is the two record blocks
+ * and the merge.
+ *
+ * **It says the shape and the default, and not the policy.** Which task an entity has anything to
+ * do with, and what would make it move, belongs to that entity's own description and behavior —
+ * which is a fact about a particular world, not about the engine. So the only rule here about
+ * *when* is "when your own instructions say so, and otherwise not at all". An entity with nothing
+ * in its behavior about the record will read this and correctly never write one.
+ */
+export const WORLD_RECORD_CONTRACT = `The world keeps a record of where the player has got to. You can add to it, in "world":
+
+<tasks>
+<one line per task you are changing: the task's id, then "=", then the id of the step it is now on, or "done">
+</tasks>
+
+<player_items>
+<one line per thing you are giving the player or taking away: its name, then "=", then how many they now have>
+</player_items>
+
+- Only write this if your own instructions tell you to. Most of the time they do not, and then you
+  leave "world" out entirely. Writing nothing there is the normal case and is never wrong.
+- What you write merges into the record line by line. Write only the lines you are changing; every
+  line you do not write stays exactly as it is, so there is nothing to copy through.
+- Leaving a line out never removes it. To say the player no longer has something, write that thing
+  with a count of 0.
+- Use the ids exactly as your instructions spell them. A name you invent does not correct an
+  existing line; it adds a line that nothing reads, and the old line stands.
+- Never write prose here, and never write a "state: " line here. This is the record only. What is
+  true of the world in general is not yours to write.`;
 
 export const MEMORY_CONTRACT = `One sentence, first person, past tense, one discrete fact or impression per entry. Stay under ${MEMORY_WORD_BUDGET} words per entry.`;
 

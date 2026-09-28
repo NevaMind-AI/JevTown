@@ -159,3 +159,91 @@ describe('AgenticRuntime', () => {
     expect(hits[0].score).toBeCloseTo(1, 5);
   });
 });
+
+describe("an entity's patch to the world's record (docs/13 §4)", () => {
+  /** The world file ships a paragraph, so `__world__` already has a version before any patch. */
+  const started = () => {
+    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    runtime.advance(160);
+    // An actor keeps its prose under its player id (`applyStateUpdate`), so a state write from one
+    // has to be addressed that way — the entity name is not an id anything holds.
+    const [first, second] = [...runtime.game.world.players.keys()];
+    return { runtime, first, second };
+  };
+
+  test('merges into the record and leaves the authored paragraph standing', () => {
+    const { runtime, first } = started();
+    const before = runtime.store.readEntityStateSync('__world__') ?? '';
+    expect(before).toContain('The river is low');
+
+    runtime.send('entityUpdateState', {
+      entityId: first,
+      state: 'state: excited\n\nI told someone at last.',
+      reason: 'the conversation ended',
+      world: '<tasks>\ns01-door-tag = ask_ash\n</tasks>',
+    });
+    runtime.advance(160);
+
+    const after = runtime.store.readEntityStateSync('__world__') ?? '';
+    // The patch said nothing about the paragraph, so the paragraph is the one that was there.
+    expect(after).toContain('The river is low');
+    expect(after).toContain('s01-door-tag = ask_ash');
+  });
+
+  test('two entities patching different lines do not lose each other', () => {
+    const { runtime, first, second } = started();
+    runtime.send('entityUpdateState', {
+      entityId: first,
+      reason: 'r',
+      world: '<tasks>\ns01-door-tag = ask_ash\n</tasks>',
+    });
+    runtime.send('entityUpdateState', {
+      entityId: second,
+      reason: 'r',
+      world: '<player_items>\n"door tag" = 1\n</player_items>',
+    });
+    runtime.advance(160);
+
+    const after = runtime.store.readEntityStateSync('__world__') ?? '';
+    expect(after).toContain('s01-door-tag = ask_ash');
+    expect(after).toContain('"door tag" = 1');
+  });
+
+  test('the audit says which entity moved the line, since the document is the world’s', () => {
+    const { runtime, first } = started();
+    runtime.send('entityUpdateState', {
+      entityId: first,
+      reason: 'the player brought me the tag',
+      world: '<tasks>\ns01-door-tag = store\n</tasks>',
+    });
+    runtime.advance(160);
+
+    const row = runtime.store
+      .snapshot()
+      .audits.filter((audit) => audit.entityId === '__world__')
+      .at(-1);
+    expect(row?.source).toBe('record');
+    expect(row?.writtenBy).toBe(first);
+  });
+
+  test('a patch that is only prose writes nothing at all', () => {
+    const { runtime, first } = started();
+    const versionsBefore = runtime.store
+      .snapshot()
+      .entityState.find(([id]) => id === '__world__')?.[1].length;
+
+    runtime.send('entityUpdateState', {
+      entityId: first,
+      reason: 'r',
+      world: 'state: uneasy\n\nThe whole town is talking about it.',
+    });
+    runtime.advance(160);
+
+    const versionsAfter = runtime.store
+      .snapshot()
+      .entityState.find(([id]) => id === '__world__')?.[1].length;
+    // §4.2 leaves the paragraph to the god, and a version allocated for nothing is worse than a
+    // write that never happened.
+    expect(versionsAfter).toBe(versionsBefore);
+  });
+});
