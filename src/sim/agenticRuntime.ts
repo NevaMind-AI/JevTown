@@ -34,14 +34,28 @@ const GOD_INTERVAL = 30_000;
  *
  * `idx` is assigned here and never by a store (docs/11 §4.2): a server-assigned sequence quietly
  * restores server ordering, and a batch retried after a timeout would assign a second range to
- * the same events. Both clocks are kept, because neither is reconstructible from the other later
- * (docs/11 §6.1).
+ * the same events. All three clocks are kept, because none is reconstructible from the others
+ * later (docs/11 §6.1, docs/13 §3.3).
  */
 export interface LoggedEvent {
   idx: number;
   name: string;
   args: unknown;
+  /** Simulation ms. The ordering authority, and what every engine deadline is measured against. */
   gameTime: number;
+  /**
+   * Fiction seconds, when the host has a story clock.
+   *
+   * Stamped rather than derived: docs/13 §3.1 shows two worlds at the same `gameTime` holding
+   * different story times, so this cannot be recovered afterwards from `gameTime` and a rate.
+   * Stamping it here is what lets a reader turn any event into "second day, evening" without
+   * folding the log.
+   */
+  storyTime?: number;
+  /**
+   * Wall ms. Audit only — docs/13 §3.5: written to the log, never read by the simulation, by a
+   * gate, or by a prompt.
+   */
   wallTime: number;
 }
 
@@ -68,6 +82,14 @@ export interface AgenticRuntimeOptions {
   runGod?: (ctx: AgentContext) => Promise<void>;
   /** Off by default: a world with no god config has nothing for it to do. */
   godEnabled?: boolean;
+  /**
+   * The host's fiction clock, in story seconds, if it has one.
+   *
+   * A supplier rather than a value because story time is the host's state and moves without this
+   * runtime being told — an authored cut moves it with no simulation time passing at all
+   * (docs/13 §3.4). Omitted, every prompt simply says nothing about what time it is.
+   */
+  storyTime?: () => number | undefined;
 }
 
 export class AgenticRuntime {
@@ -83,6 +105,7 @@ export class AgenticRuntime {
   private readonly runOperation: NonNullable<AgenticRuntimeOptions['runOperation']>;
   private readonly runGod: NonNullable<AgenticRuntimeOptions['runGod']>;
   private readonly godEnabled: boolean;
+  private readonly storyTime: () => number | undefined;
 
   constructor(options: AgenticRuntimeOptions) {
     this.game = options.game;
@@ -92,6 +115,7 @@ export class AgenticRuntime {
     this.runOperation = options.runOperation ?? runAgentOperation;
     this.runGod = options.runGod ?? godStep;
     this.godEnabled = options.godEnabled ?? false;
+    this.storyTime = options.storyTime ?? (() => undefined);
 
     const inputs: InputQueue = {
       send: async (name, args) => this.send(name, args),
@@ -100,6 +124,12 @@ export class AgenticRuntime {
       world: new GameWorldReader(this.game, options.description),
       store: this.store,
       inputs,
+      // Both readers are live rather than captured: an operation reads them when its result comes
+      // back, which is the moment the thing it is stamping actually happened (docs/13 §3.1).
+      clock: {
+        now: () => this.currentTime,
+        storyTime: () => this.storyTime(),
+      },
     };
   }
 
@@ -140,7 +170,15 @@ export class AgenticRuntime {
    */
   send<Name extends InputNames>(name: Name, args: InputArgs<Name>): number {
     const idx = this.nextIdx++;
-    this.log.push({ idx, name, args, gameTime: this.currentTime, wallTime: Date.now() });
+    const storyTime = this.storyTime();
+    this.log.push({
+      idx,
+      name,
+      args,
+      gameTime: this.currentTime,
+      ...(storyTime === undefined ? {} : { storyTime }),
+      wallTime: Date.now(),
+    });
     this.pending.push({ number: idx, name, args, received: this.currentTime });
     return idx;
   }
@@ -156,20 +194,39 @@ export class AgenticRuntime {
    */
   advance(elapsed: number) {
     if (!Number.isFinite(elapsed) || elapsed <= 0) return;
-    const now = this.currentTime + elapsed;
-    const result = runTicks(this.game, {
-      previousCurrentTime: this.currentTime,
-      now,
-      inputs: this.pending,
-      processedInputNumber: undefined,
-    });
-    // Everything handed in was for this window; anything that arrives later gets the next one.
-    this.pending = [];
-    this.currentTime = result.currentTs;
-    this.drain(this.game.takeDiff());
-    if (this.godEnabled && this.currentTime - this.lastGodStep >= GOD_INTERVAL) {
-      this.lastGodStep = this.currentTime;
-      void this.step(() => this.runGod(this.context), 'god');
+    const target = this.currentTime + elapsed;
+    // `runTicks` simulates at most `maxTicksPerStep * tickDuration` — 9.6s at the shipped 600×16 —
+    // and reports where it stopped. Taking its result as the new clock without looping is what
+    // made `advance(sevenDays)` move the world 9,616ms and drop the rest, silently
+    // (docs/13 §3.1). Looping here is what makes this method mean what its name says.
+    //
+    // It stays synchronous, so a caller asking for a long span blocks for it. That is the caller's
+    // decision to make: a night's sleep is ~113 passes, which docs/13 §3.4 prices as a real cost
+    // rather than an impossibility.
+    while (this.currentTime < target) {
+      const before = this.currentTime;
+      const result = runTicks(this.game, {
+        previousCurrentTime: this.currentTime,
+        now: target,
+        inputs: this.pending,
+        processedInputNumber: undefined,
+      });
+      // Everything handed in was for this window; anything that arrives later gets the next one.
+      this.pending = [];
+      this.currentTime = result.currentTs;
+      this.drain(this.game.takeDiff());
+      if (this.godEnabled && this.currentTime - this.lastGodStep >= GOD_INTERVAL) {
+        this.lastGodStep = this.currentTime;
+        void this.step(() => this.runGod(this.context), 'god');
+      }
+      // A pass that buys no time would spin forever. `runTicks` always starts a step at
+      // `previousCurrentTime + tickDuration`, so this is unreachable — which is exactly why it
+      // throws rather than breaking: reaching it means the tick arithmetic changed underneath.
+      if (this.currentTime <= before) {
+        throw new Error(
+          `Simulation did not advance: ${before} -> ${this.currentTime}, target ${target}`,
+        );
+      }
     }
   }
 

@@ -46,12 +46,14 @@ export interface RunTicksOptions {
    * Where game time stood at the end of the previous step, or `undefined` for a world that has
    * never stepped — in which case this step starts at `now`.
    *
-   * Careful: the test below is falsy, not `undefined`, which is upstream's behaviour preserved
-   * deliberately. A world whose previous step ended at game time exactly `0` therefore skips to
-   * `now` instead of continuing, silently dropping the interval. It cannot happen under Convex,
-   * where the engine row is seeded from `Date.now()`, but it is a live hazard once the frontend
-   * stamps game time and is free to start a world at 0 (docs/11 §4.2). Decide it in phase 4
-   * rather than changing it here, where it would move step boundaries for existing worlds.
+   * The test below was upstream's falsy check, so a world whose previous step ended at exactly `0`
+   * skipped to `now` and silently dropped the interval. Harmless under Convex, where the engine row
+   * is seeded from `Date.now()`; a live hazard the moment the frontend stamps game time and is free
+   * to start a world at 0 (docs/11 §4.2), which docs/13 §3.2 then requires by seeding the agentic
+   * clock from `draft.time` — and `draft.time` starts at 0.
+   *
+   * Now `undefined`, per that decision. It moves no step boundary for any world that ever ran: the
+   * two tests differ only at exactly 0, and no existing world starts there.
    */
   previousCurrentTime: number | undefined;
   /** How far to simulate. Ticking stops before the first tick that would pass this. */
@@ -76,7 +78,7 @@ export interface RunTicksResult {
 export function runTicks(game: TickableGame, options: RunTicksOptions): RunTicksResult {
   const { previousCurrentTime, now, inputs, processedInputNumber: alreadyProcessed } = options;
 
-  const startTs = previousCurrentTime ? previousCurrentTime + game.tickDuration : now;
+  const startTs = previousCurrentTime !== undefined ? previousCurrentTime + game.tickDuration : now;
   let currentTs = startTs;
   let inputIndex = 0;
   let numTicks = 0;

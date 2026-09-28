@@ -3,6 +3,7 @@ import type { Content } from './content.js';
 import { scriptedEntities } from './entities.js';
 import { npcPath } from './pathfinding.js';
 import type { State } from './world.js';
+import { storySecondsNow } from './storyClock.js';
 export type NpcSchedule = {
   scene: string;
   sleepAt: number;
@@ -17,14 +18,9 @@ export const npcOnDuty = (state: State, id: string) =>
 export function npcResting(content: Content, state: State, id: string) {
   const config = abilitySettings(content).schedules?.[id];
   if (!config) return false;
-  const clock = state.clock;
-  const time =
-    (state.storyTime +
-      (clock
-        ? (clock.elapsedMs * content.story.clock!.gameSecondsPerTick!) /
-          (clock.realSecondsPerTick * 1000)
-        : 0)) %
-    86400;
+  // The same smooth reading `gameTime()` gives, from the one conversion (docs/13 §3.4): a
+  // schedule boundary is a statement about the fiction, so it is keyed to the fiction clock.
+  const time = storySecondsNow(content, state) % 86400;
   return config.sleepAt < config.wakeAt
     ? time >= config.sleepAt && time < config.wakeAt
     : time >= config.sleepAt || time < config.wakeAt;

@@ -1,4 +1,5 @@
 import { abilitySettings } from './abilities.js';
+import { msPerStorySecond, storySecondsNow } from './storyClock.js';
 import { initialEntities, EntityState, scriptedEntities } from './entities.js';
 import {
   decodeState,
@@ -832,14 +833,7 @@ export class MemoryWorld {
   }
 
   gameTime(state = this.state) {
-    const c = state.clock;
-    return (
-      state.storyTime +
-      (c
-        ? (c.elapsedMs * this.content!.story.clock!.gameSecondsPerTick!) /
-          (c.realSecondsPerTick * 1000)
-        : 0)
-    );
+    return storySecondsNow(this.content, state);
   }
 
   private sleepTarget(effect: import('./content.js').Sleep, state: State, hours?: number) {
@@ -873,16 +867,18 @@ export class MemoryWorld {
     if (draft.balance < seconds) throw new Error('剩余生命不足以等待到该时刻');
     const start = draft.time,
       story = draft.storyTime;
-    const period = (draft.clock?.realSecondsPerTick ?? 1) * 1000,
-      quantum = draft.clock ? this.content.story.clock!.gameSecondsPerTick! : 1,
+    // One rate for the whole wait, and the same one living through the time would pay. It was
+    // derived here as `period / quantum`, which is right for the batch clock and silently 1000
+    // under `rate` — a 20× overcharge at the shipped compression (docs/13 §3.8).
+    const ms = msPerStorySecond(this.content, draft),
       pending = draft.clock?.elapsedMs ?? 0;
-    const duration = Math.ceil((seconds * period - pending * quantum) / quantum),
+    const duration = Math.ceil(seconds * ms - pending),
       end = start + duration;
     if (duration <= 0) throw new Error('目标时刻已在本段累计时间内，请选择更晚的时刻');
     if (!Number.isSafeInteger(end)) throw new Error('Simulation time overflow');
     draft.balance -= seconds;
     if (draft.clock) draft.clock.elapsedMs = 0;
-    const accrued = Math.floor((pending * quantum) / period);
+    const accrued = Math.floor(pending / ms);
     if (accrued) this.advanceStoryClock(draft, accrued);
     this.advanceState(draft, 0, false);
     let steps = 0;
@@ -890,13 +886,11 @@ export class MemoryWorld {
       // ponytail: bound work for very slow debug clocks; split longer waits until scheduling is optimized.
       if (draft.clock && ++steps > 200000)
         throw new Error('等待涉及过多活动，请选择更近的时刻或提高时间流速');
-      const phase = pending + draft.time - start - ((draft.storyTime - story) * period) / quantum;
-      const next = this.nextWaitTick(draft, end, phase, period / quantum);
+      const phase = pending + draft.time - start - (draft.storyTime - story) * ms;
+      const next = this.nextWaitTick(draft, end, phase, ms);
       this.advanceStoryClock(
         draft,
-        story +
-          Math.min(seconds, Math.floor(((pending + next - start) * quantum) / period)) -
-          draft.storyTime,
+        story + Math.min(seconds, Math.floor((pending + next - start) / ms)) - draft.storyTime,
       );
       this.advanceState(draft, next - draft.time, false);
     }

@@ -6,15 +6,15 @@
 single line: two state trees, two command vocabularies, they have to become one. That is true and it
 is not one question. It is five, they are independent, and they resolve on different grounds.
 
-This document is the enumeration. One chapter per conflict, each filled as it is settled. §1, §2 and
-§4 are settled. The rest state the question precisely and wait — a stated question being the part of
-an empty chapter worth writing down.
+This document is the enumeration. One chapter per conflict, each filled as it is settled. §1, §2, §3
+and §4 are settled. The rest state the question precisely and wait — a stated question being the
+part of an empty chapter worth writing down.
 
 | §   | conflict                                | status                  |
 | --- | --------------------------------------- | ----------------------- |
 | 1   | Tasks: who owns progress                | **settled**             |
 | 2   | Movement, coordinates and occupancy     | **settled**             |
-| 3   | Time: fast-forward, idle pause, cadence | open                    |
+| 3   | Time: fast-forward, idle pause, cadence | **settled**             |
 | 4   | Write authority on world state          | **settled**             |
 | 5   | Code-driven state change                | open — §1 depends on it |
 
@@ -418,25 +418,344 @@ rather than here.
 
 ## 3. Time: fast-forward, idle pause, cadence
 
-**Open.** Nothing decided.
+### 3.1 The conflict is three clocks, not two
 
-`11` §4.5 records the invariant for _involuntary_ wall-clock gaps: elapsed real time is consumed
-unconditionally and simulated conditionally. There are two _deliberate_ gaps it does not cover.
+The chapter was stated as one question about fast-forward. Read against the code it is a question
+about how many clocks there are, and the answer is three — plus a wall clock that leaks into two of
+them.
 
-**Fast-forward.** The bed's `sleep` effect and the player-facing wait panel both route into
-`waitUntil` (`prototype/world.ts:867-903`), which advances up to seven days of game time inside one
-synchronous command, hopping between service deadlines via `nextWaitTick` under a 200,000-step
-bound. With agents in the world this is either a burst of model calls or a silently skipped stretch
-of agent life. `11` F3 is the same question at tick scale; this is it at day scale, and the answer
-need not match.
+| clock                        | unit and origin                                                          | advanced by                                                                               | read by                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `draft.time`                 | simulation ms, starts at **0** (`prototype/world.ts:357`)                | `world.step(ms)` from the frame quantum, plus `waitUntil` jumps                           | movement `arrivesAt`, `startEntityStep`, `schedules`                              |
+| `AgenticRuntime.currentTime` | game ms, starts at **`Date.now()`** (`src/sim/createAgenticWorld.ts:83`) | `advance(quantum)` — the same quantum, one call site (`src/components/LocalGame.tsx:580`) | every engine tick and every agentic timeout                                       |
+| `draft.storyTime`            | fiction **seconds**, starts at 18:00                                     | `advanceStoryClock`, a 600s jump per 30 real s (`prototype/world.ts:1268-1288`)           | schedules, restocks, `balance`                                                    |
+| wall clock                   | `Date.now()`                                                             | —                                                                                         | `agent/operations.ts:124,129`, `agent/conversation.ts:101`, `agent/memory.ts:160` |
 
-**Idle pause.** `idlePauseSeconds: 60` stops the entire loop after a minute without input
-(`src/components/LocalGame.tsx:622-628`). A world meant to keep thinking while the player reads will
-not.
+Rows one and two share a unit and a rate source but **not an origin**, so they are two counters kept
+in step by one line of `LocalGame` rather than one tick. Row three is not a tick: nothing under
+`agent/` or `src/sim/` reads `storyTime` at all. The fourth row is not a clock the world owns, and
+§3.5 is about it.
 
-**Cadence.** The shipped clock runs 600 game seconds per 30 real seconds — a 20× compression, which
-answers `11` F4 empirically for the content that exists. Whether 20× survives agents driving the
-world is the open part.
+Three findings decide the rest of the chapter.
+
+**`storyTime` is not a function of `draft.time`.** Two worlds at the same `draft.time` hold
+different `storyTime`:
+
+```
+X  { time: 60000, storyTime: 66000, elapsedMs: 0     }   // waited to +600s
+Y  { time: 60000, storyTime: 65407, elapsedMs: 29650 }   // waited to +607s
+```
+
+Four things break the mapping, independently:
+
+| #   | where                                  | what it does                                                                                                                                                                                                          |
+| --- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `waitUntil` (`prototype/world.ts:885`) | sets `elapsedMs = 0` while `draft.time` is off a period boundary, converting the sub-period carry to `storyTime` at 1s granularity. The phase is lost permanently — a 7-second residue injected once never reconciles |
+| 2   | `advanceStoryTime` (`:690`)            | `storyTime += n`, `draft.time` unchanged                                                                                                                                                                              |
+| 3   | `nextScene` (`:707`)                   | `storyTime += 3600`, `draft.time` unchanged                                                                                                                                                                           |
+| 4   | `setClockSpeed` (`:681-686`)           | the **rate itself** is mutable at runtime; it rescales `elapsedMs`, not `draft.time`                                                                                                                                  |
+
+**The recording already carries state per event, not commands.** Every event embeds the full encoded
+state (`prototype/world.ts:1298-1302`), `player` and `storyTime` included; on disk it is
+delta-encoded with `finalState` kept whole (`src/lib/recordingStorage.ts:33-50`). So a reload reads
+`storyTime` the same way it reads the player's position, and "what was the fiction time at event N"
+is a field read in memory and a delta fold from disk — never a re-simulation.
+
+**The agentic clock cannot be fast-forwarded.** `runTicks` caps at `maxTicksPerStep = 600` ×
+`tickDuration = 16`, then `advance` assigns `currentTime = result.currentTs` and discards the
+remainder with no error and no return value. Measured: a 604,800,000 ms advance moves the clock
+**9,616 ms**.
+
+### 3.2 The decision
+
+**`draft.time` is the single timestamp and belongs to the engine. `storyTime` is stored state that
+rides beside it and belongs to the fiction. Neither is derived from the other.**
+
+1. **One stamp.** Every input and every state shift carries `draft.time`. The agentic runtime's
+   clock becomes that same counter rather than a parallel one seeded from `Date.now()`.
+2. **`storyTime` stays stored**, persisted and stamped per event exactly as the player's position
+   is. §2.2's derive-and-never-store rule does **not** extend to it; §3.3 says why.
+3. **`draft.time` is the engine's clock and narrative never moves it.** A character waiting costs
+   it; an author cutting does not. What changes instead is that fiction-keyed deadlines move to
+   `storyTime`, where they belong (§3.4).
+4. **Wall time is written to the log and never read** by the simulation or by a prompt (§3.5).
+5. **Idle pause stays, stops everything, and gets a longer fuse** (§3.6).
+6. **20× stands.** What changes is that the agentic constants are re-expressed against it (§3.7).
+
+### 3.3 Why `storyTime` is stored, and where §0 stands
+
+§0 is nearly silent here, as it was in §2 — a clock is not a thing a natural-language premise has an
+opinion about. It speaks once, in §3.4, and only about whether agents experience a jump.
+
+The tempting move is §2.2's: make `storyTime` a view function of `draft.time` and store nothing. It
+is available — `rate` mode already is that function, and is verifiably path-independent (one 60s
+step and 600 × 100 ms land on identical state). It would delete `state.clock`, `elapsedMs`, its
+validator and breaker #4 in one stroke.
+
+**It is rejected, because the property it buys is already bought.** Derivation would give locality —
+fiction time computable from a stamp with no fold. The recording already gives that, per event, by
+storing the state. Paying for it a second time in deleted features is a bad trade, and the features
+are not nothing: `setClockSpeed` is a dev-console affordance (`ROADMAP.md:86`), the 10-minute
+quantum is the readout the "remaining time" premise is built on, and `idlePauseSeconds` is rejected
+by the content validator outside batch mode (`prototype/content.ts:246`).
+
+There is also a precedent, and it is the agentic side's own. `LoggedEvent` keeps `gameTime` **and**
+`wallTime` with the reason stated in place: _"Both clocks are kept, because neither is
+reconstructible from the other later"_ (`src/sim/agenticRuntime.ts:39-45`). That is this codebase
+already deciding, in this exact situation, to store a non-derivable clock per event instead of
+deriving it. §3.2's second part is that decision applied once more.
+
+**So `storyTime` becomes a third stamp on the agentic log**, beside `gameTime` and `wallTime`. One
+integer per event, no semantic change to any command, and every reader — the prompt builder, the
+backend, a log tool — converts a stamp to "second day, evening" without a fold.
+
+The four breakers of §3.1 then need no fixing _as breakers_: nothing derives `storyTime`, so nothing
+can be broken by the mapping not being pure. #2 and #3 turn out not to be breakage at all — §3.4 —
+and #1 and #4 are tidiness, handled by §3.10 item B.
+
+### 3.4 Waiting is lived through; a cut is not
+
+The code already draws this line, and the first draft of this chapter erased it. Measured:
+
+| command                          | `draft.time` | `storyTime` | `balance` |
+| -------------------------------- | ------------ | ----------- | --------- |
+| `waitUntil` 1h (bed, wait panel) | +180,000 ms  | +3,600 s    | −3,600    |
+| `advanceStoryTime` 1h            | 0            | +3,600 s    | 0         |
+| `nextScene`                      | 0            | +3,600 s    | 0         |
+
+That is not an inconsistency. It is the diegetic/extradiegetic split: `waitUntil` is a character
+waiting, and it costs simulation time and life. `advanceStoryTime` and `nextScene` are an author
+cutting. Making cuts pay `draft.time` — as this chapter first proposed — collapses the two and
+deletes the author's only way to skip.
+
+**So `draft.time` is the engine's clock, and narrative never moves it.** It is monotonic, it orders
+every event, and it is the key for everything the engine owns: movement `arrivesAt`, agent cadence,
+the timeouts of §3.7. `storyTime` is the fiction's clock: stored, stamped, and the only clock a
+model is ever told about.
+
+**The argument that decides it is about the stories not yet written.** Coupling `draft.time` to
+`storyTime` makes the engine's monotonicity a constraint on fiction — no story could move its clock
+backwards, because `draft.time` cannot. Today's validators forbid backwards motion anyway
+(`advanceStoryTime` is forward-only, 1–604,800 s), but that is a content rule and it should stay
+one. A flashback, a framing device, a story that opens _in medias res_ and fills in earlier: none of
+these are things a simulation clock should have an opinion about. §0 is about ownership, and the
+engine owning whether fiction may run backwards is the engine owning too much.
+
+**What already crosses a cut, corrected.** An earlier draft of this section claimed a cut left NPC
+schedules behind while restocks fired, and called that the real bug. **That was wrong**, and the
+correction is worth more than the claim was: `execute` runs the schedule pass after _every_ command
+(`prototype/world.ts:813`, the end of the dispatch block), not only from `advanceState`. So a
+fiction-keyed deadline already fires on a cut, and the keying is already right:
+
+| deadline                   | keyed to                              | crosses a cut |
+| -------------------------- | ------------------------------------- | ------------- |
+| shop restocks              | `storyTime`, in `advanceStoryClock`   | yes           |
+| NPC `sleepAt`/`wakeAt`     | `storyTime`, via `npcResting`         | yes           |
+| `activateTasks`            | world `vars`, run after every command | yes           |
+| movement `arrivesAt`       | `draft.time`                          | **no**        |
+| agent cadence, god batches | `draft.time`                          | **no**        |
+
+The two that do not cross are exactly the two that should not, under this section's decision: they
+are the simulation living, and a cut is the author declining to simulate. Nothing here needs fixing,
+and `tests/engine/storyClock.test.ts` pins it — a cut and three hours of living reach the same
+schedule phase. The one genuine gap is the next paragraph's.
+
+**What a cut costs, and how that is paid.** Across a cut no agent thinks and no god batch forms, so
+every state document is an hour stale in fiction with nothing in the log saying why. That is real,
+and simulating the hour is the wrong fix: it invents an hour of events the story did not have. The
+right fix is to tell the world a cut happened — an event the next god write is asked to incorporate.
+That is exactly §5's mechanism, and it is the second case for it.
+
+**Balance.** A cut is free life and a wait is not. Left as it is: an author's cut should not bill
+the player. Worth stating because it is now a rule rather than an accident — `nextScene` is the
+cheapest hour in the game, and content that reached for it as a wait would be exploiting that.
+
+**The scale, corrected — for waits, which do cost.** This chapter previously read `waitUntil`'s
+seven-day bound as seven days of world to simulate. That is seven days of `storyTime`. In
+`draft.time` — the unit the agentic clock shares — 20× compression makes it a twentieth of that:
+
+| wait                    | `storyTime` | `draft.time`          | `GOD_INTERVAL`s crossed |
+| ----------------------- | ----------- | --------------------- | ----------------------- |
+| one night's sleep (6h)  | 21,600 s    | 1,080,000 ms = 18 min | 36                      |
+| the `waitUntil` maximum | 604,800 s   | 30,240,000 ms = 8.4 h | 1,008                   |
+
+A night's sleep is 36 god batches, not a week of agent life. That makes a long wait a budget
+decision rather than an impossibility — and the budget is `11` §4.4's, since the client pays it.
+
+It still cannot be spelled as one `advance` call. 1,080,000 ms is ~113 calls at the 9,616 ms
+ceiling, and a single call would silently simulate 9.6 s and drop the rest. **`advance` must loop or
+throw; it must not clamp in silence.**
+
+### 3.5 Wall time is written and never read
+
+Two uses of `Date.now()` are being conflated, and only one is a leak.
+
+**Not a leak: `LoggedEvent.wallTime`.** It answers when something happened in the real world — how
+long a session ran, when a crash landed, how a run lines up with a model provider's logs. It is the
+one clock genuinely not reconstructible from the others, which is why `11` §6.1 keeps it. Keep it,
+and add `storyTime` beside it rather than in place of it.
+
+**A leak: every wall-clock read inside `agent/`.**
+
+| site                            | what it does                                                                                         | why it is wrong                                                                                                                                                                                                                  |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent/operations.ts:129`       | `timestamp: Date.now()` → `conversation.lastMessage.timestamp` (`engine/aiTown/conversation.ts:322`) | compared against game-time `now` in `engine/aiTown/agent.ts:208,214`. Two clocks in one subtraction. It works today only because the agentic epoch _is_ `Date.now()` and its rate _is_ 1:1 — both accidents this chapter removes |
+| `agent/operations.ts:124`       | `createdAt: Date.now()` on the stored message                                                        | a message's time in the world is fiction time                                                                                                                                                                                    |
+| `agent/conversation.ts:101,113` | tells the model the time                                                                             | `now` is a **number**, so `now.toLocaleString()` renders `"1,790,208,000,000"`. The one place the model is told what time it is, it is told an integer                                                                           |
+| `agent/memory.ts:160`           | recency decays at `0.99 ** hoursSinceAccess` in wall hours                                           | at 20×, a memory from an hour ago in the fiction is three real minutes old and the decay never fires                                                                                                                             |
+
+**The rule, stated once because it is what makes one stamp work:** wall time may be written to the
+log and may never be read by the simulation, by a gate, or by a prompt. Anything an agent is told
+about time is `storyTime`; anything the engine subtracts is `draft.time`.
+
+`agent/conversation.ts:113` is the fix worth doing first — it is one line, it needs no other
+decision, and until it lands every conversation prompt carries a nonsense clock.
+
+### 3.6 Idle pause
+
+`idlePauseSeconds: 60` stops the loop after a minute without input
+(`src/components/LocalGame.tsx:570-574`, `:634`). A world meant to keep thinking while the player
+reads a dialogue box will not.
+
+**It stays, it stops everything, and 60 seconds becomes a few minutes.** The reasoning is forced by
+§3.2's first part: with one clock there is no pausing one world and not the other, and `11` §4.4
+says the client drives the bill — so an afternoon away from the keyboard must eventually stop agents
+too, not only the player. What is wrong with the shipped value is its length, not its existence: 60
+s is tuned for a world where nothing happened without input.
+
+Resuming is already correct and must stay so. The loop consumes elapsed real time before deciding
+whether to simulate it, so the gap is discarded rather than replayed — `11` §4.5's invariant, with a
+test at `src/sim/agenticRuntime.test.ts:48`.
+
+One format wrinkle: `idlePauseSeconds` is accepted only alongside the batch clock
+(`prototype/content.ts:246`), so it rides on a clock shape it has nothing to do with. Move it to a
+top-level story field.
+
+### 3.7 Cadence, and the speed question §2.8 deferred
+
+**20× stands.** It is the shipped content's assumption, `balance` is denominated in it, and nothing
+found here argues against it. What was never done is expressing the agentic constants in it. At 50
+ms of `draft.time` per story-second, `engine/constants.ts` reads:
+
+| constant                                                    | game ms | in fiction |
+| ----------------------------------------------------------- | ------- | ---------- |
+| `MIN_DECISION_INTERVAL`                                     | 5,000   | 1m 40s     |
+| `CONVERSATION_COOLDOWN`                                     | 15,000  | 5 min      |
+| `GOD_INTERVAL`                                              | 30,000  | 10 min     |
+| `AWKWARD_CONVERSATION_TIMEOUT`                              | 60,000  | 20 min     |
+| `INVITE_TIMEOUT`, `APPROACH_TIMEOUT`, `PATHFINDING_TIMEOUT` | 60,000  | 20 min     |
+| `PLAYER_CONVERSATION_COOLDOWN`                              | 60,000  | 20 min     |
+| `ACTION_TIMEOUT`                                            | 120,000 | 40 min     |
+| `MAX_CONVERSATION_DURATION`                                 | 600,000 | **3h 20m** |
+
+A conversation that feels like ten minutes to the player consumes a third of the character's day and
+drains `balance` accordingly. These are not prompt problems and no conversion fixes them: each
+constant has to be chosen against the clock it is meant to be _felt_ in. `MAX_CONVERSATION_DURATION`
+and `ACTION_TIMEOUT` are the two that cannot ship as they are.
+
+`GOD_INTERVAL = 30_000` happens to equal exactly one story-clock tick (`realSecondsPerTick: 30`).
+Make that deliberate or note it; a coincidence this load-bearing should not stay one.
+
+**§2.8's deferred speed question, decided here.** The gap is 8.3× — 160 ms/tile against 0.75 tiles/s
+(§2.1) — and 20× multiplies whichever survives. Crossing a 64-tile map (`prototype/content.ts:450`):
+
+| mover                           | `draft.time` | in fiction  |
+| ------------------------------- | ------------ | ----------- |
+| init side, `stepMs = 160`       | 10,240 ms    | 3m 25s      |
+| `engine/aiTown`, `0.75` tiles/s | 85,333 ms    | **28m 27s** |
+
+**The init side's 160 ms/tile wins**, and `movementSpeed` becomes 6.25 tiles/s. In a game whose
+currency is time, half a story-hour to cross one map is not a tuning value, it is a different game.
+The 26 shipped scenes were drawn against the faster mover, per §2.7.
+
+### 3.8 Recorded cost: what the derived clock would have bought
+
+Not a §0 deviation — §3.3 — but recorded on the same principle.
+
+Deriving `storyTime` from `draft.time` would have made the mapping pure **by construction rather
+than by discipline**. What is kept instead is four stored quantities that must be maintained in
+agreement: `draft.time`, `storyTime`, `elapsedMs` and the mutable `realSecondsPerTick`. There is no
+invariant test that catches them drifting, and breaker #1 is exactly that drift — a 7-second residue
+that no later code reconciles.
+
+The mitigation is narrow and worth naming: **`storyTime` has one writer, `advanceStoryClock`, and
+every path that moves time goes through it.** `waitUntil` today does not — it computes story-second
+targets itself while calling `advanceState` with `runClock = false` (`prototype/world.ts:889-902`) —
+and that is precisely where breaker #1 lives. Routing it back through the one writer is §3.9 item B.
+
+A latent form of the same defect: `waitUntil` ignores `rate` entirely. Its `period`/`quantum`
+default to 1000/1 when there is no `draft.clock` (`prototype/world.ts:876-878`), so under `rate`
+mode waiting costs 1,000 ms of `draft.time` per story-second while living it costs `1000/rate` — a
+20× divergence at the shipped rate. No shipped content uses `rate` mode, so this bites nobody today.
+It is a trap for whoever switches.
+
+### 3.9 Consequences accepted
+
+**A long wait is a real cost.** 36 god batches for a night's sleep, paid by the client (`11` §4.4).
+This is not new — `waitUntil` already advances `draft.time` by the full span — but it is newly
+expensive, because until now nothing was thinking while it did. What it does _not_ cost is
+correctness on the document: §4.2 makes a write a patch and §4.3 folds at read, so 36 batches of
+agent and god writes landing across one wait merge line by line rather than racing. A wait is
+expensive, not dangerous.
+
+**A cut is invisible to the agents until §5 lands.** `advanceStoryTime` and `nextScene` move the
+fiction forward with nobody experiencing it, and nothing today tells the world that happened. §3.4
+names the fix and it is not in this chapter's gift. Until then, content that cuts is content whose
+agents quietly believe time passed without remembering any of it.
+
+**Replay cost grows with waits.** A six-hour sleep is 1,080,000 ms of `draft.time` that replay walks
+through. `waitUntil`'s 200,000-step bound (`prototype/world.ts:891`) exists for exactly this and is
+now load-bearing rather than defensive.
+
+**One clock means one pause.** §3.6 accepts that a player reading a long dialogue eventually stops
+the agents too. A world that thinks while nobody watches is a separate decision, and it is `10` M3,
+answered there by `11` §8.
+
+### 3.10 What is unblocked now
+
+| #   | work                                                                                                                           | why it can start                                                                                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A   | `agent/conversation.ts:113` — tell the model a real time                                                                       | one line; the prompt currently carries `"1,790,208,000,000"`. Needs nothing from this chapter                                                                            |
+| B   | one `msPerStorySecond` behind `gameTime()`, `npcResting` and `waitUntil` — **done**; the carry reset (breaker #1) **deferred** | the rate-mode trap is free to fix: no shipped content uses `rate`, so no recording exercises it. Breaker #1 is not free — see below                                      |
+| C   | `advance` loops or throws instead of clamping at 9,616 ms                                                                      | a silent 99.998% drop is a §1.6-class bug whichever fast-forward policy wins                                                                                             |
+| D   | seed `AgenticRuntime.currentTime` from `draft.time`; replace the `Date.now()` payload stamps in `agent/operations.ts`          | §3.2 item 1 and §3.5. Independent of §4 and §5                                                                                                                           |
+| E   | add `storyTime` to `LoggedEvent` beside `gameTime` and `wallTime`                                                              | §3.3. Additive; nothing reads it yet                                                                                                                                     |
+| F   | move `idlePauseSeconds` out of the clock block, lengthen the fuse                                                              | content-format work only, both spellings accepted as in §1.8 item E                                                                                                      |
+| G   | re-express `MAX_CONVERSATION_DURATION` and `ACTION_TIMEOUT` against the story clock                                            | §3.7; a content decision needing no code beyond the constants                                                                                                            |
+| H   | ~~fire NPC `sleepAt`/`wakeAt` from `advanceStoryClock`~~ — **withdrawn**                                                       | the premise was wrong: `execute` already runs the schedule pass after every command. §3.4 is corrected, and `tests/engine/storyClock.test.ts` pins the behaviour instead |
+
+**Breaker #1 cannot ride along with B, and this is why.** `replay.step()` throws `Replay diverged`
+on any mismatch between the recomputed state and the recorded one (`prototype/replay.ts:254`), and
+every recorded event embeds its state (§3.1). So changing `waitUntil`'s arithmetic under the
+_shipped_ clock invalidates every saved run containing a sleep. The `msPerStorySecond` refactor is
+arithmetically identical for the batch clock and for a world with no story clock — which is what
+made it shippable — and differs only under `rate`, which no content uses. Breaker #1's carry reset
+is a real change to a real path, it is tidiness rather than correctness (§3.3), and it costs save
+compatibility: it needs a recording-format version gate, and that is a bigger decision than the
+defect warrants.
+
+**A and D are the ones not to skip.** Until D lands, `conversation.lastMessage.timestamp` is a wall
+clock being subtracted from game time (`engine/aiTown/agent.ts:208,214`), and it produces plausible
+answers only by the coincidence this chapter removes. Landing §3.2 item 1 without D turns a hidden
+inconsistency into a visible one.
+
+Blocked, and left alone: whether a `failed` task can be produced by a clock deadline rather than by
+an actor, which is §5's question and the last one in this document.
+
+### 3.11 A disposition in `10` that no longer holds
+
+`10` §6.6 lists `setClockSpeed`, `waitUntil` and `advanceStoryTime` as **"retired by §3"** — its own
+§3, which decided _"the backend is the sole driver of the time system"_ and gave up
+frontend-initiated pause, speed and wait as a consequence (`10` §3, `:147`).
+
+`11` reverses that premise: the frontend is authoritative and the backend never simulates (`11` §1,
+§4.1). The three commands are therefore **not** retired, and this chapter is where they are decided
+instead. Recorded here so the contradiction is found on purpose rather than tripped over.
+
+`10` M2 and `11` F4 — "is 20× still right when agents drive the world" — are answered by §3.7: yes
+for the clock, no for the constants measured against it. `11` F3 — block on a pending decision, or
+act late — stays open and is sharpened by §3.1's third finding: acting late is the only option that
+does not require `advance` to be re-entrant.
 
 ---
 

@@ -3,10 +3,18 @@ import { asyncMap } from '../engine/util/asyncMap';
 import { GameId } from '../engine/aiTown/ids';
 import { Tracer } from './model/tracing';
 import { AgentContext, ArchivedConversation, StoredMemory } from './ports';
+import { memoryStamp, memoryUnitsPerHour } from './storyClock';
 import { memoryDisabled } from './config';
 
 // How long to wait before updating a memory's last access time.
-export const MEMORY_ACCESS_THROTTLE = 300_000; // In ms
+/**
+ * Don't re-date a memory that was read in the last five minutes.
+ *
+ * In minutes rather than milliseconds because memories are dated on the fiction clock where the
+ * host has one (docs/13 §3.5), and five fiction minutes is 300 story seconds, not 300,000. The
+ * unit is applied at the point of use through `memoryUnitsPerHour`.
+ */
+export const MEMORY_ACCESS_THROTTLE_MINUTES = 5;
 // We fetch 10x the number of memories by relevance, to have more candidates
 // for sorting by relevance + recency + importance.
 const MEMORY_OVERFETCH = 10;
@@ -157,9 +165,10 @@ export async function searchMemories(
   if (candidates.length === 0) {
     return [];
   }
-  const ts = Date.now();
+  const stamp = memoryStamp(ctx.clock);
+  const perHour = memoryUnitsPerHour(ctx.clock);
   const recencyScore = candidates.map(({ memory }) => {
-    const hoursSinceAccess = (ts - memory.lastAccess) / 1000 / 60 / 60;
+    const hoursSinceAccess = (stamp - memory.lastAccess) / perHour;
     return 0.99 ** Math.floor(hoursSinceAccess);
   });
   const relevanceRange = makeRange(candidates.map((c) => c.score));
@@ -174,11 +183,12 @@ export async function searchMemories(
   }));
   memoryScores.sort((a, b) => b.overallScore - a.overallScore);
   const accessed = memoryScores.slice(0, n);
+  const throttle = (MEMORY_ACCESS_THROTTLE_MINUTES * perHour) / 60;
   const stale = accessed
-    .filter(({ memory }) => memory.lastAccess < ts - MEMORY_ACCESS_THROTTLE)
+    .filter(({ memory }) => memory.lastAccess < stamp - throttle)
     .map(({ memory }) => memory.id);
   if (stale.length) {
-    await ctx.store.touchMemories(stale, ts);
+    await ctx.store.touchMemories(stale, stamp);
   }
   return accessed.map(({ memory }) => memory);
 }
@@ -321,7 +331,7 @@ async function reflectOnMemories(ctx: AgentContext, playerId: GameId<'players'>)
       };
     });
 
-    const lastAccess = Date.now();
+    const lastAccess = memoryStamp(ctx.clock);
     for (const { embedding, relatedMemoryIds, ...rest } of memoriesToSave) {
       await ctx.store.insertMemory({
         playerId,

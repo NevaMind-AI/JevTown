@@ -116,17 +116,24 @@ export async function agentGenerateMessage(
   // input in one transaction. The two are separate calls now; the input is what the simulation
   // sees, and `messageUuid` is what makes the row idempotent if the batch is retried
   // (docs/11 §6.2).
+  // Both stamps are game time, read here rather than before the model call: the message happened
+  // when the answer came back, not when it was asked for (docs/13 §3.1). `timestamp` in
+  // particular becomes `conversation.lastMessage.timestamp`, which `Agent.tick` subtracts from
+  // game-time `now` for the message cooldown and the awkward-silence deadline
+  // (`engine/aiTown/agent.ts`). It was `Date.now()`, and that subtraction only produced plausible
+  // answers while the agentic clock happened to be seeded from the wall clock at a 1:1 rate.
+  const now = ctx.clock.now();
   await ctx.store.insertMessage({
     conversationId: args.conversationId,
     messageUuid: args.messageUuid,
     author: args.playerId,
     text,
-    createdAt: Date.now(),
+    createdAt: now,
   });
   await ctx.inputs.send('agentFinishSendingMessage', {
     conversationId: args.conversationId,
     agentId: args.agentId,
-    timestamp: Date.now(),
+    timestamp: now,
     leaveConversation: args.type === 'leave',
     operationId: args.operationId,
   });
