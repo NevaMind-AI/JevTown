@@ -13,6 +13,7 @@ import {
 import { Tracer } from './model/tracing';
 import { AgentContext } from './ports';
 import { memoryDisabled, numMemoriesToSearch } from './config';
+import { formatStoryTime } from './storyClock';
 
 export async function startConversationMessage(
   ctx: AgentContext,
@@ -86,6 +87,34 @@ function trimContentPrefx(content: string, prompt: string) {
   return content;
 }
 
+/**
+ * What the model is told about time.
+ *
+ * Fiction time only (docs/13 §3.5). The line this replaced read the wall clock and printed it
+ * through `Number.prototype.toLocaleString`, so every conversation prompt carried a comma-grouped
+ * integer — `"1,790,208,000,000"` — where a time was meant to be.
+ *
+ * The conversation's own age is given in turns rather than in minutes, which is a deliberate
+ * narrowing: `conversation.created` is game time, the only other clock here is story time, and
+ * §3.1's first finding is that neither converts to the other. A turn count is exact, needs no
+ * clock, and says the thing the number was there to say. Restoring "we have been talking for
+ * twenty minutes" means recording the story time a conversation started at, which is an engine
+ * schema change and not this one.
+ */
+function whenItIs(ctx: AgentContext, numMessages: number): string[] {
+  const lines: string[] = [];
+  const storySeconds = ctx.clock.storyTime();
+  if (storySeconds !== undefined) lines.push(`It is ${formatStoryTime(storySeconds)}.`);
+  if (numMessages > 0) {
+    lines.push(
+      `You have each spoken before in this conversation: ${numMessages} message${
+        numMessages === 1 ? ' has' : 's have'
+      } been sent so far.`,
+    );
+  }
+  return lines;
+}
+
 export async function continueConversationMessage(
   ctx: AgentContext,
   conversationId: GameId<'conversations'>,
@@ -98,8 +127,6 @@ export async function continueConversationMessage(
     otherPlayerId,
     conversationId,
   );
-  const now = Date.now();
-  const started = new Date(conversation.created);
   const memories = memoryDisabled()
     ? []
     : await memory.searchMemories(
@@ -110,7 +137,7 @@ export async function continueConversationMessage(
       );
   const prompt = [
     `You are ${player.name}, and you're currently in a conversation with ${otherPlayer.name}.`,
-    `The conversation started at ${started.toLocaleString()}. It's now ${now.toLocaleString()}.`,
+    ...whenItIs(ctx, conversation.numMessages),
   ];
   prompt.push(...agentPrompts(otherPlayer, agent, otherAgent ?? null));
   prompt.push(...proseStatePrompts(await promptContextFor(ctx, playerId)));

@@ -1,6 +1,7 @@
 import { LLMMessage, chatCompletion, fetchEmbedding } from './model/client';
 import { GameId } from '../engine/aiTown/ids';
 import { AgentContext } from './ports';
+import { memoryStamp } from './storyClock';
 import {
   ENVELOPE_INSTRUCTION,
   STATE_REASK_LIMIT,
@@ -219,7 +220,7 @@ async function storeConversationMemories(
       playerId,
       description,
       importance,
-      lastAccess: Date.now(),
+      lastAccess: memoryStamp(ctx.clock),
       data: {
         type: 'conversation',
         conversationId,

@@ -75,11 +75,16 @@ export interface CreateAgenticWorldOptions {
   /** Stubbed in tests, so the loop can be driven without a model. */
   runOperation?: AgenticRuntimeOptions['runOperation'];
   runGod?: AgenticRuntimeOptions['runGod'];
+  /** The host's fiction clock, in story seconds (docs/13 §3.3). */
+  storyTime?: AgenticRuntimeOptions['storyTime'];
 }
 
 export function createAgenticWorld(options: CreateAgenticWorldOptions = {}): AgenticRuntime {
   const collision = staticCollision();
   const context = mapContext(collision);
+  // `?? Date.now()` remains only for a host with no simulation to ride — a test, or a world
+  // created before `LocalGame` hands its clock over. A real session passes `draft.time`, which
+  // is what makes the two worlds share one stamp (docs/13 §3.2).
   const startTime = options.startTime ?? Date.now();
   const plan = createWorldPlan(worldFile, context, collision, {
     maxMobileActors: options.maxMobileActors,
@@ -132,6 +137,7 @@ export function createAgenticWorld(options: CreateAgenticWorldOptions = {}): Age
     godEnabled: options.godEnabled ?? !!plan.description.godPersona,
     runOperation: options.runOperation,
     runGod: options.runGod,
+    storyTime: options.storyTime,
   });
 
   // The world's population arrives as inputs, so creating a world is itself in the log and a

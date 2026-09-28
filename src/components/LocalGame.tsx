@@ -185,7 +185,14 @@ function LoadedLocalGame({
   const reportedTaskDrift = useRef(new Set<string>());
   // The agentic world, when it is switched on. It rides the same clock as `world` below rather
   // than keeping one of its own -- see `useAgenticRuntime` for why that matters.
-  const agentic = useAgenticRuntime();
+  //
+  // Both clocks are handed over, and they are not the same thing (docs/13 §3.2): `time` is the
+  // engine's stamp, shared so that one integer orders events in both worlds, and `storyTime` is
+  // the fiction's, read live because an authored cut moves it with no simulation time passing.
+  const agentic = useAgenticRuntime({
+    time: world.inspect().time,
+    storyTime: () => Math.floor(world.gameTime()),
+  });
   const gainCursor = useRef<{
     sequence: number;
     state: Pick<typeof state, 'tasks' | 'commerce' | 'clues' | 'balance' | 'storyTime'>;

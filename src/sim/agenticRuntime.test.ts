@@ -53,6 +53,53 @@ describe('AgenticRuntime', () => {
     expect(runtime.time).toBe(after);
   });
 
+  test('advances by the whole span asked for, rather than clamping at one step', () => {
+    // docs/13 §3.1: `runTicks` simulates at most maxTicksPerStep * tickDuration -- 9,616ms at the
+    // shipped 600x16 -- so taking its result as the new clock without looping moved a seven-day
+    // fast-forward by 9.6 seconds and dropped the rest, silently. A night's sleep at the shipped
+    // 20x is 1,080,000ms of game time, which is the case this has to survive (docs/13 §3.4).
+    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    const sleep = 6 * 3600 * 50; // six fiction hours, at 50ms of game time per story second
+    runtime.advance(sleep);
+    expect(runtime.time).toBeGreaterThanOrEqual(T0 + sleep);
+    // Still bounded by one tick of overshoot, not running away.
+    expect(runtime.time).toBeLessThan(T0 + sleep + 16);
+  });
+
+  test('stamps story time on the log when the host has a story clock, and omits it otherwise', () => {
+    // docs/13 §3.3: story time is stamped rather than derived, because §3.1 shows two worlds at
+    // the same game time holding different story times.
+    let story = 64_800;
+    const withClock = createAgenticWorld({
+      worldId: 'w',
+      startTime: T0,
+      godEnabled: false,
+      storyTime: () => story,
+    });
+    expect(withClock.events().every((e) => e.storyTime === 64_800)).toBe(true);
+
+    // An authored cut moves the fiction with no simulation time passing at all (docs/13 §3.4), so
+    // the next event carries the new story time on the same game time.
+    story = 68_400;
+    const before = withClock.time;
+    withClock.send('createEntity', { name: 'late' } as never);
+    const last = withClock.events().at(-1)!;
+    expect(last.storyTime).toBe(68_400);
+    expect(last.gameTime).toBe(before);
+
+    const without = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    expect(without.events().every((e) => e.storyTime === undefined)).toBe(true);
+  });
+
+  test('a world may start at game time zero', () => {
+    // `MemoryWorld` starts at 0 and docs/13 §3.2 seeds the agentic clock from it. The falsy
+    // start-of-step test this replaces sent such a world to `now` and dropped the first interval.
+    const runtime = createAgenticWorld({ worldId: 'w', startTime: 0, godEnabled: false });
+    runtime.advance(160);
+    expect(runtime.time).toBeGreaterThan(0);
+    expect(runtime.time).toBeLessThanOrEqual(160);
+  });
+
   test('runs the operations the simulation asks for, and takes their result back as input', async () => {
     const ran: string[] = [];
     const runtime = createAgenticWorld({

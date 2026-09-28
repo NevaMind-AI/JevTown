@@ -197,9 +197,38 @@ export interface InputQueue {
   send<Name extends InputNames>(name: Name, args: InputArgs<Name>): Promise<unknown>;
 }
 
-/** The three handed to every operation, in place of a Convex `ActionCtx`. */
+// ---------------------------------------------------------------- what time it is
+
+/**
+ * The two clocks an operation may read, and the one it may not.
+ *
+ * docs/13 §3.5: wall time may be written to the log and may never be read by the simulation, by a
+ * gate, or by a prompt. So `Date.now()` does not appear behind this interface — anything the
+ * engine subtracts comes from `now()`, anything a model is told comes from `storyTime()`.
+ */
+export interface AgentClock {
+  /**
+   * Game time now, in the simulation's own milliseconds.
+   *
+   * This is the clock every engine deadline is measured against, so a timestamp that will be
+   * compared with one — a message's, an invite's — has to come from here. An operation reads it
+   * when its result comes back, which is what makes a late model answer land at the time it
+   * actually arrived rather than the time it was asked for (docs/13 §3.1).
+   */
+  now(): number;
+  /**
+   * Fiction time now, in story seconds, or `undefined` for a host with no story clock.
+   *
+   * Never subtract this from `now()`: they are different clocks running at different rates, and
+   * §3.1's first finding is that neither is a function of the other.
+   */
+  storyTime(): number | undefined;
+}
+
+/** The four handed to every operation, in place of a Convex `ActionCtx`. */
 export interface AgentContext {
   world: WorldReader;
   store: AgentStore;
   inputs: InputQueue;
+  clock: AgentClock;
 }

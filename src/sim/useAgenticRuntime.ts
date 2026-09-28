@@ -31,14 +31,34 @@ const FLUSH_INTERVAL_MS = 5_000;
 /** Well inside any reasonable lease expiry, and cheap: renewing is the same call as claiming. */
 const HEARTBEAT_INTERVAL_MS = 15_000;
 
-export function useAgenticRuntime(): AgenticRuntime | undefined {
+/**
+ * What the agentic world needs of the simulation it rides on.
+ *
+ * Two clocks, because docs/13 §3.2 keeps them separate: `time` is the engine's millisecond
+ * counter, which both worlds now share as a single stamp, and `storyTime` is the fiction's, which
+ * only the prompts read.
+ */
+export interface HostClock {
+  time: number;
+  storyTime: () => number;
+}
+
+export function useAgenticRuntime(host?: HostClock): AgenticRuntime | undefined {
   const runtime = useRef<AgenticRuntime | null | undefined>(undefined);
   if (runtime.current === undefined) {
     if (!(import.meta as any).env?.VITE_AGENTIC) {
       runtime.current = null;
     } else {
       try {
-        runtime.current = createAgenticWorld();
+        runtime.current = createAgenticWorld(
+          host && {
+            // One counter for both worlds (docs/13 §3.2). `MemoryWorld` starts at 0, which the
+            // falsy start-of-step test in `engine/runtime.ts` used to discard; that test is now
+            // `undefined`, so 0 is a legal start and no offset is needed to dodge it.
+            startTime: host.time,
+            storyTime: host.storyTime,
+          },
+        );
       } catch (error) {
         // A world file that will not load is worth reporting, and is never worth taking the game
         // down with: the agentic world is an addition to a session that works without it.
