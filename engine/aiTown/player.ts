@@ -55,6 +55,8 @@ export const serializedPlayer = {
   // Which scene the position is in (docs/13 §2). Optional while a world may stand on one unnamed
   // map; a scene world writes it with every position, and the two are one address.
   scene: v.optional(v.string()),
+  /** The id the world file gave this actor, when it came from one (docs/13 §2). */
+  sourceId: v.optional(v.string()),
   facing: vector,
   speed: v.number(),
 
@@ -74,6 +76,7 @@ export class Player {
 
   position: Point;
   scene?: string;
+  sourceId?: string;
   facing: Vector;
   speed: number;
   stateVersion?: number;
@@ -88,6 +91,7 @@ export class Player {
     this.lastInput = lastInput;
     this.position = position;
     this.scene = serialized.scene;
+    this.sourceId = serialized.sourceId;
     this.facing = facing;
     this.speed = speed;
   }
@@ -185,6 +189,7 @@ export class Player {
     tokenIdentifier?: string,
     spawnAnchor?: string,
     spawnScene?: string,
+    sourceId?: string,
   ) {
     if (tokenIdentifier) {
       let numHumans = 0;
@@ -244,6 +249,7 @@ export class Player {
         lastInput: now,
         position,
         ...(spawnScene !== undefined ? { scene: spawnScene } : {}),
+        ...(sourceId !== undefined ? { sourceId } : {}),
         facing,
         speed: 0,
       }),
@@ -283,6 +289,7 @@ export class Player {
       lastInput,
       position,
       ...(this.scene !== undefined ? { scene: this.scene } : {}),
+      ...(this.sourceId !== undefined ? { sourceId: this.sourceId } : {}),
       facing,
       speed,
       stateVersion,

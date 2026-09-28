@@ -357,6 +357,7 @@ export function createEntityArgs(entity: WorldFileEntity) {
     sprite: entity.sprite,
     anchor: anchorOf(entity),
     scene: entity.scene,
+    sourceId: entity.id,
     description: entity.description,
     behavior: entity.behavior,
     initialState: entity.initial_state,
