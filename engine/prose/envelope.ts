@@ -1,5 +1,6 @@
 import { MEMORY_WORD_BUDGET, REASON_WORD_BUDGET } from './contract';
 import { truncateWords } from './stateDocument';
+import { recordPatchOnly } from './worldState';
 
 /**
  * The state-update envelope of docs/05 §6.1, and its nested §6.2 variant.
@@ -13,6 +14,15 @@ import { truncateWords } from './stateDocument';
 export interface EnvelopeUpdate {
   /** Absent when the model emitted no state; the caller keeps the previous document. */
   state?: string;
+  /**
+   * A patch to the world's record, if the writer had one (docs/13 §4). Absent is the normal case.
+   *
+   * The inverse of `state` in every way that matters: `state` is a whole document and replaces
+   * what was there, this is a fragment and merges into it. Prose is stripped before it is sent —
+   * `WORLD_RECORD_CONTRACT` says not to write any, and this is where not writing any is enforced
+   * rather than trusted.
+   */
+  world?: string;
   memory: string[];
   reason: string;
   tags: Record<string, unknown>;
@@ -98,6 +108,24 @@ function parseUpdate(value: unknown): EnvelopeUpdate {
     problems.push('state is not a non-empty string, keeping the previous document');
   }
 
+  let world: string | undefined;
+  if (typeof value.world === 'string' && value.world.trim() !== '') {
+    const { patch, droppedProse } = recordPatchOnly(value.world);
+    if (droppedProse) {
+      // The division of §4.2 is that the paragraph is the god's. Enforced here rather than left to
+      // the prompt, because a writer that has just been asked to describe itself is exactly the
+      // one that will describe the world by accident.
+      problems.push('world patch carried prose, which was dropped — the record blocks were kept');
+    }
+    if (patch !== '') {
+      world = patch;
+    } else {
+      problems.push('world patch had no record lines, ignored');
+    }
+  } else if (value.world !== undefined) {
+    problems.push('world is not a non-empty string, ignored');
+  }
+
   if (value.physics !== undefined) {
     // A model still emitting the old JSON projection. Recorded rather than honoured: the tag in
     // the document is the only thing that moves physics now.
@@ -141,7 +169,7 @@ function parseUpdate(value: unknown): EnvelopeUpdate {
     problems.push('tags is not an object, ignored');
   }
 
-  return { state, memory, reason, tags, problems };
+  return { state, world, memory, reason, tags, problems };
 }
 
 export function parseEnvelope(raw: string): ParsedEnvelope {
@@ -159,11 +187,19 @@ export function parseEnvelope(raw: string): ParsedEnvelope {
   }
   if (isRecord(value) && (value.self !== undefined || value.target !== undefined)) {
     // The §6.2 shape: one call updates the acting agent and the prop it acted on.
-    return {
-      self: parseUpdate(value.self),
-      target: value.target === undefined ? undefined : parseUpdate(value.target),
-      problems: [],
-    };
+    const self = parseUpdate(value.self);
+    const target = value.target === undefined ? undefined : parseUpdate(value.target);
+    if (target?.world !== undefined) {
+      // One call, one world patch. A patch under `target` is a writer that put it in the wrong
+      // half rather than a second writer, and silently applying it would make `world` mean
+      // something different depending on where it appeared.
+      target.problems = [
+        ...target.problems,
+        'world patch under "target" ignored; write it in "self"',
+      ];
+      delete target.world;
+    }
+    return { self, target, problems: [] };
   }
   return { self: parseUpdate(value), problems: [] };
 }

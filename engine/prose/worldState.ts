@@ -62,6 +62,29 @@ export function renderWorldState(parts: WorldStateParts): string {
   ].join('\n\n');
 }
 
+/**
+ * A patch with its prose removed: what an entity other than the god is allowed to write.
+ *
+ * docs/13 §4.2 divides the document by what can be keyed — the blocks merge, the paragraph does
+ * not, so the paragraph stays with the one writer that sees the whole world. This is where that
+ * division is enforced instead of being asked for: a writer that has just been told to describe
+ * its own condition is the one most likely to describe the world's as well.
+ *
+ * Returns `''` when there was nothing to keep, which the caller reads as "no patch" rather than as
+ * "a patch that clears everything" — an empty block is a no-op either way (see `foldWorldState`).
+ */
+export function recordPatchOnly(patch: string): { patch: string; droppedProse: boolean } {
+  const { document } = parseStateDocument(patch);
+  return {
+    patch: renderWorldState({
+      prose: '',
+      tasks: document.tasks ?? {},
+      playerItems: document.playerItems ?? {},
+    }),
+    droppedProse: budgetedText(document.raw) !== '',
+  };
+}
+
 export function foldWorldState(versions: readonly string[]): WorldStateFold {
   const parts: WorldStateParts = { prose: '', tasks: {}, playerItems: {} };
   for (const version of versions) {

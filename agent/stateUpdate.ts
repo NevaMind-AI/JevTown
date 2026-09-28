@@ -177,6 +177,10 @@ export async function sendStateUpdate(
   await ctx.inputs.send('entityUpdateState', {
     entityId,
     state: outcome.state,
+    // docs/13 §4: the record patch rides the same input as the state document, so one model call
+    // is one write at one step boundary. It survives a state that fell back to the previous
+    // document — an over-budget paragraph is no reason to lose a task line (docs/13 §1.7).
+    world: outcome.update.world,
     memory: outcome.update.memory,
     reason: outcome.update.reason,
     tags: {

@@ -218,6 +218,9 @@ export class AgenticRuntime {
         entityId: write.entityId,
         field: 'state',
         source: write.source,
+        // Set only on a `record` write, whose `entityId` is `__world__` (docs/13 §4): without it
+        // the audit cannot say which entity moved a task line.
+        writtenBy: write.writtenBy,
         before,
         after: content,
         reason: write.reason,

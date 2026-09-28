@@ -41,7 +41,16 @@ export const proseWrite = v.object({
   memory: v.optional(v.array(v.string())),
   physicsBefore: v.optional(v.object(entityPhysics)),
   physicsAfter: v.optional(v.object(entityPhysics)),
-  source: v.union(v.literal('self'), v.literal('interaction'), v.literal('god')),
+  // `record` is a write to the world's record by an entity rather than the god (docs/13 §4).
+  source: v.union(
+    v.literal('self'),
+    v.literal('interaction'),
+    v.literal('god'),
+    v.literal('record'),
+  ),
+  // Which entity wrote it, where the entity being written is not the writer. Set for `record`
+  // writes, whose `entityId` is always `__world__` and so says nothing about who moved a line.
+  writtenBy: v.optional(v.string()),
   reason: v.string(),
   batchId: v.optional(v.string()),
   tags: v.optional(v.any()),
