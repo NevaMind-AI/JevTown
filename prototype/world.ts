@@ -5,7 +5,9 @@ import {
   decodeState,
   encodeState,
   equal,
+  reconcileEntities,
   validateEntities,
+  EntityReconciliation,
   LegacyState,
 } from './entityRecording.js';
 import {
@@ -21,6 +23,7 @@ import {
   Condition,
   Content,
   DialogueText,
+  anchorCovers,
   loadContent,
   mapBlocked,
   mapEdgeBlocked,
@@ -427,11 +430,18 @@ export class MemoryWorld {
   }
 
   // The caller binds this local snapshot to its recording/content before restoration.
-  restoreSnapshot(input: State | LegacyState, snapshot: Snapshot) {
+  restoreSnapshot(input: State | LegacyState, snapshot: Snapshot): EntityReconciliation {
     const state = this.content
       ? decodeState(this.content, input, this.rules)
       : (structuredClone(input) as State);
-    if (this.content) validateEntities(this.content, state);
+    // Reconcile before validating: loaded against content whose entity set has moved, the save
+    // is brought up to it rather than refused (entityRecording.ts). Returned rather than logged,
+    // because this module does not reach for a host — the caller says so out loud.
+    let reconciliation: EntityReconciliation = { added: [], dropped: [] };
+    if (this.content) {
+      reconciliation = reconcileEntities(this.content, state);
+      validateEntities(this.content, state);
+    }
     if (
       snapshot?.format !== 'memory-world-snapshot-1' ||
       !Number.isSafeInteger(snapshot.sequence) ||
@@ -527,6 +537,7 @@ export class MemoryWorld {
     this.initialState = this.recordedState();
     this.pendingAdvance = { type: 'advance', ms: 0, count: 0, steps: [] };
     this.capacityReached = false;
+    return reconciliation;
   }
 
   recording(eventCount?: number) {
@@ -1120,7 +1131,7 @@ export class MemoryWorld {
           ((e.position[0] === x && e.position[1] === y) ||
             (e.moving?.target.x === x && e.moving?.target.y === y)),
       ) ||
-      (Object.values(scene.anchors).some((p) => p[0] === x && p[1] === y) &&
+      (Object.values(scene.anchors).some((p) => anchorCovers(p, x, y)) &&
         !(actor.transit && actor.path.length === 1) &&
         npcOnDuty(draft, id)) ||
       (!!abilitySettings(this.content).schedules?.[id] &&

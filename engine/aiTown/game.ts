@@ -63,7 +63,6 @@ export const gameStateDiff = v.object({
   playerDescriptions: v.optional(v.array(v.object(serializedPlayerDescription))),
   agentDescriptions: v.optional(v.array(v.object(serializedAgentDescription))),
   entityDescriptions: v.optional(v.array(v.object(serializedEntityDescription))),
-  worldMap: v.optional(v.object(serializedWorldMap)),
   agentOperations: v.array(v.object({ name: v.string(), args: v.any() })),
   proseWrites: v.optional(v.array(proseWrite)),
 });
@@ -203,9 +202,6 @@ export class Game {
     for (const player of players) {
       player.tickPosition(this, now);
     }
-    for (const conversation of this.world.sortedConversations()) {
-      conversation.tick(this, now);
-    }
     for (const agent of this.world.sortedAgents()) {
       agent.tick(this, now);
     }
@@ -228,7 +224,6 @@ export class Game {
       result.playerDescriptions = serializeMap(this.playerDescriptions);
       result.agentDescriptions = serializeMap(this.agentDescriptions);
       result.entityDescriptions = serializeMap(this.entityDescriptions);
-      result.worldMap = this.worldMap.serialize();
       this.descriptionsModified = false;
     }
     return result;

@@ -35,6 +35,27 @@ export function mapBlocked(map: SceneMap, x: number, y: number): boolean {
     ? map.collision[y][x] === '#'
     : x === 0 || y === 0 || x === map.width - 1 || y === map.height - 1;
 }
+/**
+ * An anchor is `[x, y]` — the 1x1 rect at that tile — or `[x, y, w, h]` spelled out (docs/13 §2).
+ *
+ * The widening rides in the array so it costs nothing: every reader destructures the first two
+ * entries and stops, so a rect anchor reads as its origin tile wherever the rect is not the
+ * point. Only code that means "every tile this anchor covers" needs these.
+ */
+export function anchorRect(anchor: number[]) {
+  const [x, y, w = 1, h = 1] = anchor;
+  return { x, y, w, h };
+}
+export function anchorTiles(anchor: number[]): number[][] {
+  const { x, y, w, h } = anchorRect(anchor);
+  const tiles: number[][] = [];
+  for (let i = x; i < x + w; i++) for (let j = y; j < y + h; j++) tiles.push([i, j]);
+  return tiles;
+}
+export function anchorCovers(anchor: number[], x: number, y: number): boolean {
+  const r = anchorRect(anchor);
+  return x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
+}
 export function mapEdgeBlocked(map: SceneMap, from: number[], to: number[]): boolean {
   return (
     map.blockedEdges?.some(
@@ -134,6 +155,12 @@ export type Story = {
   };
   clues?: RelicClue[];
   items?: Item[];
+  /**
+   * Named prop art (docs/13 §2): the vocabulary a world file's `sprite` may name, so a placed
+   * entity that is not a character has something to be drawn as. Keyed by name because a world
+   * file addresses art the way it addresses places — by an id the content owns, never by a path.
+   */
+  sprites?: Record<string, Visual>;
   shops?: Record<string, Shop>;
   tasks?: Task[];
   schema_version: string;
@@ -237,7 +264,7 @@ export function loadContent(rawScenes: unknown[], rawStory: unknown, rawNpcs?: u
   object(
     story,
     ['schema_version', 'content_version', 'start', 'vars', 'interactions'],
-    ['tasks', 'items', 'shops', 'clues', 'clock', 'schedules'],
+    ['tasks', 'items', 'shops', 'clues', 'clock', 'schedules', 'sprites'],
   );
   version(story);
   ref(story.start);
@@ -518,9 +545,17 @@ export function loadContent(rawScenes: unknown[], rawStory: unknown, rawNpcs?: u
     };
     if (!scene.anchors || typeof scene.anchors !== 'object' || Array.isArray(scene.anchors))
       throw new Error('Invalid anchors');
+    const anchor = (v: any) => {
+      if (!Array.isArray(v) || (v.length !== 2 && v.length !== 4) || !v.every(Number.isInteger))
+        throw new Error('Invalid anchor');
+      const { w, h } = anchorRect(v);
+      if (w < 1 || h < 1) throw new Error('Invalid anchor');
+      for (const [x, y] of anchorTiles(v))
+        if (mapBlocked(scene.map, x, y)) throw new Error('Anchor must be on walkable interior');
+    };
     for (const [id, pos] of Object.entries(scene.anchors)) {
       text(id);
-      position(pos);
+      anchor(pos);
     }
     list(scene.entities);
     const occupied = new Set();
@@ -656,7 +691,22 @@ export function loadContent(rawScenes: unknown[], rawStory: unknown, rawNpcs?: u
         throw new Error('Travel requires portal');
     }
     for (const pos of Object.values(scene.anchors) as number[][])
-      if (occupied.has(pos.join())) throw new Error('Anchor is occupied');
+      for (const tile of anchorTiles(pos))
+        if (occupied.has(tile.join())) throw new Error('Anchor is occupied');
+  }
+  if (story.sprites !== undefined) {
+    if (
+      !story.sprites ||
+      typeof story.sprites !== 'object' ||
+      Array.isArray(story.sprites) ||
+      Object.keys(story.sprites).length > 256
+    )
+      throw new Error('Invalid sprites');
+    for (const [name, visual] of Object.entries(story.sprites)) {
+      text(name);
+      object(visual, ['image'], ['size', 'anchor', 'offset']);
+      validateVisual(visual as Visual);
+    }
   }
   const itemIds = new Set<string>();
   if (story.items !== undefined) {

@@ -27,6 +27,11 @@ export interface WorldFileEntity {
   sprite?: string;
   spawn?: { anchor: string };
   anchor?: string;
+  /**
+   * Which scene this entity is placed in (docs/13 §2). Optional: a one-map world has nowhere
+   * else to put it, and a scene world falls back to `MapContext.defaultScene`.
+   */
+  scene?: string;
   description?: string;
   behavior?: string;
   initial_state?: string;
@@ -54,13 +59,37 @@ export interface WorldFile {
   };
 }
 
-export interface MapContext {
+/** One scene's ground: its bounds, the anchors authored in it, and what the static map blocks. */
+export interface SceneContext {
   anchors: Map<string, { x: number; y: number; w: number; h: number }>;
-  characters: Set<string>;
   width: number;
   height: number;
   /** Static map collision, before any load-time subtraction. */
   blocked: (x: number, y: number) => boolean;
+}
+
+/**
+ * The ground a world file is validated against.
+ *
+ * A world with one map is the flat case, and is what it always was. A world standing on
+ * `MemoryWorld`'s scenes (docs/13 §2) fills `scenes` as well: an entity's `scene` then says
+ * which one it is placed in, and the flat fields mirror `defaultScene`, which is what an entity
+ * naming no scene of its own gets.
+ *
+ * The registry is not decoration. Anchor ids are scene-local — `start` is authored in all 26
+ * scenes and `from-return` in 20 — so an anchor id alone does not name a place, and a file that
+ * leaves the scene out is placing its entities by coin flip.
+ */
+export interface MapContext extends SceneContext {
+  characters: Set<string>;
+  /**
+   * Named prop art the content knows (docs/13 §2), the `character` vocabulary's counterpart for
+   * entities that are not drawn as people. Absent means "this host declares none", and the
+   * sprite check is skipped rather than failing every prop.
+   */
+  sprites?: Set<string>;
+  scenes?: Map<string, SceneContext>;
+  defaultScene?: string;
 }
 
 export interface ValidationResult {
@@ -105,8 +134,26 @@ export function validateWorldFile(file: WorldFile, map: MapContext): ValidationR
   }
 
   const seen = new Set<string>();
-  // Tile -> the entities whose anchor covers it, for the occupancy rules.
+  // Tile -> the entities whose anchor covers it, for the occupancy rules. Keyed by scene too:
+  // two scenes both have a tile (4, 7), and they are not the same place.
   const occupancy = new Map<string, string[]>();
+
+  /** Which scene's ground an entity stands on, or the complaint to make instead of guessing. */
+  const groundOf = (
+    entity: WorldFileEntity,
+  ): { id?: string; ground?: SceneContext; error?: string } => {
+    if (!map.scenes) {
+      return entity.scene
+        ? { error: `names scene "${entity.scene}", but this world stands on one unnamed map` }
+        : { ground: map };
+    }
+    const id = entity.scene ?? map.defaultScene;
+    if (!id) {
+      return { error: 'needs a scene: this world has several and declares no default' };
+    }
+    const ground = map.scenes.get(id);
+    return ground ? { id, ground } : { error: `unknown scene "${id}"` };
+  };
 
   for (const entity of file.entities) {
     const where = `entity "${entity.id ?? '(no id)'}"`;
@@ -171,28 +218,39 @@ export function validateWorldFile(file: WorldFile, map: MapContext): ValidationR
       if (entity.kind === 'actor' && !entity.sprite) {
         warnings.push(`${where}: a fixed actor with no sprite will not render`);
       }
+      if (entity.sprite && map.sprites && !map.sprites.has(entity.sprite)) {
+        // Symmetric with an unknown character: the content owns the vocabulary, and a name
+        // outside it draws nothing at all rather than drawing the wrong thing.
+        errors.push(`${where}: unknown sprite "${entity.sprite}"`);
+      }
     }
 
+    const { id: sceneId, ground, error: sceneError } = groundOf(entity);
+    if (sceneError) {
+      errors.push(`${where}: ${sceneError}`);
+    }
+    const inScene = sceneId ? ` in scene "${sceneId}"` : '';
+
     const anchorId = anchorOf(entity);
-    if (anchorId) {
-      const anchor = map.anchors.get(anchorId);
+    if (anchorId && ground) {
+      const anchor = ground.anchors.get(anchorId);
       if (!anchor) {
         // docs/07 §8 rule 1.
-        errors.push(`${where}: unknown anchor "${anchorId}"`);
+        errors.push(`${where}: unknown anchor "${anchorId}"${inScene}`);
       } else {
         if (
           anchor.x < 0 ||
           anchor.y < 0 ||
-          anchor.x + anchor.w > map.width ||
-          anchor.y + anchor.h > map.height
+          anchor.x + anchor.w > ground.width ||
+          anchor.y + anchor.h > ground.height
         ) {
-          errors.push(`${where}: anchor "${anchorId}" falls outside the map`);
+          errors.push(`${where}: anchor "${anchorId}"${inScene} falls outside the map`);
         }
         const isFixed = !(entity.kind === 'actor' && entity.mobile);
         if (isFixed) {
           for (let x = anchor.x; x < anchor.x + anchor.w; x++) {
             for (let y = anchor.y; y < anchor.y + anchor.h; y++) {
-              const key = `${x},${y}`;
+              const key = sceneId ? `${sceneId} ${x},${y}` : `${x},${y}`;
               occupancy.set(key, [...(occupancy.get(key) ?? []), entity.id]);
             }
           }
@@ -201,13 +259,13 @@ export function validateWorldFile(file: WorldFile, map: MapContext): ValidationR
           let free = false;
           for (let x = anchor.x; x < anchor.x + anchor.w && !free; x++) {
             for (let y = anchor.y; y < anchor.y + anchor.h && !free; y++) {
-              if (!map.blocked(x, y)) {
+              if (!ground.blocked(x, y)) {
                 free = true;
               }
             }
           }
           if (!free) {
-            errors.push(`${where}: spawn anchor "${anchorId}" has no free tile`);
+            errors.push(`${where}: spawn anchor "${anchorId}"${inScene} has no free tile`);
           }
         }
       }
@@ -252,14 +310,22 @@ export function subtractEntityAnchors(
   collision: boolean[][],
   file: WorldFile,
   map: MapContext,
+  sceneId?: string,
 ): { collision: boolean[][]; warnings: string[] } {
   const warnings: string[] = [];
   const result = collision.map((column) => [...column]);
+  // One collision layer belongs to one scene, so only that scene's entities may punch holes in
+  // it. Without the filter a door in `low-kitchen` opens a hole at the same tile in `low-deck`.
+  const scene = sceneId ?? map.defaultScene;
   for (const entity of file.entities) {
     if (entity.kind === 'actor' && entity.mobile) {
       continue;
     }
-    const anchor = entity.anchor ? map.anchors.get(entity.anchor) : undefined;
+    if (map.scenes && (entity.scene ?? map.defaultScene) !== scene) {
+      continue;
+    }
+    const ground = map.scenes ? map.scenes.get(scene!) : map;
+    const anchor = entity.anchor ? ground?.anchors.get(entity.anchor) : undefined;
     if (!anchor) {
       continue;
     }
@@ -290,6 +356,7 @@ export function createEntityArgs(entity: WorldFileEntity) {
     character: entity.character,
     sprite: entity.sprite,
     anchor: anchorOf(entity),
+    scene: entity.scene,
     description: entity.description,
     behavior: entity.behavior,
     initialState: entity.initial_state,

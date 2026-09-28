@@ -170,3 +170,28 @@ test('JSON tasks advance in order on actual movement and matching interaction', 
   expect(reordered.taskViews()[0].title).toBe('JSON title');
   expect(reordered.taskViews()[0].completed).toEqual(['talk']);
 });
+
+describe('anchors are points or rectangles (docs/13 §2)', () => {
+  const load = (anchors: Record<string, number[]>) => {
+    const scene = structuredClone(room);
+    scene.anchors = { ...scene.anchors, ...anchors } as typeof scene.anchors;
+    return () => loadContent([scene, corridor], story);
+  };
+
+  test('a four-entry anchor loads, and every tile it covers must be walkable', () => {
+    expect(load({ bar: [2, 4, 2, 2] })).not.toThrow();
+    // The room is 12x10 with a solid border, so a rect that reaches the wall is refused.
+    expect(load({ bar: [2, 4, 2, 6] })).toThrow('Anchor must be on walkable interior');
+  });
+
+  test('a rect anchor may not cover an entity, as a point anchor may not stand on one', () => {
+    // n07 is at (5, 5); the rect covers (4, 4) through (5, 5).
+    expect(load({ bar: [4, 4, 2, 2] })).toThrow('Anchor is occupied');
+  });
+
+  test('anything but a pair or a quad is refused', () => {
+    expect(load({ bar: [2, 4, 2] })).toThrow('Invalid anchor');
+    expect(load({ bar: [2, 4, 0, 2] })).toThrow('Invalid anchor');
+    expect(load({ bar: [2.5, 4] })).toThrow('Invalid anchor');
+  });
+});

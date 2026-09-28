@@ -10,15 +10,13 @@ import {
   CONVERSATION_DISTANCE,
   INTERACTION_DISTANCE,
   MIN_DECISION_INTERVAL,
-  INVITE_ACCEPT_PROBABILITY,
-  INVITE_TIMEOUT,
   MAX_CONVERSATION_DURATION,
   MAX_CONVERSATION_MESSAGES,
   MESSAGE_COOLDOWN,
-  MIDPOINT_THRESHOLD,
 } from '../constants';
 import { distance } from '../util/geometry';
-import { movePlayer, stopPlayer } from './movement';
+import { stopPlayer } from './movement';
+import { Conversation } from './conversation';
 import { DecisionManifest, buildManifest, targetIsStillLegal } from './manifest';
 
 export class Agent {
@@ -102,60 +100,10 @@ export class Agent {
       return;
     }
     if (conversation && member) {
-      const [otherPlayerId, otherMember] = [...conversation.participants.entries()].find(
+      const [otherPlayerId] = [...conversation.participants.entries()].find(
         ([id]) => id !== player.id,
       )!;
       const otherPlayer = game.world.players.get(otherPlayerId)!;
-      if (member.status.kind === 'invited') {
-        // Accept a conversation with another agent with some probability and with
-        // a human unconditionally.
-        if (otherPlayer.human || game.rng.random() < INVITE_ACCEPT_PROBABILITY) {
-          console.log(`Agent ${player.id} accepting invite from ${otherPlayer.id}`);
-          conversation.acceptInvite(game, player);
-          // Stop moving so we can start walking towards the other player.
-          if (player.pathfinding) {
-            delete player.pathfinding;
-          }
-        } else {
-          console.log(`Agent ${player.id} rejecting invite from ${otherPlayer.id}`);
-          conversation.rejectInvite(game, now, player);
-        }
-        return;
-      }
-      if (member.status.kind === 'walkingOver') {
-        // Leave a conversation if we've been waiting for too long.
-        if (member.invited + INVITE_TIMEOUT < now) {
-          console.log(`Giving up on invite to ${otherPlayer.id}`);
-          conversation.leave(game, now, player);
-          return;
-        }
-
-        // Don't keep moving around if we're near enough.
-        const playerDistance = distance(player.position, otherPlayer.position);
-        if (playerDistance < CONVERSATION_DISTANCE) {
-          return;
-        }
-
-        // Keep moving towards the other player.
-        // If we're close enough to the player, just walk to them directly.
-        if (!player.pathfinding) {
-          let destination;
-          if (playerDistance < MIDPOINT_THRESHOLD) {
-            destination = {
-              x: Math.floor(otherPlayer.position.x),
-              y: Math.floor(otherPlayer.position.y),
-            };
-          } else {
-            destination = {
-              x: Math.floor((player.position.x + otherPlayer.position.x) / 2),
-              y: Math.floor((player.position.y + otherPlayer.position.y) / 2),
-            };
-          }
-          console.log(`Agent ${player.id} walking towards ${otherPlayer.id}...`, destination);
-          movePlayer(game, now, player, destination);
-        }
-        return;
-      }
       if (member.status.kind === 'participating') {
         const started = member.status.started;
         if (conversation.isTyping && conversation.isTyping.playerId !== player.id) {
@@ -271,6 +219,29 @@ export class Agent {
       stopPlayer(player);
       delete this.pendingInteraction;
       return false;
+    }
+    if (pending.targetId.startsWith('p:')) {
+      // docs/13 §2: an approach to another actor ends in a conversation the same way an approach
+      // to a prop ends in an interaction — on arrival, and only then. Nothing exists between the
+      // decision and the arrival, which is what leaves the engine with no walk of its own.
+      const other = game.world.players.get(parseGameId('players', pending.targetId));
+      if (!other) {
+        delete this.pendingInteraction;
+        return false;
+      }
+      if (distance(player.position, other.position) > CONVERSATION_DISTANCE) {
+        // Still walking.
+        return true;
+      }
+      stopPlayer(player);
+      delete this.pendingInteraction;
+      const { error } = Conversation.start(game, now, player, other);
+      this.lastInviteAttempt = now;
+      if (error) {
+        console.log(`Agent ${this.id} arrived but could not start talking: ${error}`);
+        return false;
+      }
+      return true;
     }
     const entity = game.world.entities.get(parseGameId('entities', pending.targetId));
     if (!entity) {

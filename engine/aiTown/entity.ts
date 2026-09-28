@@ -46,6 +46,10 @@ export const serializedEntity = {
   sprite: v.optional(v.string()),
   // A named rectangle owned by the map (docs/07 §4). Never raw tile coordinates.
   anchor: v.string(),
+  // Which scene the anchor belongs to (docs/13 §2). Anchor ids are scene-local — `start` is
+  // authored in all 26 scenes — so the pair is the address and the anchor alone is not.
+  // Optional: a world standing on a single unnamed map has only one scene to mean.
+  scene: v.optional(v.string()),
   physics: v.object(entityPhysics),
   // Points at the current row in `entityState`. The prose itself never enters the world
   // document, which is rewritten in full every step (docs/05 §8).
@@ -59,6 +63,7 @@ export class Entity {
   name?: string;
   sprite?: string;
   anchor: string;
+  scene?: string;
   physics: EntityPhysics;
   stateVersion: number;
 
@@ -68,6 +73,7 @@ export class Entity {
     this.name = serialized.name;
     this.sprite = serialized.sprite;
     this.anchor = serialized.anchor;
+    this.scene = serialized.scene;
     this.physics = { ...serialized.physics };
     this.stateVersion = serialized.stateVersion;
   }
@@ -84,6 +90,7 @@ export class Entity {
       name: this.name,
       sprite: this.sprite,
       anchor: this.anchor,
+      ...(this.scene !== undefined ? { scene: this.scene } : {}),
       physics: { ...this.physics },
       stateVersion: this.stateVersion,
     };
