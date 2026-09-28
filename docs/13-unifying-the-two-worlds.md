@@ -388,12 +388,15 @@ Reservation makes that corridor a hard block. For hand-authored maps of this siz
 design, and the 26 shipped scenes were drawn against a mover that already had this constraint.
 
 The part that is _not_ free: reservation alone does not solve deadlock. Two agents stepping into
-each other's target tile both refuse and both stop, and `startEntityStep` simply returns — there is
-no retry. That is exactly the hole §2.6's second row fills, and the engine's fill for it draws
-backoff jitter from `game.rng.random()`. **Open sub-question:** whether that draw can be taken from
-the seeded PRNG in input order so replay survives it, or whether deadlock needs a deterministic
-tiebreak — lowest entity id yields — instead. This must be settled before agent movement ships, not
-after.
+each other's target tile both refuse and both stop, and `startEntityStep` simply returns.
+
+**Narrowed by §2.9.** "There is no retry" was wrong: `advanceState` calls `startEntityStep` for
+every entity on every step, so a refused step is retried next tick and a blocked walker resumes the
+moment the blocker moves. Nothing needs backoff jitter, and the question of whether a
+`game.rng.random()` draw survives replay does not arise. What is left is the narrow case — two
+entities holding each other's target tile, refusing each other forever — and for that a
+deterministic tiebreak, **lowest entity id yields**, is the whole fix. Still to be written, no
+longer a decision.
 
 ### 2.8 Consequences accepted
 
@@ -481,6 +484,14 @@ true because nothing remains that would.
 | J   | the placement pass: world-file entity + scene anchor → `EntityState`            | must live inside `initialEntities`: `validateEntities` is exact, so nothing may be created at runtime       |
 | K   | an agent destination as a `MemoryWorld` command                                 | the last seam. `execute()` is a whitelist matching exact key sets, so it lands in the input log and replays |
 | L   | the scene as a component of the address, with comparison helpers                | wants I done first, so the bundling is not spent on code about to be deleted                                |
+
+**What `moveEntity` settles, beyond moving something.** A destination rather than a path is what
+keeps routing in the only place that knows the scene — an agent that had to hand over a path would
+need the collision map, and a path computed a tick ago replays into a wall. Three things follow.
+Agent movement is in the input log, so a run driven by agents replays for the first time. Arrival
+stops being something the engine polls by distance and becomes what the init world already answers —
+`nearby()`, on the tile grid the content was authored against. And retry is free, because
+`advanceState` re-attempts every entity's step every tick, which is what narrows §2.7.
 
 **One thing J changes that is worth knowing before it lands.** A recording embeds its own content
 (`replay.ts:89`), so editing scenes has never invalidated a save — the save keeps playing the old

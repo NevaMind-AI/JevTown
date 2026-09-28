@@ -10,6 +10,7 @@ import {
   EntityReconciliation,
   LegacyState,
 } from './entityRecording.js';
+import { npcPath } from './pathfinding.js';
 import {
   advanceSchedules,
   initialSchedules,
@@ -75,6 +76,7 @@ type Command =
     }
   | { requestId: string; type: 'choose'; choice: string; revision: number; hours?: number }
   | { requestId: string; type: 'teleport'; sceneId: string; x: number; y: number }
+  | { requestId: string; type: 'moveEntity'; entity: string; x: number; y: number }
   | { requestId: string; type: 'move'; dx: number; dy: number; sprint?: boolean }
   | { requestId: string; type: 'interact'; target: string }
   | {
@@ -700,6 +702,8 @@ export class MemoryWorld {
         this.waitUntil(draft, command.time);
       } else if (command.type === 'advanceStoryTime') {
         this.advanceStoryClock(draft, command.seconds);
+      } else if (command.type === 'moveEntity') {
+        this.moveEntity(draft, command.entity, command.x, command.y);
       } else if (command.type === 'teleport') {
         const { sceneId, x, y } = command;
         const scene = this.content?.scenes.find((candidate) => candidate.id === sceneId);
@@ -1116,6 +1120,45 @@ export class MemoryWorld {
     }
   }
 
+  /**
+   * Send an entity to a tile (docs/13 §2, the agentic seam).
+   *
+   * A destination, never a path and never a position: routing belongs to the world, which is the
+   * only thing that knows the scene's collision, its blocked edges and who is standing where. An
+   * agent that had to hand over a path would need the map, and a path computed a tick ago can be
+   * replayed into a wall.
+   *
+   * Partial by design (§2.6): asked for somewhere it cannot reach, the entity walks as far as it
+   * gets and stops, which is the engine's `bestCandidate` behaviour and better than standing
+   * still. Only a destination it cannot start toward at all is an error.
+   */
+  private moveEntity(draft: State, id: string, x: number, y: number) {
+    const actor = draft.entities[id];
+    if (!actor) throw new Error('Unknown entity');
+    if (!actor.sceneId) throw new Error('Entity is offstage');
+    if (actor.transit) throw new Error('Entity is in transit');
+    // A scheduled NPC's path is rewritten by `advanceSchedules` every step, so an agent driving
+    // one would be overruled a tick later. Two drivers for one body is the thing §2 removes.
+    if (abilitySettings(this.content).schedules?.[id]) throw new Error('Entity is on a schedule');
+    const scene = this.content?.scenes.find((s) => s.id === actor.sceneId);
+    if (!scene) throw new Error('Unknown scene');
+    if (!Number.isInteger(x) || !Number.isInteger(y)) throw new Error('Destination must be a tile');
+
+    // Route from where the current step lands, not from where the entity is standing: replacing
+    // a path mid-step would break `path[0] === moving.target`, which arrival and the recording
+    // both rely on.
+    const from = actor.moving ? [actor.moving.target.x, actor.moving.target.y] : actor.position;
+    const route =
+      from[0] === x && from[1] === y
+        ? []
+        : (npcPath(scene, from, [[x, y]], npcObstacles(this.content!, draft, actor.sceneId, id), {
+            partial: true,
+          }) ?? null);
+    if (route === null) throw new Error('No route toward that tile');
+    actor.path = actor.moving ? [[...from], ...route] : route;
+    this.startEntityStep(draft, id, draft.time);
+  }
+
   private startEntityStep(draft: State, id: string, time: number) {
     const actor = draft.entities[id];
     if (actor.moving || !actor.path.length) return;
@@ -1417,6 +1460,23 @@ export function parseCommand(input: unknown): Command {
       sceneId: value.sceneId,
       x: value.x,
       y: value.y,
+    };
+  }
+  if (
+    value.type === 'moveEntity' &&
+    Object.keys(value).sort().join() === 'entity,requestId,type,x,y' &&
+    typeof value.entity === 'string' &&
+    value.entity.length > 0 &&
+    value.entity.length <= 200 &&
+    Number.isSafeInteger(value.x) &&
+    Number.isSafeInteger(value.y)
+  ) {
+    return {
+      requestId: value.requestId,
+      type: 'moveEntity',
+      entity: value.entity,
+      x: value.x as number,
+      y: value.y as number,
     };
   }
   if (
