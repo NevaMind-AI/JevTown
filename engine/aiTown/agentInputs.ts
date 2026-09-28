@@ -2,52 +2,12 @@ import { v } from '../util/validators';
 import { agentId, conversationId, parseGameId } from './ids';
 import { Player } from './player';
 import { conversationInputs } from './conversation';
-import { blocked, movePlayer } from './movement';
-import { targetIsStillLegal } from './manifest';
-import { Point } from '../util/types';
-import { distance } from '../util/geometry';
+import { sourceOfTarget, targetIsStillLegal } from './manifest';
 import { inputHandler } from './inputHandler';
 import { Descriptions } from '../../data/characters';
 import { AgentDescription } from './agentDescription';
 import { Agent } from './agent';
 import { Game } from './game';
-
-/**
- * Where to stand to act on a target: the target itself if it moves, otherwise the nearest free
- * tile adjacent to its anchor rect — an anchor is a rectangle, so a 3x2 gate has ten choices
- * (docs/09 §6).
- */
-/**
- * The tile to walk to in order to act on a target (docs/13 §2).
- *
- * One shape for both kinds, which is the point: an approach to another actor and an approach to
- * a prop differ in what arrival produces, not in how the walking works. `Agent.tickApproach`
- * decides what happens when the walk ends.
- */
-function approachDestination(
-  game: Game,
-  now: number,
-  player: Player,
-  targetId: string,
-): Point | undefined {
-  if (targetId.startsWith('p:')) {
-    const other = game.world.players.get(parseGameId('players', targetId));
-    return other && { x: Math.floor(other.position.x), y: Math.floor(other.position.y) };
-  }
-  const entity = game.world.entities.get(parseGameId('entities', targetId));
-  if (!entity) {
-    return undefined;
-  }
-  const free = game.worldMap
-    .approachTiles(entity.anchor)
-    .filter((tile) => !blocked(game, now, tile));
-  if (free.length === 0) {
-    return undefined;
-  }
-  return free.reduce((best, tile) =>
-    distance(player.position, tile) < distance(player.position, best) ? tile : best,
-  );
-}
 
 export const agentInputs = {
   finishRememberConversation: inputHandler({
@@ -119,13 +79,17 @@ export const agentInputs = {
           };
           return null;
         case 'wander': {
-          const tiles = args.anchor ? game.worldMap.anchorTiles(args.anchor) : [];
-          const free = tiles.filter((tile) => !blocked(game, now, tile));
-          if (free.length === 0) {
-            console.debug(`Nowhere free in ${args.anchor}; deciding again`);
+          // docs/13 §2: the engine names the place and the world that owns the ground picks the
+          // tile — the nearest free one, by walking — because only it knows who stands where.
+          if (!args.anchor || !game.mapFor(game.sceneOf(player)).anchor(args.anchor)) {
+            console.debug(`No place ${args.anchor} here; deciding again`);
             return null;
           }
-          movePlayer(game, now, player, game.rng.pick(free));
+          if (player.sourceId === undefined) {
+            console.debug(`Agent ${args.agentId} has no body the host can move`);
+            return null;
+          }
+          game.queueMove({ kind: 'wander', body: player.sourceId, anchor: args.anchor });
           return null;
         }
         case 'approach': {
@@ -133,20 +97,46 @@ export const agentInputs = {
             console.debug(`Target ${args.target} is no longer legal; deciding again`);
             return null;
           }
-          const destination = approachDestination(game, now, player, args.target);
-          if (!destination) {
-            console.debug(`No way to stand next to ${args.target}; deciding again`);
+          const target = sourceOfTarget(game, args.target);
+          if (player.sourceId === undefined || target === undefined) {
+            console.debug(`No body to walk ${args.agentId} to ${args.target}; deciding again`);
             return null;
           }
+          // Where to stand is the ground's question (docs/13 §2), and so is whether anywhere
+          // beside the target is free. If nowhere is, `bodyMoveFailed` comes back and this is
+          // cleared; arrival is `Agent.tickApproach`'s to notice.
           agent.pendingInteraction = {
             targetId: args.target,
             intent: args.intent ?? '',
             startedWalking: now,
+            lastIssued: now,
           };
-          movePlayer(game, now, player, destination);
+          game.queueMove({ kind: 'approach', body: player.sourceId, target });
           return null;
         }
       }
+    },
+  }),
+
+  /**
+   * A move the world that owns the ground could not start (docs/13 §2): nowhere free beside the
+   * target, a place with no free tile, a target that left the scene.
+   *
+   * Only an approach has anything to undo. Without this the agent would stand waiting for an
+   * arrival that is never coming until `APPROACH_TIMEOUT` — a minute of game time, twenty of
+   * fiction — so it is told, and decides again.
+   */
+  bodyMoveFailed: inputHandler({
+    args: { body: v.string(), kind: v.string(), reason: v.string() },
+    handler: (game, now, args) => {
+      if (args.kind !== 'approach') return null;
+      const player = [...game.world.players.values()].find((p) => p.sourceId === args.body);
+      const agent = player && [...game.world.agents.values()].find((a) => a.playerId === player.id);
+      if (agent?.pendingInteraction) {
+        console.debug(`Approach by ${args.body} could not start: ${args.reason}`);
+        delete agent.pendingInteraction;
+      }
+      return null;
     },
   }),
 

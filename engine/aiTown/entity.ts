@@ -84,7 +84,7 @@ export class Entity {
 
   /** The tiles this entity occupies — its whole anchor rect, which is how a 3x2 gate works. */
   tiles(game: Game): Point[] {
-    return game.worldMap.anchorTiles(this.anchor);
+    return game.mapFor(game.sceneOf(this)).anchorTiles(this.anchor);
   }
 
   serialize(): SerializedEntity {

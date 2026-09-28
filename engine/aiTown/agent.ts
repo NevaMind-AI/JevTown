@@ -13,11 +13,16 @@ import {
   MAX_CONVERSATION_DURATION,
   MAX_CONVERSATION_MESSAGES,
   MESSAGE_COOLDOWN,
+  REAPPROACH_INTERVAL,
 } from '../constants';
 import { distance } from '../util/geometry';
-import { stopPlayer } from './movement';
 import { Conversation } from './conversation';
-import { DecisionManifest, buildManifest, targetIsStillLegal } from './manifest';
+import {
+  DecisionManifest,
+  buildManifest,
+  sourceOfTarget,
+  targetIsStillLegal,
+} from './manifest';
 
 export class Agent {
   id: GameId<'agents'>;
@@ -26,7 +31,12 @@ export class Agent {
   lastConversation?: number;
   lastInviteAttempt?: number;
   lastDecision?: number;
-  pendingInteraction?: { targetId: string; intent: string; startedWalking: number };
+  pendingInteraction?: {
+    targetId: string;
+    intent: string;
+    startedWalking: number;
+    lastIssued?: number;
+  };
   inProgressOperation?: {
     name: string;
     operationId: string;
@@ -83,7 +93,7 @@ export class Agent {
     const member = conversation?.participants.get(player.id);
 
     // Being in a conversation, walking, or busy cancels an activity, as before.
-    if (player.activity && player.activity.until > now && (conversation || player.pathfinding)) {
+    if (player.activity && player.activity.until > now && (conversation || player.speed > 0)) {
       player.activity.until = now;
     }
     // Check to see if we have a conversation we need to remember.
@@ -187,7 +197,7 @@ export class Agent {
     }
 
     const doingActivity = player.activity && player.activity.until > now;
-    if (doingActivity || player.pathfinding) {
+    if (doingActivity || player.speed > 0) {
       return;
     }
     // The one piece of pacing the model must not own (docs/09 §10).
@@ -216,24 +226,29 @@ export class Agent {
     if (now > pending.startedWalking + APPROACH_TIMEOUT) {
       // The path may be blocked by something that is not going to move.
       console.log(`Agent ${this.id} gave up approaching ${pending.targetId}`);
-      stopPlayer(player);
+      game.stopBody(player);
       delete this.pendingInteraction;
       return false;
     }
+    // Distances mean something only within one scene (docs/13 §2): two bodies at (4, 7) in two
+    // different rooms are not close.
+    const here = game.sceneOf(player);
     if (pending.targetId.startsWith('p:')) {
       // docs/13 §2: an approach to another actor ends in a conversation the same way an approach
-      // to a prop ends in an interaction — on arrival, and only then. Nothing exists between the
-      // decision and the arrival, which is what leaves the engine with no walk of its own.
+      // to a prop ends in an interaction — on arrival, and only then.
       const other = game.world.players.get(parseGameId('players', pending.targetId));
       if (!other) {
         delete this.pendingInteraction;
         return false;
       }
-      if (distance(player.position, other.position) > CONVERSATION_DISTANCE) {
-        // Still walking.
+      if (
+        game.sceneOf(other) !== here ||
+        distance(player.position, other.position) > CONVERSATION_DISTANCE
+      ) {
+        this.keepApproaching(game, now, player, pending);
         return true;
       }
-      stopPlayer(player);
+      game.stopBody(player);
       delete this.pendingInteraction;
       const { error } = Conversation.start(game, now, player, other);
       this.lastInviteAttempt = now;
@@ -248,16 +263,18 @@ export class Agent {
       delete this.pendingInteraction;
       return false;
     }
-    const tiles = game.worldMap.anchorTiles(entity.anchor);
-    const nearest = tiles.reduce(
-      (best, tile) => Math.min(best, distance(player.position, tile)),
-      Infinity,
-    );
+    const nearest =
+      game.sceneOf(entity) !== here
+        ? Infinity
+        : game
+            .mapFor(here)
+            .anchorTiles(entity.anchor)
+            .reduce((best, tile) => Math.min(best, distance(player.position, tile)), Infinity);
     if (nearest > INTERACTION_DISTANCE) {
-      // Still walking.
+      this.keepApproaching(game, now, player, pending);
       return true;
     }
-    stopPlayer(player);
+    game.stopBody(player);
     this.startOperation(game, now, 'agentInteract', {
       worldId: game.worldId,
       playerId: this.playerId,
@@ -266,6 +283,29 @@ export class Agent {
       intent: pending.intent,
     });
     return true;
+  }
+
+  /**
+   * Re-aim an approach whose walk ended short (docs/13 §2).
+   *
+   * The approach was resolved against where the target stood when it was sent; a person walks
+   * on. The host only reports a walk that could not start — not one that finished beside where
+   * somebody used to be — so noticing that is this side's job. Asked again only once the body has
+   * stopped and a step's worth of time has passed, so a sync that has not arrived yet is not
+   * mistaken for a walk that ended.
+   */
+  private keepApproaching(
+    game: Game,
+    now: number,
+    player: Player,
+    pending: NonNullable<Agent['pendingInteraction']>,
+  ) {
+    if (player.speed > 0) return;
+    if (now < (pending.lastIssued ?? pending.startedWalking) + REAPPROACH_INTERVAL) return;
+    const target = sourceOfTarget(game, pending.targetId);
+    if (player.sourceId === undefined || target === undefined) return;
+    pending.lastIssued = now;
+    game.queueMove({ kind: 'approach', body: player.sourceId, target });
   }
 
   startOperation<Name extends AgentOperationName>(
@@ -308,6 +348,8 @@ export const pendingInteraction = v.object({
   targetId: v.string(),
   intent: v.string(),
   startedWalking: v.number(),
+  /** When the approach was last asked for, so a short walk is re-aimed at a steady pace. */
+  lastIssued: v.optional(v.number()),
 });
 
 export const serializedAgent = {

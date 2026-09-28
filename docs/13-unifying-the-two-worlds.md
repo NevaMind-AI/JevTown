@@ -485,22 +485,22 @@ true because nothing remains that would.
 
 ### 2.10 What is unblocked now
 
-| #   | work                                                                            | state                                                                                                                  |
-| --- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| A   | `Scene` → `MapContext` / `CollisionLayer` / `WorldMap` adapter                  | **landed** (`src/sim/sceneMap.ts`). Checked against every tile of all 26 scenes                                        |
-| B   | anchors accept `[x, y, w, h]` beside `[x, y]`                                   | **landed**. Rides inside the array, so no reader changed                                                               |
-| C   | `scene` on a world-file entity; scene-keyed `MapContext`; scene-keyed occupancy | **landed**. Anchor errors name the scene                                                                               |
-| D   | `npcPath` partial paths and a search budget; `approachTiles`; `nearestFreeTile` | **landed**. `partial` is opt-in: `loadContent` uses a null return to mean "unroutable" at authoring time               |
-| E   | `scene` on `Entity` and `Player`; the map derived and never persisted           | **landed**. The map left `GameStateDiff`; it is content the client already holds                                       |
-| F   | conversation on arrival; `Conversation.tick` deleted                            | **landed**                                                                                                             |
-| G   | `reconcileEntities`: a save is brought up to its content rather than refused    | **landed**. `validateEntities`' two checks survive as post-conditions                                                  |
-| H   | `story.sprites` and `placedAppearance`                                          | **landed**. An unresolvable sprite draws nothing rather than something wrong                                           |
-| I   | delete the engine mover                                                         | started — see below. `sourceId` links the two worlds' bodies; the ground, the sync and the deletion remain             |
-| J   | the placement pass: world-file entity + scene anchor → `EntityState`            | **landed**, and smaller than planned: a placement becomes an ordinary scene entity, so nothing downstream learns of it |
-| K   | an agent destination as a `MemoryWorld` command                                 | **landed**. `moveEntity` takes a tile; the world routes, reserves and retries it every step                            |
-| L   | the scene as a component of the address, with comparison helpers                | wants I done first, so the bundling is not spent on code about to be deleted                                           |
-| M   | the agentic world is no longer behind `VITE_AGENTIC`                            | **landed**. It gated an experiment running beside the game; it is the game                                             |
-| N   | the head-on swap (§2.7)                                                         | **landed**. Two walkers on each other's tile exchange them, both steps committed in one call                           |
+| #   | work                                                                            | state                                                                                                                    |
+| --- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| A   | `Scene` → `MapContext` / `CollisionLayer` / `WorldMap` adapter                  | **landed** (`src/sim/sceneMap.ts`). Checked against every tile of all 26 scenes                                          |
+| B   | anchors accept `[x, y, w, h]` beside `[x, y]`                                   | **landed**. Rides inside the array, so no reader changed                                                                 |
+| C   | `scene` on a world-file entity; scene-keyed `MapContext`; scene-keyed occupancy | **landed**. Anchor errors name the scene                                                                                 |
+| D   | `npcPath` partial paths and a search budget; `approachTiles`; `nearestFreeTile` | **landed**. `partial` is opt-in: `loadContent` uses a null return to mean "unroutable" at authoring time                 |
+| E   | `scene` on `Entity` and `Player`; the map derived and never persisted           | **landed**. The map left `GameStateDiff`; it is content the client already holds                                         |
+| F   | conversation on arrival; `Conversation.tick` deleted                            | **landed**                                                                                                               |
+| G   | `reconcileEntities`: a save is brought up to its content rather than refused    | **landed**. `validateEntities`' two checks survive as post-conditions                                                    |
+| H   | `story.sprites` and `placedAppearance`                                          | **landed**. An unresolvable sprite draws nothing rather than something wrong                                             |
+| I   | delete the engine mover                                                         | **landed**. The engine stands on the scenes, is told where bodies are, and says where agents want them — it walks nobody |
+| J   | the placement pass: world-file entity + scene anchor → `EntityState`            | **landed**, and smaller than planned: a placement becomes an ordinary scene entity, so nothing downstream learns of it   |
+| K   | an agent destination as a `MemoryWorld` command                                 | **landed**. `moveEntity` takes a tile; the world routes, reserves and retries it every step                              |
+| L   | the scene as a component of the address, with comparison helpers                | **mostly dissolved** by I: with the mover gone, four sites compare positions and each already checks the scene first     |
+| M   | the agentic world is no longer behind `VITE_AGENTIC`                            | **landed**. It gated an experiment running beside the game; it is the game                                               |
+| N   | the head-on swap (§2.7)                                                         | **landed**. Two walkers on each other's tile exchange them, both steps committed in one call                             |
 
 **What `moveEntity` settles, beyond moving something.** A destination rather than a path is what
 keeps routing in the only place that knows the scene — an agent that had to hand over a path would
@@ -535,22 +535,52 @@ Two things the scenes had to learn to receive them:
   places, because a thing that blocks one mover and not another is worse than a thing that blocks
   nobody.
 
-**What I still needs, which is more than deleting code.** The engine's bodies do not stand on the
-scenes yet: `createAgenticWorld` still builds its `Game` from `data/gentle`, so an engine `Player`'s
-position and a `MemoryWorld` `EntityState`'s position are two unrelated coordinates that happen to
-describe one character. Deleting `tickPosition` on its own would leave the agent loop deciding and
-nothing moving. Four things, in order:
+**How I landed.** The engine's bodies used to stand on `data/gentle`, so an engine `Player`'s
+position and a `MemoryWorld` `EntityState`'s were two unrelated coordinates describing one
+character. Four steps closed that, and the order mattered: deleting `tickPosition` first would have
+left the agent loop deciding and nothing moving.
 
-1. **Identity.** The engine allocates `p:3`; the map-owning side keys everything on the authored id.
-   `sourceId` now rides on `Player` and `Entity`, so the two worlds can name one body. **Landed.**
-2. **Ground.** Build the `Game` from the scene registry rather than from `data/gentle` — the adapter
-   for it landed as A and has never been called.
-3. **Both directions.** Positions in, as a per-tick sync the host performs; destinations out, as a
-   queue `takeDiff` drains into K's command. `pendingOperations` is the shape to copy.
-4. **Then delete.** `tickPathfinding`, `tickPosition`, `findRoute`, `blocked`, the `pathfinding`
-   state, `COLLISION_THRESHOLD`, `PATHFINDING_BACKOFF`, `MAX_PATHFINDS_PER_STEP` and `movementSpeed`
-   go together, and L follows — bundling an address into code about to be deleted is the waste this
-   ordering exists to avoid.
+1. **Identity.** `sourceId` rides on `Player` and `Entity`, so the two worlds can name one body.
+2. **Ground.** `createAgenticWorld` takes the loaded content package. Its scenes are the `Game`'s
+   registry (`mapFor`, `sceneOf`), and its `world` is the world file — the same one J resolved into
+   placements. One file, read twice: once for where things stand, once for who they are.
+   `data/gentle` is nobody's ground any more, and `data/world.json` is only a test fixture's cast.
+3. **Both directions.** Positions come in as a `syncBodies` _input_, not a write from outside, so
+   the engine's own log replays them — positions decide who is close enough to talk. The host sends
+   only bodies that changed. Intents go out as `approach` / `wander` / `stop`, keyed by authored id,
+   and `MemoryWorld` resolves each in-world against live occupancy with a command of the same name,
+   so the recording holds the intent rather than a tile somebody computed a frame ago. A move that
+   cannot start comes back as `bodyMoveFailed`, so an agent does not wait a full `APPROACH_TIMEOUT`
+   for an arrival that is never coming. `BodyBridge` (`src/sim/bodyBridge.ts`) is the host side,
+   called around the agentic step in `LocalGame`.
+4. **Deleted.** `movement.ts` and `collisionOverlay.ts` whole; `tickPathfinding`, `tickPosition`,
+   the `pathfinding` state and the `moveTo` input; `COLLISION_THRESHOLD`, `PATHFINDING_TIMEOUT`,
+   `PATHFINDING_BACKOFF`, `MAX_PATHFINDS_PER_STEP`, `MIDPOINT_THRESHOLD`, the two invite constants
+   and `movementSpeed`. `speed` survives as a unit rate the sync sets — whether a body walks, not
+   how fast.
+
+Arrival stays the engine's to notice, from synced positions, and one thing had to be added for it:
+**an approach re-aims.** It is resolved against where the target stood when it was sent, and a
+person walks on. The ground only reports a walk that could not _start_, not one that finished beside
+where somebody used to be, so `Agent.tickApproach` asks again once the body has stopped short and
+`REAPPROACH_INTERVAL` has passed.
+
+Consequences accepted:
+
+- **The log grows by the bodies that move.** `syncBodies` is most of the agentic world's events once
+  anyone walks. Change-only keeps a still room silent; a busy one is the price of a replay that
+  knows who was close to whom.
+- **A physics change stops at the engine.** A prose `<unblocked/>` still updates `Entity.physics`,
+  and nothing carries it across to the scene: a door an agent opens stays shut on the ground. The
+  fix is a `passable` toggle as another command, and it is not done.
+- **The shipped package has no agents.** `remaining-time`'s manifest names no world file, so
+  `useAgenticRuntime` starts nothing — quietly, because a package that authors no agents is a game
+  with no agents in it. Before this they ran headless on `data/gentle`, invisible; now they appear
+  the moment the package ships a world file with anchors authored into its scenes and, for props,
+  `story.sprites`.
+- **L is small now.** Four sites compare positions — `tickApproach`, `Conversation.start`, the
+  manifest, `Player.join` — and every one checks `sceneOf` first. A bundled address would tidy that;
+  it no longer prevents anything.
 
 **One thing to settle now that J has landed.** A recording embeds its own content (`replay.ts:89`),
 so editing scenes has never invalidated a save — the save keeps playing the old content.

@@ -1,4 +1,4 @@
-import { Game, GameStateDiff, ProseWrite } from '../../engine/aiTown/game';
+import { BodyMove, Game, GameStateDiff, ProseWrite } from '../../engine/aiTown/game';
 import { World } from '../../engine/aiTown/world';
 import { EngineInput, runTicks } from '../../engine/runtime';
 import { InputArgs, InputNames } from '../../engine/aiTown/inputs';
@@ -101,6 +101,7 @@ export class AgenticRuntime {
   private nextIdx = 0;
   private pending: EngineInput[] = [];
   private log: LoggedEvent[] = [];
+  private moves: BodyMove[] = [];
   private lastGodStep: number;
   private readonly runOperation: NonNullable<AgenticRuntimeOptions['runOperation']>;
   private readonly runGod: NonNullable<AgenticRuntimeOptions['runGod']>;
@@ -238,6 +239,7 @@ export class AgenticRuntime {
    */
   private drain(diff: GameStateDiff) {
     this.archiveDepartures(diff);
+    this.moves.push(...(diff.bodyMoves ?? []));
     for (const write of diff.proseWrites ?? []) {
       this.applyProseWrite(write);
     }
@@ -248,6 +250,19 @@ export class AgenticRuntime {
         `${operation.name}:${args?.operationId}`,
       );
     }
+  }
+
+  /**
+   * The moves agents have asked for since the last call, for the host to carry to the world that
+   * owns the ground (docs/13 §2).
+   *
+   * Taken rather than pushed: the host drives both worlds and decides when a move lands, which is
+   * after this runtime's step and before the other world's — the same frame, in one order.
+   */
+  takeMoves(): BodyMove[] {
+    const moves = this.moves;
+    this.moves = [];
+    return moves;
   }
 
   /**
@@ -390,7 +405,6 @@ export class AgenticRuntime {
       throw new Error('Unsupported agentic runtime snapshot');
     }
     this.game.world = new World(structuredClone(snapshot.world));
-    this.game.rebuildCollisionOverlay();
     this.currentTime = snapshot.currentTime;
     this.lastGodStep = snapshot.currentTime;
     this.nextIdx = snapshot.nextIdx;

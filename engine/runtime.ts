@@ -36,7 +36,6 @@ export interface CompletedInput {
 export interface TickableGame {
   tickDuration: number;
   maxTicksPerStep: number;
-  beginStep(now: number): void;
   handleInput(now: number, name: any, args: any, inputNumber?: number): Value;
   tick(now: number): void;
 }
@@ -84,8 +83,6 @@ export function runTicks(game: TickableGame, options: RunTicksOptions): RunTicks
   let numTicks = 0;
   let processedInputNumber = alreadyProcessed;
   const completedInputs: CompletedInput[] = [];
-
-  game.beginStep(currentTs);
 
   while (numTicks < game.maxTicksPerStep) {
     numTicks += 1;

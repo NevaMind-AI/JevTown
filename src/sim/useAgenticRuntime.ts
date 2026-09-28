@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AgenticRuntime } from './agenticRuntime';
-import { createAgenticWorld } from './createAgenticWorld';
+import { createAgenticWorld, worldFileOf } from './createAgenticWorld';
+import type { Content } from '../../prototype/content';
 import { IndexedDbOutbox, SyncClient } from './syncClient';
 
 /**
@@ -42,21 +43,28 @@ const HEARTBEAT_INTERVAL_MS = 15_000;
 export interface HostClock {
   time: number;
   storyTime: () => number;
+  /**
+   * The loaded content package: its scenes are the agentic world's ground and its `world` is the
+   * world file (docs/13 §2). A package without one has no agents, and no runtime is started.
+   */
+  content: Content;
 }
 
-export function useAgenticRuntime(host?: HostClock): AgenticRuntime | undefined {
+export function useAgenticRuntime(host: HostClock): AgenticRuntime | undefined {
   const runtime = useRef<AgenticRuntime | null | undefined>(undefined);
   if (runtime.current === undefined) {
     try {
-      runtime.current = createAgenticWorld(
-        host && {
-          // One counter for both worlds (docs/13 §3.2). `MemoryWorld` starts at 0, which the
-          // falsy start-of-step test in `engine/runtime.ts` used to discard; that test is now
-          // `undefined`, so 0 is a legal start and no offset is needed to dodge it.
-          startTime: host.time,
-          storyTime: host.storyTime,
-        },
-      );
+      runtime.current = worldFileOf(host.content)
+        ? createAgenticWorld({
+            content: host.content,
+            // One counter for both worlds (docs/13 §3.2). `MemoryWorld` starts at 0, which the
+            // falsy start-of-step test in `engine/runtime.ts` used to discard; that test is now
+            // `undefined`, so 0 is a legal start and no offset is needed to dodge it.
+            startTime: host.time,
+            storyTime: host.storyTime,
+          })
+        : // Not an error: a package that authors no agents is a game with no agents in it.
+          null;
     } catch (error) {
       // A world file that will not load is worth reporting, and is never worth taking the game
       // down with: the scenes, the story and the player are all still there without it.

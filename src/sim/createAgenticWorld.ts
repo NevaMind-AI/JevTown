@@ -1,72 +1,37 @@
-import * as gentle from '../../data/gentle';
-import worldFileJson from '../../data/world.json';
 import { characters } from '../../data/characters';
 import { Game } from '../../engine/aiTown/game';
-import { MapContext, WorldFile } from '../../engine/aiTown/worldFile';
-import { CollisionLayer } from '../../engine/aiTown/worldMap';
+import { WorldFile } from '../../engine/aiTown/worldFile';
 import { createWorldPlan } from '../../engine/createWorld';
 import { WORLD_STATE_ID } from '../../engine/prose/contract';
 import { InMemoryAgentStore } from '../../agent/store/memoryStore';
+import type { Content } from '../../prototype/content';
 import { AgenticRuntime, AgenticRuntimeOptions } from './agenticRuntime';
+import { sceneCollision, sceneMapContext, sceneWorldMap } from './sceneMap';
 
 /**
  * Stand up the agentic world in the tab.
  *
  * This is `convex/init.ts` without the database: the decisions it made about what a world *is*
- * are in `engine/createWorld.ts`, and what is left here is feeding it a map and handing the
+ * are in `engine/createWorld.ts`, and what is left here is feeding it ground and handing the
  * result to a runtime.
  *
- * The map is still `data/gentle.js`, which is the one `data/world.json` was authored against —
- * its anchors are the places the world file puts entities. Sharing a map with `MemoryWorld`'s
- * scenes is the remaining piece of docs/11 §9 F1 and needs anchors authored into `dev`'s
- * per-scene JSON; until then the two worlds tick on one clock but stand on different ground.
+ * The ground is the content package's scenes (docs/13 §2) — the same ones `MemoryWorld` walks —
+ * and the world file is the package's too, the one `loadContent` already resolved onto those
+ * scenes as placements. One file, read twice: once for where things stand, once for who they are.
+ * The agentic world owns no map of its own, and `data/gentle` is no longer anybody's ground.
  */
-
-const mapModule = gentle as typeof gentle & {
-  collision?: boolean[][];
-  anchors?: Record<string, { x: number; y: number; w: number; h: number; description: string }>;
-};
-
-const worldFile = worldFileJson as WorldFile;
-
-/** Static collision, derived from the object layers for a map that predates docs/07 §5.1. */
-function staticCollision(): CollisionLayer {
-  return (
-    mapModule.collision ??
-    Array.from({ length: gentle.mapwidth }, (_, x) =>
-      Array.from({ length: gentle.mapheight }, (_, y) =>
-        gentle.objmap.some((layer: number[][]) => (layer[x]?.[y] ?? -1) !== -1),
-      ),
-    )
-  );
-}
-
-function mapContext(collision: CollisionLayer): MapContext {
-  return {
-    anchors: new Map(Object.entries(mapModule.anchors ?? {})),
-    characters: new Set(characters.map((c) => c.name)),
-    width: gentle.mapwidth,
-    height: gentle.mapheight,
-    blocked: (x, y) => collision[x]?.[y] ?? false,
-  };
-}
-
-/**
- * Anchors are stored sorted by id: iteration order is observable, and docs/05 §10 requires it to
- * be deterministic.
- */
-function serializeAnchors() {
-  return Object.entries(mapModule.anchors ?? {})
-    .map(([id, anchor]) => ({ id, ...anchor }))
-    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-}
 
 export interface CreateAgenticWorldOptions {
+  /**
+   * The loaded content package: its scenes are the ground and its `world` is the world file.
+   * `loadPackage` produces exactly this.
+   */
+  content: Content;
   worldId?: string;
   /**
    * Game time the world starts at. Defaults to the wall clock, which is what the Convex engine
-   * row did — and which also keeps it away from zero, where `runTicks`'s falsy start-of-step test
-   * would skip the first interval.
+   * row did. A real session passes `MemoryWorld`'s `draft.time`, which is what makes the two
+   * worlds share one stamp (docs/13 §3.2).
    */
   startTime?: number;
   godEnabled?: boolean;
@@ -79,19 +44,43 @@ export interface CreateAgenticWorldOptions {
   storyTime?: AgenticRuntimeOptions['storyTime'];
 }
 
-export function createAgenticWorld(options: CreateAgenticWorldOptions = {}): AgenticRuntime {
-  const collision = staticCollision();
-  const context = mapContext(collision);
-  // `?? Date.now()` remains only for a host with no simulation to ride — a test, or a world
-  // created before `LocalGame` hands its clock over. A real session passes `draft.time`, which
-  // is what makes the two worlds share one stamp (docs/13 §3.2).
+/** The package's world file, if it ships one. A package without one has no agents in it. */
+export function worldFileOf(content: Content): WorldFile | undefined {
+  // `loadContent` types this by what placement reads; the whole file rides along, and
+  // `validateWorldFile` below is the authority on the rest of it.
+  return content.world as WorldFile | undefined;
+}
+
+export function createAgenticWorld(options: CreateAgenticWorldOptions): AgenticRuntime {
+  const { content } = options;
+  const worldFile = worldFileOf(content);
+  if (!worldFile) {
+    throw new Error('This content package ships no world file, so it has no agents to run');
+  }
+  const startScene = content.story.start.scene;
+  const context = {
+    ...sceneMapContext(
+      content.scenes,
+      characters.map((c) => c.name),
+      startScene,
+    ),
+    // The content owns the art vocabulary; a name outside it draws nothing (docs/13 §2).
+    sprites: new Set(Object.keys(content.story.sprites ?? {})),
+  };
   const startTime = options.startTime ?? Date.now();
-  const plan = createWorldPlan(worldFile, context, collision, {
-    maxMobileActors: options.maxMobileActors,
-    // Only reached for a world file with no `meta.seed`; `data/world.json` declares one, so this
-    // world is reproducible from its file plus its log.
-    fallbackSeed: startTime >>> 0,
-  });
+  // The engine walks nothing any more, so the collision this plan subtracts under fixed entities
+  // serves no mover. It is passed because the plan still validates against it; the maps the game
+  // stands on come straight from the scenes below.
+  const plan = createWorldPlan(
+    worldFile,
+    context,
+    sceneCollision(content.scenes.find((s) => s.id === startScene)!),
+    {
+      maxMobileActors: options.maxMobileActors,
+      // Only reached for a world file with no `meta.seed`.
+      fallbackSeed: startTime >>> 0,
+    },
+  );
   for (const warning of plan.warnings) {
     console.warn(`World file: ${warning}`);
   }
@@ -107,19 +96,9 @@ export function createAgenticWorld(options: CreateAgenticWorldOptions = {}): Age
     playerDescriptions: [],
     agentDescriptions: [],
     entityDescriptions: [],
-    worldMap: {
-      width: gentle.mapwidth,
-      height: gentle.mapheight,
-      tileSetUrl: gentle.tilesetpath,
-      tileSetDimX: gentle.tilesetpxw,
-      tileSetDimY: gentle.tilesetpxh,
-      tileDim: gentle.tiledim,
-      bgTiles: gentle.bgtiles,
-      objectTiles: gentle.objmap,
-      animatedSprites: gentle.animatedsprites,
-      collision: plan.collision,
-      anchors: serializeAnchors(),
-    },
+    // Derived here, never persisted: the scenes are content the client already holds.
+    scenes: content.scenes.map((scene) => ({ scene: scene.id, map: sceneWorldMap(scene) })),
+    defaultScene: startScene,
   });
 
   const store = new InMemoryAgentStore();

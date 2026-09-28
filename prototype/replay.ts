@@ -88,7 +88,7 @@ export function restoreSnapshot(
     },
     run.rules,
   );
-  world.load(run.content.scenes, run.content.story, run.content.npcs);
+  world.load(run.content.scenes, run.content.story, run.content.npcs, run.content.world);
   const state = run.finalState;
   if (
     !state ||
@@ -163,7 +163,12 @@ export function createReplay(input: unknown, origin?: Recording) {
           definition.rules,
         );
   if (!origin && !definition.initialState)
-    world.load(definition.content.scenes, definition.content.story, definition.content.npcs);
+    world.load(
+      definition.content.scenes,
+      definition.content.story,
+      definition.content.npcs,
+      definition.content.world,
+    );
   let index = offset,
     first = offset;
   let continued = false;
