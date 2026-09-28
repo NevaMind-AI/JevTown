@@ -3,6 +3,8 @@ import { Conversation } from './conversation';
 import { ConversationMembership } from './conversationMembership';
 import type { Game } from './game';
 import type { Player } from './player';
+import { World } from './world';
+import worldFile from '../../data/world.json';
 
 const T0 = 1_700_000_000_000;
 
@@ -122,5 +124,29 @@ describe('membership states that no longer exist', () => {
       status: { kind: 'participating', started: T0 + 5 },
     });
     expect(member.status).toEqual({ kind: 'participating', started: T0 + 5 });
+  });
+});
+
+describe('the authored id survives into the engine (docs/13 §2)', () => {
+  test('every body created from the world file carries the id the file gave it', () => {
+    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    runtime.advance(160);
+    const authored = worldFile.entities.map((e) => e.id).sort();
+    const carried = [
+      ...runtime.game.world.sortedPlayers().map((p) => p.sourceId),
+      ...runtime.game.world.sortedEntities().map((e) => e.sourceId),
+    ]
+      .filter((id): id is string => id !== undefined)
+      .sort();
+    expect(carried).toEqual(authored);
+  });
+
+  test('it survives a round trip through serialization', () => {
+    const runtime = createAgenticWorld({ worldId: 'w', startTime: T0, godEnabled: false });
+    runtime.advance(160);
+    const before = runtime.game.world.sortedPlayers().map((p) => p.sourceId);
+    const after = new World(runtime.game.world.serialize()).sortedPlayers().map((p) => p.sourceId);
+    expect(after).toEqual(before);
+    expect(after.every((id) => typeof id === 'string')).toBe(true);
   });
 });

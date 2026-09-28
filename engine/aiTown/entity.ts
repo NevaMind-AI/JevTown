@@ -50,6 +50,8 @@ export const serializedEntity = {
   // authored in all 26 scenes — so the pair is the address and the anchor alone is not.
   // Optional: a world standing on a single unnamed map has only one scene to mean.
   scene: v.optional(v.string()),
+  /** The id the world file gave it, when it came from one (docs/13 §2). */
+  sourceId: v.optional(v.string()),
   physics: v.object(entityPhysics),
   // Points at the current row in `entityState`. The prose itself never enters the world
   // document, which is rewritten in full every step (docs/05 §8).
@@ -64,6 +66,7 @@ export class Entity {
   sprite?: string;
   anchor: string;
   scene?: string;
+  sourceId?: string;
   physics: EntityPhysics;
   stateVersion: number;
 
@@ -74,6 +77,7 @@ export class Entity {
     this.sprite = serialized.sprite;
     this.anchor = serialized.anchor;
     this.scene = serialized.scene;
+    this.sourceId = serialized.sourceId;
     this.physics = { ...serialized.physics };
     this.stateVersion = serialized.stateVersion;
   }
@@ -91,6 +95,7 @@ export class Entity {
       sprite: this.sprite,
       anchor: this.anchor,
       ...(this.scene !== undefined ? { scene: this.scene } : {}),
+      ...(this.sourceId !== undefined ? { sourceId: this.sourceId } : {}),
       physics: { ...this.physics },
       stateVersion: this.stateVersion,
     };

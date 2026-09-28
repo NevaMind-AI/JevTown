@@ -73,6 +73,14 @@ export const entityInputs = {
       blocksMovement: v.optional(v.boolean()),
       /** Which scene the anchor belongs to (docs/13 §2). */
       scene: v.optional(v.string()),
+      /**
+       * The id the world file gave this entity (docs/13 §2).
+       *
+       * The engine allocates its own — `p:3`, `e:7` — and an allocated id says nothing about
+       * which authored thing it is. The map-owning side keys everything on the authored id, so
+       * without this the two worlds hold two bodies for one character and no way to tell.
+       */
+      sourceId: v.optional(v.string()),
     },
     handler: (game, now, args) => {
       const hasState = !!args.initialState;
@@ -88,6 +96,7 @@ export const entityInputs = {
           undefined,
           args.anchor,
           args.scene,
+          args.sourceId,
         );
         const agentId = game.allocId('agents');
         game.world.agents.set(
@@ -133,6 +142,7 @@ export const entityInputs = {
         sprite: args.sprite,
         anchor: args.anchor!,
         scene: args.scene,
+        sourceId: args.sourceId,
         physics: initialPhysics(args.blocksMovement ?? false, hasState),
         stateVersion: args.initialState ? 1 : 0,
       });
