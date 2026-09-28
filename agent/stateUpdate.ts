@@ -55,7 +55,15 @@ export async function requestStateUpdate(opts: {
     const { document, conformance } = parseStateDocument(state);
     conformance.reasks = reasks;
     if (!conformance.overBudget) {
-      return { update: parsed.self, document, conformance, state, reasks, fellBack: false, problems };
+      return {
+        update: parsed.self,
+        document,
+        conformance,
+        state,
+        reasks,
+        fellBack: false,
+        problems,
+      };
     }
     if (reasks >= limit) {
       conformance.fellBack = true;
@@ -71,7 +79,7 @@ export async function requestStateUpdate(opts: {
     }
     reasks += 1;
     raw = await opts.ask(
-      `That was ${conformance.wordCount} words, over the ${STATE_WORD_BUDGET}-word limit. Send the same state document again, shorter, keeping every section.`,
+      `That was ${conformance.budgetWordCount} words of prose, over the ${STATE_WORD_BUDGET}-word limit. Send the same state document again, shorter, keeping every section. The record blocks do not count toward the limit and must come back unchanged.`,
     );
     parsed = parseEnvelope(raw);
     problems = [...problems, ...parsed.problems, ...parsed.self.problems];

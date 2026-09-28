@@ -187,7 +187,7 @@ describe('validateWorldFile', () => {
   });
 });
 
-describe('common knowledge (docs/05 §5.3)', () => {
+describe('world state (docs/05 §5.3, docs/13 §1.4)', () => {
   test('the reserved id cannot be taken by an entity', () => {
     const { errors } = validateWorldFile(file([{ ...ACTOR, id: '__world__' }]), context());
 
@@ -196,17 +196,44 @@ describe('common knowledge (docs/05 §5.3)', () => {
 
   test('it gets the same word budget every state document gets', () => {
     const { errors } = validateWorldFile(
-      file([ACTOR], { common_knowledge: 'word '.repeat(STATE_WORD_BUDGET + 1) }),
+      file([ACTOR], { world_state: 'word '.repeat(STATE_WORD_BUDGET + 1) }),
       context(),
     );
 
-    expect(errors.join(' ')).toContain('common_knowledge is over');
+    expect(errors.join(' ')).toContain('world_state is over');
+  });
+
+  test('the record blocks are outside that budget, as they are at runtime', () => {
+    // docs/13 §1.7: an authored world with a long task list is not over budget for prose it
+    // does not have.
+    const tasks = Array.from({ length: STATE_WORD_BUDGET }, (_, i) => `t${i} = s${i}`).join('\n');
+    const { errors } = validateWorldFile(
+      file([ACTOR], { world_state: `state: ordinary\n\nQuiet.\n\n<tasks>\n${tasks}\n</tasks>` }),
+      context(),
+    );
+
+    expect(errors.join(' ')).not.toContain('over');
+  });
+
+  test('the old spelling still loads, and the two together are an error', () => {
+    // docs/13 §1.8 item E.
+    const legacy = validateWorldFile(
+      file([ACTOR], { common_knowledge: 'word '.repeat(STATE_WORD_BUDGET + 1) }),
+      context(),
+    );
+    expect(legacy.errors.join(' ')).toContain('world_state is over');
+
+    const both = validateWorldFile(
+      file([ACTOR], { world_state: 'state: a', common_knowledge: 'state: b' }),
+      context(),
+    );
+    expect(both.errors.join(' ')).toContain('write only world_state');
   });
 
   test('a world with none is fine — most worlds start with nothing to know', () => {
     const { errors } = validateWorldFile(file([ACTOR]), context());
 
-    expect(errors.join(' ')).not.toContain('common_knowledge');
+    expect(errors.join(' ')).not.toContain('world_state');
   });
 });
 

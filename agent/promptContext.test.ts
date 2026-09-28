@@ -1,6 +1,6 @@
 import {
   PromptContext,
-  commonKnowledgeSection,
+  worldStateSection,
   currentStateSection,
   identitySection,
   stateWritingSystemPrompt,
@@ -84,27 +84,24 @@ describe('stateWritingSystemPrompt', () => {
   });
 });
 
-describe('common knowledge (docs/05 §5.3)', () => {
+describe('world state (docs/05 §5.3, docs/13 §1.4)', () => {
   const KNOWN = 'state: uneasy\n\nA boat went out last week and has not come back.';
 
-  test('goes in verbatim, labelled as what everyone knows', () => {
-    const lines = commonKnowledgeSection({ ...ALICE, commonKnowledge: KNOWN });
+  test('goes in verbatim, labelled as how the world stands', () => {
+    const lines = worldStateSection({ ...ALICE, worldState: KNOWN });
 
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toContain('everyone here knows');
+    expect(lines[0]).toContain('How this world stands');
     expect(lines[1]).toBe(KNOWN);
   });
 
   test('a world that has none contributes nothing, as empty world rules do', () => {
-    expect(commonKnowledgeSection(ALICE)).toEqual([]);
-    expect(commonKnowledgeSection({ ...ALICE, commonKnowledge: '   ' })).toEqual([]);
+    expect(worldStateSection(ALICE)).toEqual([]);
+    expect(worldStateSection({ ...ALICE, worldState: '   ' })).toEqual([]);
   });
 
   test('sits after the world rules and before anything about this entity', () => {
-    const prompt = stateWritingSystemPrompt(
-      { ...ALICE, commonKnowledge: KNOWN },
-      ENVELOPE_INSTRUCTION,
-    );
+    const prompt = stateWritingSystemPrompt({ ...ALICE, worldState: KNOWN }, ENVELOPE_INSTRUCTION);
 
     // The static prefix a god write must not invalidate comes first; everything after it was
     // per-entity and changing anyway.

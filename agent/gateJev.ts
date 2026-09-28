@@ -1,4 +1,4 @@
-import { BOTH_TIERS_STATE_CONTRACT, COMMON_KNOWLEDGE_CONTRACT } from '../engine/prose/contract';
+import { BOTH_TIERS_STATE_CONTRACT, WORLD_STATE_CONTRACT } from '../engine/prose/contract';
 import { SystemOneAnswers, SystemOneQuestions } from './model/client';
 
 /**
@@ -34,8 +34,8 @@ import { SystemOneAnswers, SystemOneQuestions } from './model/client';
  *
  * They are separate constants rather than one shared threshold because the two questions have
  * different costs when they are wrong. A false positive on format spends one intervention that
- * rewrites nothing; a false positive on common knowledge writes a document everybody reads
- * (`COMMON_KNOWLEDGE_RULES`). They will want to move independently, so they start apart.
+ * rewrites nothing; a false positive on world state rewrites a document everybody reads
+ * (`WORLD_STATE_PROSE_RULES`). They will want to move independently, so they start apart.
  */
 export const FORMAT_BREAK_THRESHOLD = 0.5;
 export const KNOWLEDGE_STALE_THRESHOLD = 0.5;
@@ -57,7 +57,7 @@ export interface JevGateRequest {
   documents: Record<string, string>;
 }
 
-/** The `what_everyone_here_knows` field, which is stated even when it is empty. */
+/** The `the_world_right_now` field, which is stated even when it is empty. */
 const NOTHING_WRITTEN = '(nothing has been written there yet)';
 
 /**
@@ -88,7 +88,7 @@ function kindWords(tier: 'actor' | 'prop'): string {
  */
 export function jevGateRequest(args: {
   persona: string;
-  commonKnowledge: string | undefined;
+  worldState: string | undefined;
   documents: GateDocument[];
 }): JevGateRequest {
   const state: Record<string, string> = {
@@ -99,8 +99,8 @@ export function jevGateRequest(args: {
     // apart. Here each question judges one document and names its variant, so the paragraph would
     // be instructing the model to do something the request shape already did.
     how_documents_must_be_written: BOTH_TIERS_STATE_CONTRACT,
-    what_common_knowledge_is_for: COMMON_KNOWLEDGE_CONTRACT,
-    what_everyone_here_knows: args.commonKnowledge?.trim() ? args.commonKnowledge : NOTHING_WRITTEN,
+    what_the_world_state_is_for: WORLD_STATE_CONTRACT,
+    the_world_right_now: args.worldState?.trim() ? args.worldState : NOTHING_WRITTEN,
   };
 
   const questions: SystemOneQuestions = {};
@@ -126,12 +126,18 @@ export function jevGateRequest(args: {
     documents[id] = document.entityId;
   });
 
+  // One question, two ways to be stale: the paragraph missing something everyone should know, and
+  // a record line that is now wrong. They could be asked separately — docs/12 §11's argument
+  // against one boolean for two questions applies — but the answer here feeds one decision (send
+  // stage two the document), so splitting would buy a measurement nobody reads yet. Split it when
+  // the two get different thresholds, which is the same moment they get different costs.
   questions.knowledge = {
     type: 'noul',
     instructions:
-      'Something in these documents has become true that everyone in this world should know, ' +
-      'belongs in common knowledge under `what_common_knowledge_is_for`, and is not written in ' +
-      '`what_everyone_here_knows` yet.',
+      'The world state in `the_world_right_now` is out of date, judged against ' +
+      '`what_the_world_state_is_for`: either something in these documents has become true that ' +
+      'everyone in this world should know and its paragraph does not say so, or a line in its ' +
+      '<tasks> or <player_items> block no longer matches what these documents show.',
   };
 
   return { state, questions, documents };

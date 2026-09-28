@@ -212,10 +212,13 @@ export function stateContractFor(tier: EntityTier): string {
   return tier === 'actor' ? ACTOR_STATE_CONTRACT : PROP_STATE_CONTRACT;
 }
 
-// ---------------------------------------------------------------- common knowledge (docs/05 §5.3)
+// -------------------------------------------------------------------- world state (docs/05 §5.3)
 
 /**
- * The reserved `entityState.entityId` under which the world's common knowledge is stored.
+ * The reserved `entityState.entityId` under which the world's state document is stored.
+ *
+ * Called common knowledge until docs/13 §1.4. The name was not only an identifier: it was
+ * instruction text, and read literally it forbade the record blocks below.
  *
  * It is a key in the prose tier and nothing else. Deliberately **not** an `Entity`: staying out of
  * `world.entities` is what makes "not targetable, no physics, no memory, never rendered" true by
@@ -226,50 +229,98 @@ export function stateContractFor(tier: EntityTier): string {
  * (a), entity ids otherwise), so a third namespace costs nothing. The double underscores keep it
  * outside anything `parseGameId` would accept.
  */
-export const COMMON_KNOWLEDGE_ID = '__world__';
+export const WORLD_STATE_ID = '__world__';
 
 /**
- * Common knowledge has a condition, not a plan, so it takes the prop shape without the intention
- * section — and without the bracketed tail, since it occupies no space and carries nothing. It is
- * the same document format every entity writes, which is the point: one parser, one budget, one
- * conformance record.
+ * The world has a condition, not a plan, so it takes the prop shape without the intention section —
+ * and without the bracketed tail, since it occupies no space and carries nothing. It is the same
+ * document format every entity writes, which is the point: one parser, one budget, one conformance
+ * record.
+ *
+ * The two record blocks are docs/13 §1.4. They are stated in the shape rather than left implicit
+ * because a writer told the shape is "a head-state and one paragraph" folds anything else back into
+ * prose on the next rewrite — which is how task state would be lost with nobody noticing.
+ *
+ * docs/13 §4: a write need not carry every part. The shape is what the document looks like, not
+ * what one write has to contain — the rules below say which parts a write may leave out and what
+ * leaving them out means.
  */
-const COMMON_KNOWLEDGE_SHAPE = `${STATE_HEAD}
+const WORLD_STATE_SHAPE = `${STATE_HEAD}
 
-<a paragraph, in natural language, of what is true in this world right now>`;
+<a paragraph, in natural language, of what is true in this world right now>
+
+<tasks>
+<one line per task: the task's id, then "=", then the id of the step it is on, or "done">
+</tasks>
+
+<player_items>
+<one line per kind of thing the player is carrying: its name, then "=", then how many>
+</player_items>`;
 
 /**
  * The scope rule, which is the whole of what keeps this from becoming a back door.
  *
- * An actor cannot see another entity's state and learns it only by interacting (docs/05 §6.4).
- * Common knowledge is read by everyone, so anything written here is known by everyone without
+ * An actor cannot see another entity's state and learns it only by interacting (docs/05 §6.4). The
+ * paragraph here is read by everyone, so anything written into it is known by everyone without
  * anybody having learned it. That is a deliberate exception and it is only safe while what goes in
  * is restricted to what every inhabitant would already know anyway.
+ *
+ * docs/13 §1.4: it is **scoped to the paragraph**, not to the document. The record blocks are not
+ * claims the world makes about itself — they are records the engine keeps in the world's document,
+ * and every clause below would forbid them. "If a fact is not yet settled, leave it out and wait"
+ * describes an unfinished task exactly, and "only the people present could know" describes the
+ * player's pockets exactly. Deleting the rule instead of scoping it would make every actor
+ * omniscient, which is the thing it exists to prevent.
  */
-const COMMON_KNOWLEDGE_RULES = `- Write only what is settled and what everyone in this world would already know: things that
-  happened in the open, or that the whole place would have heard by now. Write it in the third
-  person, about the world.
+const WORLD_STATE_PROSE_RULES = `- In the paragraph, write only what is settled and what everyone in this world would already know:
+  things that happened in the open, or that the whole place would have heard by now. Write it in
+  the third person, about the world.
 - One character's belief, one character's secret, or anything only the people present could know
-  does NOT go here. That stays in their own state and their own memory. Everyone reads this, so
-  writing it here is the same as telling everyone.
-- Nothing here is secret, and nothing here is in doubt. If a fact is not yet settled, leave it out
-  and wait.
+  does NOT go in the paragraph. That stays in their own state and their own memory. Everyone reads
+  the paragraph, so writing it there is the same as telling everyone.
+- Nothing in the paragraph is secret, and nothing in it is in doubt. If a fact is not yet settled,
+  leave it out of the paragraph and wait.
 - Do not restate the rules of the world; those never change and are given separately. This is only
   what has come to be true within them.
-- Keep it short. Most worlds need a handful of lines, and a fact that stops mattering should be
-  dropped rather than kept forever.`;
+- Keep the paragraph short. Most worlds need a handful of lines, and a fact that stops mattering
+  should be dropped rather than kept forever.
+- The paragraph is replaced by whatever you write. Write it in full when you change it, or leave it
+  out of your write entirely to keep the one that is already there.`;
 
-/** Injected wherever common knowledge is written — today only the god's intervention. */
+/**
+ * The rule the blocks need and the paragraph's rules would destroy (docs/13 §1.4).
+ *
+ * Every clause is a countermeasure to something the prose rules above would otherwise license:
+ * summarising, dropping what is finished, and withholding what is not yet settled. A record a
+ * writer is free to tidy is not a record.
+ */
+const WORLD_STATE_RECORD_RULES = `- The <tasks> and <player_items> blocks are records, not narration, and they merge line by line.
+  Write only the lines you are changing. Every line you do not write stays exactly as it is, so
+  there is nothing to copy through and nothing to restate.
+- Leave a block out of your write entirely when you are changing nothing in it. An empty block
+  changes nothing either; it is not a way to say the record is empty.
+- Leaving a line out never removes it. To say the player no longer has something, write that thing
+  with a count of 0. A task's line is never removed.
+- A task's line names the step it is on, spelled exactly as that step is spelled in the task, under
+  the task's own id, spelled exactly as the task spells it. A name you invent does not correct the
+  old line; it adds a line that nothing reads, and the old line stands. If you are not sure which
+  task or which step a line is about, leave it out.
+- These blocks are not part of what everyone knows. They are the world's record of where the player
+  has got to, and the rules about the paragraph above do not apply to them.`;
+
+/** Injected wherever world state is written: the god, and agents under docs/13 §4. */
 /** The world has no `description` to source a head-state from; it has the rules it runs on. */
-const COMMON_KNOWLEDGE_HEAD_STATE_RULE = `- Line one always begins "state: ", followed by one word or a short phrase naming where this
-  world stands now. Reuse the one last written unless something has actually changed. Do not coin
-  a new one for its own sake.`;
+const WORLD_STATE_HEAD_STATE_RULE = `- When you write the paragraph, line one begins "state: ", followed by one word or a short phrase
+  naming where this world stands now. Reuse the one last written unless something has actually
+  changed. Do not coin a new one for its own sake. A write that changes only the record blocks has
+  no paragraph, and so no "state: " line.`;
 
-export const COMMON_KNOWLEDGE_CONTRACT = `Common knowledge is one document, in this shape:
+export const WORLD_STATE_CONTRACT = `The world's state is one document, in this shape:
 
-${COMMON_KNOWLEDGE_SHAPE}
+${WORLD_STATE_SHAPE}
 
-${COMMON_KNOWLEDGE_HEAD_STATE_RULE}
+${WORLD_STATE_HEAD_STATE_RULE}
 ${SHAPE_RULES}
-${COMMON_KNOWLEDGE_RULES}
-${BUDGET_RULE}`;
+${WORLD_STATE_PROSE_RULES}
+${WORLD_STATE_RECORD_RULES}
+${BUDGET_RULE} That limit is on the paragraph; the record blocks do not count toward it.`;

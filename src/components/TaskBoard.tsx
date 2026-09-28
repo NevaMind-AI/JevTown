@@ -5,15 +5,28 @@ export default function TaskBoard({
   tasks,
   onOpenChange,
   hidden = false,
+  progress,
 }: {
   hidden?: boolean;
   tasks: ReturnType<MemoryWorld['taskViews']>;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Where the world-state document says the player has got to (docs/13 §1.8 item D). Absent
+   * whenever the agentic world is not running, and the board then derives it from the typed
+   * progress exactly as before.
+   *
+   * `step: undefined` with a task named is the honest answer to a line we could not read: the
+   * task is current, and which step it is on is unknown. Never a failure (docs/13 §1.6).
+   */
+  progress?: { taskId: string; step?: { id: string; text: string; marker?: '!' | '?' } };
 }) {
   const [selectedId, setSelectedId] = useState<string>();
   const selected = tasks.find((t) => t.id === selectedId) ?? tasks[0];
-  const current = tasks.find((t) => t.completed.length < t.steps.length);
-  const currentStep = current?.steps.find((step) => !current.completed.includes(step.id));
+  const typedCurrent = tasks.find((t) => t.completed.length < t.steps.length);
+  const current = progress ? tasks.find((t) => t.id === progress.taskId) : typedCurrent;
+  const currentStep = progress
+    ? progress.step
+    : typedCurrent?.steps.find((step) => !typedCurrent.completed.includes(step.id));
   const complete = tasks.length > 0 && !current;
   const [dismissed, setDismissed] = useState(false);
   const panel = useRef<HTMLDialogElement>(null);
@@ -56,7 +69,11 @@ export default function TaskBoard({
         {!dismissed && (
           <div aria-live="polite">
             <h2>{current?.title ?? '✓ 任务已完成'}</h2>
-            <p>{currentStep?.text ?? '全部任务已完成。'}</p>
+            {/*
+              A current task whose step we could not read renders as unknown, never as finished.
+              docs/13 §1.6: unparseable prose degrades the view, it never ends the game.
+            */}
+            <p>{currentStep?.text ?? (current ? '（当前进度未知）' : '全部任务已完成。')}</p>
             {currentStep?.marker && (
               <div className="task-board__guide">
                 <p>

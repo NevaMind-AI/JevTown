@@ -8,7 +8,7 @@ import { EntityDescription } from './entityDescription';
 import { parseGameId } from './ids';
 import { Game } from './game';
 import { parseStateDocument, physicsPatchFrom } from '../prose/stateDocument';
-import { COMMON_KNOWLEDGE_ID } from '../prose/contract';
+import { WORLD_STATE_ID } from '../prose/contract';
 
 /**
  * Inputs that create and mutate entities and their prose state.
@@ -23,13 +23,19 @@ import { COMMON_KNOWLEDGE_ID } from '../prose/contract';
  */
 
 /**
- * docs/05 §5.3: common knowledge has exactly one writer, the god. Every other path refuses the
- * reserved id here rather than anywhere further in, so the rule holds for any caller that reaches
- * an input — including one written later that never read this file.
+ * The world-state document is not an entity, so it is never written through an entity's input.
+ *
+ * docs/05 §5.3 made this "only the god may write it", because the god was the only writer there
+ * was. docs/13 §4 opens the document to agents, and this check is not what gates that: an agent
+ * writes it through the world write of `godVerdict`, the same atomic path the god uses. What this
+ * still refuses is the reserved id arriving on an *entity* state input, where it would allocate a
+ * version on an `Entity` that does not exist. That is a category error under any write policy, so
+ * the refusal stays where every caller reaching an input hits it — including one written later
+ * that never read this file.
  */
-function refuseCommonKnowledge(id: string) {
-  if (id === COMMON_KNOWLEDGE_ID) {
-    throw new Error(`"${COMMON_KNOWLEDGE_ID}" is common knowledge; only the god may write it`);
+function refuseWorldStateAsEntity(id: string) {
+  if (id === WORLD_STATE_ID) {
+    throw new Error(`"${WORLD_STATE_ID}" is the world's state; write it through the world write`);
   }
 }
 
@@ -167,7 +173,7 @@ export const entityInputs = {
       operationId: v.optional(v.string()),
     },
     handler: (game, now, args) => {
-      refuseCommonKnowledge(args.entityId);
+      refuseWorldStateAsEntity(args.entityId);
       return applyStateUpdate(game, args, 'self');
     },
   }),
@@ -189,7 +195,7 @@ export const entityInputs = {
       operationId: v.optional(v.string()),
     },
     handler: (game, now, args) => {
-      refuseCommonKnowledge(args.entityId);
+      refuseWorldStateAsEntity(args.entityId);
       return applyStateUpdate(game, args, 'interaction');
     },
   }),
@@ -212,8 +218,8 @@ export const entityInputs = {
           reason: v.string(),
         }),
       ),
-      // docs/05 §5.3: the world's common knowledge, which only the god may write. It rides in the
-      // same verdict as the entity writes rather than in an input of its own so that one judgement
+      // docs/05 §5.3, docs/13 §4: the world's state document. It rides in the same verdict as the
+      // entity writes rather than in an input of its own so that one judgement
       // lands as one atomic step-boundary application under one `batchId` — a separate input could
       // tear against the entity writes formed from the same evidence.
       world: v.optional(v.object({ state: v.string(), reason: v.string() })),
@@ -233,7 +239,7 @@ export const entityInputs = {
       }
       let world = false;
       if (args.world) {
-        applyCommonKnowledgeUpdate(game, args.world, args.batchId);
+        applyWorldStateUpdate(game, args.world, args.batchId);
         world = true;
       }
       return { applied, world };
@@ -339,15 +345,15 @@ function applyStateUpdate(
  * the counter lives on the world rather than on an `Entity`, and there is no physics to derive,
  * because it occupies no tiles.
  */
-function applyCommonKnowledgeUpdate(
+function applyWorldStateUpdate(
   game: Game,
   write: { state: string; reason: string },
   batchId: string,
 ) {
-  game.world.commonKnowledgeVersion += 1;
+  game.world.worldStateVersion += 1;
   game.queueProseWrite({
-    entityId: COMMON_KNOWLEDGE_ID,
-    version: game.world.commonKnowledgeVersion,
+    entityId: WORLD_STATE_ID,
+    version: game.world.worldStateVersion,
     state: write.state,
     source: 'god',
     reason: write.reason,

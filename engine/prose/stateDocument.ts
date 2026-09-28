@@ -48,6 +48,23 @@ export interface StateDocument {
    * branch has reinvented `vars` (docs/05 §9.4).
    */
   items?: Record<string, number>;
+  /**
+   * The `<tasks>` block of docs/13 §1.2: `task-id = step-id`, one line per task.
+   *
+   * This is the branch the `items` note above warns against, taken deliberately and argued in
+   * docs/13 §1.6. The warning still describes the failure mode, so the rule that makes it
+   * affordable is enforced by the callers rather than here: **an unrecognised value is never an
+   * error.** This returns whatever was written and leaves judging it to the reader.
+   *
+   * Only on the world-state document in practice, but parsed on every document, because a parser
+   * that knows which entity it is reading has a second way to be wrong.
+   */
+  tasks?: Record<string, string>;
+  /**
+   * The `<player_items>` block of docs/13 §1.4 — `<items>`' shape, for what the player carries.
+   * Separate from `items` because that one is the *subject's* inventory and this one is not.
+   */
+  playerItems?: Record<string, number>;
   /** The document as written, which is the only form anything downstream consumes. */
   raw: string;
 }
@@ -66,7 +83,18 @@ export interface Conformance {
   blockCount: number;
   physicsTag: PhysicsTagStatus;
   itemCount: number;
+  taskCount: number;
+  playerItemCount: number;
   wordCount: number;
+  /**
+   * Words the budget actually applies to: the document with its record blocks removed
+   * (docs/13 §1.7).
+   *
+   * The blocks are records, not prose, and an over-budget update is discarded whole
+   * (`agent/stateUpdate.ts`). Counting them would let a long paragraph revert task state — a
+   * silent loss, which docs/13 §0 rules out however much prose owns the value.
+   */
+  budgetWordCount: number;
   charCount: number;
   overBudget: boolean;
   /** Set by the caller once it knows whether it truncated or re-asked. */
@@ -87,8 +115,16 @@ const FIELD = /^([A-Za-z_][A-Za-z0-9_ -]*?)\s*:\s*(.*)$/;
 // the tag is looked for anywhere in the document rather than at an agreed position. A model that
 // gets the shape nearly right should not silently fail to open a door.
 const PHYSICS_TAG = /<\s*(blocked|unblocked)\s*\/?\s*>/gi;
-const ITEMS_BLOCK = /<\s*items\s*>([\s\S]*?)<\s*\/\s*items\s*>/i;
+// Blocks are matched by name with the same tolerance the physics tag gets, and anywhere in the
+// document rather than at an agreed position.
+const blockPattern = (name: string) =>
+  new RegExp(`<\\s*${name}\\s*>([\\s\\S]*?)<\\s*\\/\\s*${name}\\s*>`, 'i');
+const ITEMS_BLOCK = blockPattern('items');
+const PLAYER_ITEMS_BLOCK = blockPattern('player_items');
+const TASKS_BLOCK = blockPattern('tasks');
 const ITEM_LINE = /^"?\s*([^"=]+?)\s*"?\s*=\s*(-?\d+)$/;
+// Same shape, any token on the right: a step id, `done`, or something we do not recognise yet.
+const TASK_LINE = /^"?\s*([^"=]+?)\s*"?\s*=\s*(\S[^\n]*?)$/;
 
 function parsePhysicsTag(text: string): { tag?: PhysicsTag; status: PhysicsTagStatus } {
   const found = new Set([...text.matchAll(PHYSICS_TAG)].map((m) => m[1].toLowerCase()));
@@ -104,8 +140,8 @@ function parsePhysicsTag(text: string): { tag?: PhysicsTag; status: PhysicsTagSt
   return { tag, status: tag };
 }
 
-function parseItems(text: string): Record<string, number> | undefined {
-  const block = ITEMS_BLOCK.exec(text);
+function parseCountBlock(text: string, pattern: RegExp): Record<string, number> | undefined {
+  const block = pattern.exec(text);
   if (!block) {
     return undefined;
   }
@@ -117,6 +153,33 @@ function parseItems(text: string): Record<string, number> | undefined {
     }
   }
   return items;
+}
+
+/** `task-id = step-id`. The value is never validated here; see `StateDocument.tasks`. */
+function parseTasks(text: string): Record<string, string> | undefined {
+  const block = TASKS_BLOCK.exec(text);
+  if (!block) {
+    return undefined;
+  }
+  const tasks: Record<string, string> = {};
+  for (const line of block[1].split('\n')) {
+    const match = TASK_LINE.exec(line.trim());
+    if (match && match[1] !== '') {
+      tasks[match[1]] = match[2].trim();
+    }
+  }
+  return tasks;
+}
+
+/**
+ * The document with its record blocks removed, which is what the word budget applies to
+ * (docs/13 §1.7, §1.8 item B).
+ */
+export function budgetedText(text: string): string {
+  return text
+    .replace(new RegExp(TASKS_BLOCK.source, 'gi'), '')
+    .replace(new RegExp(PLAYER_ITEMS_BLOCK.source, 'gi'), '')
+    .trim();
 }
 
 export function wordCount(text: string): number {
@@ -173,10 +236,21 @@ export function parseStateDocument(raw: string): ParsedState {
   }
 
   const physics = parsePhysicsTag(normalized);
-  const items = parseItems(normalized);
+  const items = parseCountBlock(normalized, ITEMS_BLOCK);
+  const playerItems = parseCountBlock(normalized, PLAYER_ITEMS_BLOCK);
+  const tasks = parseTasks(normalized);
+  const budgeted = budgetedText(normalized);
 
   return {
-    document: { headState, fields, physicsTag: physics.tag, items, raw: normalized },
+    document: {
+      headState,
+      fields,
+      physicsTag: physics.tag,
+      items,
+      tasks,
+      playerItems,
+      raw: normalized,
+    },
     conformance: {
       headState: headStatus,
       headStateToken: headState,
@@ -184,9 +258,12 @@ export function parseStateDocument(raw: string): ParsedState {
       blockCount: blocks.length,
       physicsTag: physics.status,
       itemCount: items ? Object.keys(items).length : 0,
+      taskCount: tasks ? Object.keys(tasks).length : 0,
+      playerItemCount: playerItems ? Object.keys(playerItems).length : 0,
       wordCount: wordCount(normalized),
+      budgetWordCount: wordCount(budgeted),
       charCount: normalized.length,
-      overBudget: overBudget(normalized),
+      overBudget: overBudget(budgeted),
       truncated: false,
       reasks: 0,
       fellBack: false,

@@ -27,6 +27,13 @@ import { catalogue, restoreSlot, SaveHead, SavePlayback } from '../lib/autosaves
 import { useAutoSaves, Restored, PlayHandler } from './AutoSaves';
 import { loadPackage, Package } from '../../prototype/package';
 import { useAgenticRuntime } from '../sim/useAgenticRuntime';
+import {
+  currentProseStep,
+  readWorldStateDocument,
+  readWorldTasks,
+  taskDisagreements,
+  unknownKeys,
+} from '../sim/taskStatus';
 type PlaybackSession = SavePlayback & { playing: boolean; speed: number };
 export default function LocalGame({ controlsBlocked }: { controlsBlocked: boolean }) {
   const gains = useGainNotifications();
@@ -174,6 +181,8 @@ function LoadedLocalGame({
     return runtime;
   });
   const [state, setState] = useState(() => world.inspect());
+  /** Disagreements already reported, so a standing one is not logged every frame (§1.8 D). */
+  const reportedTaskDrift = useRef(new Set<string>());
   // The agentic world, when it is switched on. It rides the same clock as `world` below rather
   // than keeping one of its own -- see `useAgenticRuntime` for why that matters.
   const agentic = useAgenticRuntime();
@@ -724,8 +733,46 @@ function LoadedLocalGame({
   const currentScene = world.scene(state.sceneId)!;
   const tasks = world.taskViews();
   const currentTask = tasks.find((task) => task.completed.length < task.steps.length);
-  const currentStep = currentTask?.steps.find((step) => !currentTask.completed.includes(step.id));
+  const typedStep = currentTask?.steps.find((step) => !currentTask.completed.includes(step.id));
+  // docs/13 §1.8 item D: the world-state document is the reader's source, and `progressTasks`
+  // still writes the typed progress beside it. The step is resolved against the authored task
+  // rather than against `taskViews()`, whose step list is truncated to the *typed* progress and
+  // so cannot carry a step the document is ahead of.
+  const worldStateDoc = readWorldStateDocument(agentic);
+  const proseTasks = useMemo(() => readWorldTasks(worldStateDoc), [worldStateDoc]);
+  const proseProgress = useMemo(
+    () => currentProseStep(content.story.tasks ?? [], proseTasks),
+    [content, proseTasks],
+  );
+  const currentStep = proseTasks ? proseProgress?.step : typedStep;
   const guide = taskGuidance(content.scenes, currentScene, currentStep);
+  // The oracle of docs/13 §1.8 item D. Both paths run, so every divergence between what the model
+  // wrote and what `progressTasks` computed is a free measurement of whether a step id survives a
+  // rewrite. Reported once per distinct disagreement — the question is which ones happen, not how
+  // many frames they last. Silent when there is no agentic world: no document, no rows.
+  useEffect(() => {
+    for (const row of taskDisagreements(content.story.tasks ?? [], tasks, proseTasks)) {
+      const key = `${row.taskId}:${row.prose}:${row.typed}`;
+      if (reportedTaskDrift.current.has(key)) continue;
+      reportedTaskDrift.current.add(key);
+      console.warn(
+        `[docs/13 §1.8 D] task "${row.taskId}": the world state says ${row.prose}, the typed path says ${row.typed}.`,
+      );
+    }
+    // Louder than a disagreement, and for a worse reason: nothing reads this line, and the task it
+    // was meant for keeps whatever it said before, silently, forever (docs/13 §4).
+    for (const id of unknownKeys(
+      (content.story.tasks ?? []).map((task) => task.id),
+      proseTasks,
+    )) {
+      const key = `unknown:${id}`;
+      if (reportedTaskDrift.current.has(key)) continue;
+      reportedTaskDrift.current.add(key);
+      console.warn(
+        `[docs/13 §4] the world state's <tasks> block names "${id}", which is not a task in this world. Nothing reads that line, and whatever the intended task said before still stands.`,
+      );
+    }
+  });
   const guideVisual = guide?.entity.sprite;
   const guidePosition = guide
     ? {
@@ -1090,7 +1137,12 @@ function LoadedLocalGame({
               storyTime={state.storyTime}
             />
           )}
-          <TaskBoard hidden={hudHidden} tasks={tasks} onOpenChange={setTasksOpen} />
+          <TaskBoard
+            hidden={hudHidden}
+            tasks={tasks}
+            progress={proseTasks ? proseProgress : undefined}
+            onOpenChange={setTasksOpen}
+          />
         </>
       }
       sceneOverlay={(width, height) =>

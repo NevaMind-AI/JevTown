@@ -9,6 +9,8 @@ import {
   TranscriptRow,
 } from '../ports';
 import { GameId } from '../../engine/aiTown/ids';
+import { WORLD_STATE_ID } from '../../engine/prose/contract';
+import { foldWorldState } from '../../engine/prose/worldState';
 
 /**
  * `AgentStore` in memory, and serializable.
@@ -88,6 +90,15 @@ function cosine(a: number[], b: number[]): number {
 export class InMemoryAgentStore implements AgentStore {
   /** Append-only per entity, ordered by the version the input handler allocated. */
   private entityState = new Map<string, { version: number; state: string }[]>();
+  /**
+   * The composed world-state document, kept until the chain it was composed from changes.
+   *
+   * docs/13 §4: a write to `__world__` is a patch, and what a reader wants is the fold of every
+   * patch so far. Folding here rather than at each call site is what keeps "the document" one
+   * thing — the god's prompt, an agent's prompt and the client all ask the same question and get
+   * the same answer, and none of them has to know the storage is a chain.
+   */
+  private worldStateFold?: { through: number; document: string };
   /** Content-addressed and append-only, so it dedupes naturally (docs/05 §9.5). */
   private blobs = new Map<string, string>();
   private messages = new Map<string, StoredMessage[]>();
@@ -139,7 +150,17 @@ export class InMemoryAgentStore implements AgentStore {
    */
   readEntityStateSync(entityId: string): string | undefined {
     const versions = this.entityState.get(entityId);
-    return versions?.length ? versions[versions.length - 1].state : undefined;
+    if (!versions?.length) return undefined;
+    // An entity's state is the last document it wrote. The world's is the fold (docs/13 §4).
+    if (entityId !== WORLD_STATE_ID) return versions[versions.length - 1].state;
+    const through = versions[versions.length - 1].version;
+    if (this.worldStateFold?.through !== through) {
+      this.worldStateFold = {
+        through,
+        document: foldWorldState(versions.map((row) => row.state)).document,
+      };
+    }
+    return this.worldStateFold.document;
   }
 
   /** Called by the runtime as it drains the engine's prose queue. Not part of `AgentStore`. */
@@ -150,6 +171,9 @@ export class InMemoryAgentStore implements AgentStore {
     versions.push({ version, state });
     versions.sort((a, b) => a.version - b.version);
     this.entityState.set(entityId, versions);
+    // Invalidate on append rather than trusting the cache key: a replayed write can land *before*
+    // the newest version, which changes the fold without changing the version it folds through.
+    if (entityId === WORLD_STATE_ID) this.worldStateFold = undefined;
     this.record({ kind: 'entityState', entityId, version, state });
   }
 
@@ -376,6 +400,7 @@ export class InMemoryAgentStore implements AgentStore {
     }
     const copy = structuredClone(snapshot);
     this.entityState = new Map(copy.entityState);
+    this.worldStateFold = undefined;
     this.blobs = new Map(copy.blobs);
     this.messages = new Map(copy.messages);
     this.memories = copy.memories;

@@ -91,7 +91,15 @@ describe('parseStateDocument tolerates malformed documents', () => {
   });
 
   test('never throws, whatever it is handed', () => {
-    const inputs = ['', '   ', '\n\n\n', 'state:', '{"state":"json"}', 'state: a\nb: \n\n\n', '::::'];
+    const inputs = [
+      '',
+      '   ',
+      '\n\n\n',
+      'state:',
+      '{"state":"json"}',
+      'state: a\nb: \n\n\n',
+      '::::',
+    ];
     for (const input of inputs) {
       expect(() => parseStateDocument(input)).not.toThrow();
     }
@@ -180,13 +188,17 @@ describe('the items block', () => {
   });
 
   test('tolerates missing quotes and loose spacing', () => {
-    const { document } = parseStateDocument('state: x\n<items>\nrope=2\n  "a lamp"   =   1\n</items>');
+    const { document } = parseStateDocument(
+      'state: x\n<items>\nrope=2\n  "a lamp"   =   1\n</items>',
+    );
 
     expect(document.items).toEqual({ rope: 2, 'a lamp': 1 });
   });
 
   test('an unparseable line is skipped rather than throwing', () => {
-    const { document } = parseStateDocument('state: x\n<items>\nsome prose about rope\n"rope" = 2\n</items>');
+    const { document } = parseStateDocument(
+      'state: x\n<items>\nsome prose about rope\n"rope" = 2\n</items>',
+    );
 
     expect(document.items).toEqual({ rope: 2 });
   });
@@ -202,5 +214,58 @@ describe('the items block', () => {
     const { document } = parseStateDocument('state: x\n<items>\n</items>');
 
     expect(document.items).toEqual({});
+  });
+});
+
+// `STATE_WORD_BUDGET` from `./contract`, restated rather than imported: importing it here as well
+// as through `stateDocument` trips the ESM transform, and the number is the point of the test.
+const STATE_WORD_BUDGET = 1000;
+
+describe('the record blocks of docs/13 §1', () => {
+  test('a tasks block parses task id to step id', () => {
+    const { document, conformance } = parseStateDocument(
+      'state: ordinary\n\n<tasks>\ns01-door-tag = ask_ash\nsettle-in = done\n</tasks>\n\nThe river is low.',
+    );
+    expect(document.tasks).toEqual({ 's01-door-tag': 'ask_ash', 'settle-in': 'done' });
+    expect(conformance.taskCount).toBe(2);
+  });
+
+  test('an unrecognised value is returned, not rejected', () => {
+    const { document } = parseStateDocument('state: x\n<tasks>\nsome-task = who knows\n</tasks>');
+    expect(document.tasks).toEqual({ 'some-task': 'who knows' });
+  });
+
+  test('player items parse as counts and stay separate from the subject`s own items', () => {
+    const { document, conformance } = parseStateDocument(
+      'state: x\n<items>\n"a brass key" = 1\n</items>\n<player_items>\n"door tag" = 1\ncoin = 40\n</player_items>',
+    );
+    expect(document.items).toEqual({ 'a brass key': 1 });
+    expect(document.playerItems).toEqual({ 'door tag': 1, coin: 40 });
+    expect(conformance.itemCount).toBe(1);
+    expect(conformance.playerItemCount).toBe(2);
+  });
+
+  test('a document with no blocks reports neither', () => {
+    const { document, conformance } = parseStateDocument('state: x\n\nNothing has happened.');
+    expect(document.tasks).toBeUndefined();
+    expect(document.playerItems).toBeUndefined();
+    expect(conformance.taskCount).toBe(0);
+    expect(conformance.playerItemCount).toBe(0);
+  });
+
+  test('the record blocks do not count toward the budget', () => {
+    const tasks = Array.from({ length: 400 }, (_, i) => `task-${i} = step-${i}`).join('\n');
+    const { conformance } = parseStateDocument(
+      `state: x\n\nShort enough.\n\n<tasks>\n${tasks}\n</tasks>`,
+    );
+    expect(conformance.wordCount).toBeGreaterThan(STATE_WORD_BUDGET);
+    expect(conformance.budgetWordCount).toBeLessThan(STATE_WORD_BUDGET);
+    expect(conformance.overBudget).toBe(false);
+  });
+
+  test('over-budget prose is still over budget with blocks present', () => {
+    const prose = Array.from({ length: STATE_WORD_BUDGET + 1 }, () => 'word').join(' ');
+    const { conformance } = parseStateDocument(`state: x\n\n${prose}\n\n<tasks>\na = b\n</tasks>`);
+    expect(conformance.overBudget).toBe(true);
   });
 });

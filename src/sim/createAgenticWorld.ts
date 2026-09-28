@@ -5,7 +5,7 @@ import { Game } from '../../engine/aiTown/game';
 import { MapContext, WorldFile } from '../../engine/aiTown/worldFile';
 import { CollisionLayer } from '../../engine/aiTown/worldMap';
 import { createWorldPlan } from '../../engine/createWorld';
-import { COMMON_KNOWLEDGE_ID } from '../../engine/prose/contract';
+import { WORLD_STATE_ID } from '../../engine/prose/contract';
 import { InMemoryAgentStore } from '../../agent/store/memoryStore';
 import { AgenticRuntime, AgenticRuntimeOptions } from './agenticRuntime';
 
@@ -118,10 +118,10 @@ export function createAgenticWorld(options: CreateAgenticWorldOptions = {}): Age
   });
 
   const store = new InMemoryAgentStore();
-  if (plan.commonKnowledge) {
+  if (plan.worldState) {
     // Installed at creation rather than through an input, for the reason docs/05 §5.3 gives: it
     // is configuration the world is built from, and it has exactly one writer.
-    store.appendEntityState(COMMON_KNOWLEDGE_ID, 1, plan.commonKnowledge);
+    store.appendEntityState(WORLD_STATE_ID, 1, plan.worldState);
   }
 
   const runtime = new AgenticRuntime({
