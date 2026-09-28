@@ -10,7 +10,7 @@ import {
   EntityReconciliation,
   LegacyState,
 } from './entityRecording.js';
-import { npcPath } from './pathfinding.js';
+import { approachTiles, nearestFreeTile, npcPath } from './pathfinding.js';
 import {
   advanceSchedules,
   initialSchedules,
@@ -32,6 +32,7 @@ import {
   mapBlocked,
   mapEdgeBlocked,
   portalAt,
+  Scene,
 } from './content.js';
 type Position = { x: number; y: number };
 export type State = {
@@ -80,6 +81,9 @@ type Command =
   | { requestId: string; type: 'choose'; choice: string; revision: number; hours?: number }
   | { requestId: string; type: 'teleport'; sceneId: string; x: number; y: number }
   | { requestId: string; type: 'moveEntity'; entity: string; x: number; y: number }
+  | { requestId: string; type: 'approachEntity'; entity: string; target: string }
+  | { requestId: string; type: 'wanderEntity'; entity: string; anchor: string }
+  | { requestId: string; type: 'stopEntity'; entity: string }
   | { requestId: string; type: 'move'; dx: number; dy: number; sprint?: boolean }
   | { requestId: string; type: 'interact'; target: string }
   | {
@@ -724,6 +728,12 @@ export class MemoryWorld {
         this.advanceStoryClock(draft, command.seconds);
       } else if (command.type === 'moveEntity') {
         this.moveEntity(draft, command.entity, command.x, command.y);
+      } else if (command.type === 'approachEntity') {
+        this.approachEntity(draft, command.entity, command.target);
+      } else if (command.type === 'wanderEntity') {
+        this.wanderEntity(draft, command.entity, command.anchor);
+      } else if (command.type === 'stopEntity') {
+        this.stopEntity(draft, command.entity);
       } else if (command.type === 'teleport') {
         const { sceneId, x, y } = command;
         const scene = this.content?.scenes.find((candidate) => candidate.id === sceneId);
@@ -1156,6 +1166,66 @@ export class MemoryWorld {
    * still. Only a destination it cannot start toward at all is an error.
    */
   private moveEntity(draft: State, id: string, x: number, y: number) {
+    const { actor, scene } = this.drivable(draft, id);
+    if (!Number.isInteger(x) || !Number.isInteger(y)) throw new Error('Destination must be a tile');
+    this.route(draft, id, actor, scene, x, y);
+  }
+
+  /**
+   * Walk to stand beside another entity (docs/13 §2): an agent's `approach`.
+   *
+   * Resolved here rather than by whoever sent it, because the answer depends on who is standing
+   * where right now, and only the world knows that. The candidate tiles are the authored ones —
+   * `approachTiles` is `nearby()`'s rule — ordered nearest-first from where this entity's current
+   * step lands, so a replay picks the same one.
+   *
+   * Already beside the target is a success with nothing to do, not an error: arrival is what the
+   * sender is waiting to observe, and it has happened.
+   */
+  private approachEntity(draft: State, id: string, targetId: string) {
+    const { actor, scene } = this.drivable(draft, id);
+    const target = draft.entities[targetId];
+    if (!target) throw new Error('Unknown target');
+    if (target.sceneId !== actor.sceneId) throw new Error('Target is in another scene');
+    const live = this.liveScene(draft, scene.id);
+    const from = this.stepOrigin(actor);
+    const beside = approachTiles(live, targetId, [], from);
+    if (beside.some((p) => p[0] === from[0] && p[1] === from[1])) {
+      this.stopEntity(draft, id);
+      return;
+    }
+    const free = approachTiles(live, targetId, this.obstacles(draft, id, actor.sceneId), from);
+    if (!free.length) throw new Error('Nowhere free beside the target');
+    this.route(draft, id, actor, scene, free[0][0], free[0][1]);
+  }
+
+  /**
+   * Walk to the nearest free tile to a named place (docs/13 §2): an agent's `wander`.
+   *
+   * Nearest by walking, not by straight line — `nearestFreeTile` is a BFS — and an arrival anchor
+   * is never the answer, because it has to stay clear.
+   */
+  private wanderEntity(draft: State, id: string, anchorId: string) {
+    const { actor, scene } = this.drivable(draft, id);
+    const anchor = Object.hasOwn(scene.anchors, anchorId) ? scene.anchors[anchorId] : undefined;
+    if (!anchor) throw new Error('Unknown place');
+    const tile = nearestFreeTile(
+      this.liveScene(draft, scene.id),
+      anchor,
+      this.obstacles(draft, id, actor.sceneId),
+    );
+    if (!tile) throw new Error('Nowhere free near that place');
+    this.route(draft, id, actor, scene, tile[0], tile[1]);
+  }
+
+  /** Stop after the step in flight, which is the only place a tile walker can stop. */
+  private stopEntity(draft: State, id: string) {
+    const { actor } = this.drivable(draft, id);
+    actor.path = actor.moving ? [[actor.moving.target.x, actor.moving.target.y]] : [];
+  }
+
+  /** An entity this world may drive on somebody else's behalf, and the scene it stands in. */
+  private drivable(draft: State, id: string) {
     const actor = draft.entities[id];
     if (!actor) throw new Error('Unknown entity');
     if (!actor.sceneId) throw new Error('Entity is offstage');
@@ -1165,27 +1235,47 @@ export class MemoryWorld {
     if (abilitySettings(this.content).schedules?.[id]) throw new Error('Entity is on a schedule');
     const scene = this.content?.scenes.find((s) => s.id === actor.sceneId);
     if (!scene) throw new Error('Unknown scene');
-    if (!Number.isInteger(x) || !Number.isInteger(y)) throw new Error('Destination must be a tile');
+    return { actor, scene };
+  }
 
-    // Route from where the current step lands, not from where the entity is standing: replacing
-    // a path mid-step would break `path[0] === moving.target`, which arrival and the recording
-    // both rely on.
-    const from = actor.moving ? [actor.moving.target.x, actor.moving.target.y] : actor.position;
+  /**
+   * Where the current step lands, or where the entity stands if it is not stepping. Routing from
+   * anywhere else would break `path[0] === moving.target`, which arrival and the recording both
+   * rely on.
+   */
+  private stepOrigin(actor: EntityState): number[] {
+    return actor.moving ? [actor.moving.target.x, actor.moving.target.y] : actor.position;
+  }
+
+  /** Live occupancy, plus the arrival tiles `startEntityStep` would refuse on arrival. */
+  private obstacles(draft: State, id: string, sceneId: string): number[][] {
+    return [...npcObstacles(this.content!, draft, sceneId, id), ...this.arrivalTiles(sceneId)];
+  }
+
+  /**
+   * A scene as it stands in `draft`: its authored definition, with every entity currently in it
+   * at its live position. The content scene holds where things were placed, which for anything
+   * that walks is where it no longer is.
+   */
+  private liveScene(draft: State, sceneId: string): Scene {
+    const scene = this.content!.scenes.find((s) => s.id === sceneId)!;
+    const definitions = this.content!.scenes.flatMap((s) => s.entities);
+    return {
+      ...scene,
+      entities: definitions
+        .filter((e) => draft.entities[e.id]?.sceneId === sceneId)
+        .map((e) => ({ ...e, position: [...draft.entities[e.id].position] })),
+    };
+  }
+
+  private route(draft: State, id: string, actor: EntityState, scene: Scene, x: number, y: number) {
+    const from = this.stepOrigin(actor);
     const route =
       from[0] === x && from[1] === y
         ? []
-        : (npcPath(
-            scene,
-            from,
-            [[x, y]],
-            [
-              ...npcObstacles(this.content!, draft, actor.sceneId, id),
-              // An arrival tile is refused by `startEntityStep`, so routing through one would
-              // hand the mover a path it will not walk.
-              ...this.arrivalTiles(actor.sceneId),
-            ],
-            { partial: true },
-          ) ?? null);
+        : (npcPath(scene, from, [[x, y]], this.obstacles(draft, id, actor.sceneId), {
+            partial: true,
+          }) ?? null);
     if (route === null) throw new Error('No route toward that tile');
     actor.path = actor.moving ? [[...from], ...route] : route;
     this.startEntityStep(draft, id, draft.time);
@@ -1535,6 +1625,37 @@ export function parseCommand(input: unknown): Command {
       y: value.y,
     };
   }
+  const id = (v: unknown): v is string => typeof v === 'string' && v.length > 0 && v.length <= 200;
+  if (
+    value.type === 'approachEntity' &&
+    Object.keys(value).sort().join() === 'entity,requestId,target,type' &&
+    id(value.entity) &&
+    id(value.target)
+  )
+    return {
+      requestId: value.requestId,
+      type: 'approachEntity',
+      entity: value.entity,
+      target: value.target,
+    };
+  if (
+    value.type === 'wanderEntity' &&
+    Object.keys(value).sort().join() === 'anchor,entity,requestId,type' &&
+    id(value.entity) &&
+    id(value.anchor)
+  )
+    return {
+      requestId: value.requestId,
+      type: 'wanderEntity',
+      entity: value.entity,
+      anchor: value.anchor,
+    };
+  if (
+    value.type === 'stopEntity' &&
+    Object.keys(value).sort().join() === 'entity,requestId,type' &&
+    id(value.entity)
+  )
+    return { requestId: value.requestId, type: 'stopEntity', entity: value.entity };
   if (
     value.type === 'moveEntity' &&
     Object.keys(value).sort().join() === 'entity,requestId,type,x,y' &&
