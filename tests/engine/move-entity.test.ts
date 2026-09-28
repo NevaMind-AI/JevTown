@@ -46,12 +46,14 @@ describe('moveEntity', () => {
 
   test('an unreachable destination walks as far as it can (§2.6)', () => {
     const w = world();
-    // (11, 5) is the wall. The walk gets to (9, 5) and stops: (10, 5) is the exit door, which
-    // occupies its tile even though a portal does not block a route through it.
+    // (11, 5) is the wall, so the walk ends on the reachable tile nearest it — (10, 4), around
+    // two obstacles it may not cross: (10, 5) is the exit door, which occupies its tile, and
+    // (9, 5) is `from_corridor`, an anchor the corridor's return portal arrives at. Routing
+    // leaves arrival anchors clear because `startEntityStep` would refuse them anyway.
     expect(send(w, { type: 'moveEntity', entity: 'n07', x: 11, y: 5 })).toEqual({ ok: true });
     const { path } = w.inspect().entities.n07;
     expect(path.length).toBeGreaterThan(0);
-    expect(path.at(-1)).toEqual([9, 5]);
+    expect(path.at(-1)).toEqual([10, 4]);
   });
 
   test('retargeting mid-step keeps the step it is already taking', () => {
