@@ -414,6 +414,79 @@ input-validation rule for a synchronous command queue. Agents queue a `path` and
 (§2.1). Whichever number wins, the 20× clock compression in §3 multiplies it, so this lands with §3
 rather than here.
 
+### 2.9 The map is the init side's, and the agentic world has none
+
+This chapter was written as though two coordinate systems had to be reconciled. They do not. **The
+26 authored scenes are the ground; the agentic world places its entities on anchors those scenes
+define and owns no map at all.** Everything below follows from that, and most of it is subtraction.
+
+**What the constraint deletes outright.** The engine's mover is retired rather than converted.
+`findRoute`, `tickPathfinding`, `tickPosition`, `COLLISION_THRESHOLD`, `PATHFINDING_BACKOFF` and
+`movementSpeed` have no ground to walk on once the ground is a scene, so §2.2's second part and
+§2.6's three takes stop being ports into the engine and become ports into `npcPath`. `data/gentle`
+stops being the agentic world's ground; `createAgenticWorld`'s `staticCollision()` and
+`mapContext()` go with it.
+
+**Scene-keyed registry, not one world per scene.** `MemoryWorld` already answers this: `State` holds
+every scene's actors in one flat map, each labelled with `sceneId`, every scene ticks, and actors
+cross between them mid-tick (`world.ts:1254`). The engine's own ownership forbids the other answer —
+`World` holds `nextId`, `seed`, `rng` and `worldStateVersion` (`world.ts:37-44`), and 26 Games would
+mean 26 PRNG streams from one authored seed and 26 version counters for a `__world__` whose §4 fold
+assumes one chain.
+
+The label is cheaper than it sounds, and where it is expensive it is an artifact: `sceneId` and
+`position` are siblings today, so occupancy reads `e.sceneId === X && e.position[0] === x`. §2.2's
+first part is the fix — the scene is a component of the address, and comparison helpers carry it —
+after which the label appears only where places are compared, and inputs, conversations, memory and
+the prompt layer never mention it.
+
+**One writer for a position, and the second writer was the engine's own tick.** `EntityState` owns
+position: the ground, the reservation, the renderer and the recording are all on that side. The
+duplicate writer is not the agent deciding twice — it is `game.tick` running `tickPosition` over
+every `Player` unconditionally (`game.ts:203-205`), because an agentic actor _is_ a `Player` +
+`Agent` pair (`entityInputs.ts:76-100`). `Player` is the body and `human` is an optional token on
+it; in the merged world the person plays `draft.player`, so every engine `Player` is an agent body
+and the mover is deleted rather than gated.
+
+**A conversation is what arrival produces.** The two approach paths were inverted: an approach to a
+prop fired `agentInteract` on arrival, while an approach to an actor called `Conversation.start` at
+decision time and let the conversation walk the pair together. Now both end on arrival.
+`Conversation.start` refuses at range, membership has one state, and `Conversation.tick` is gone —
+with it the `invited`/`walkingOver` machine, `INVITE_TIMEOUT`, `MIDPOINT_THRESHOLD`, the midpoint
+chase and the seating nudge. The typing lock expires on read instead of on a tick, which is also the
+stronger shape: a lock cannot outlive a model call that died holding it.
+
+Two costs, accepted. **Invitation stops existing before the walk** — a refusal now happens at
+arrival or in the conversation's first turn, which is more legible and is still a behaviour change.
+And **two actors arriving at each other in the same tick both try to start**; lowest id wins, which
+is §2.7's tiebreak and settles with it.
+
+What this buys is not tidiness. With the actor path flipped there is no engine-issued destination
+left anywhere, so "the engine never writes a position" stops being a rule to enforce and becomes
+true because nothing remains that would.
+
+### 2.10 What is unblocked now
+
+| #   | work                                                                            | state                                                                                                       |
+| --- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| A   | `Scene` → `MapContext` / `CollisionLayer` / `WorldMap` adapter                  | **landed** (`src/sim/sceneMap.ts`). Checked against every tile of all 26 scenes                             |
+| B   | anchors accept `[x, y, w, h]` beside `[x, y]`                                   | **landed**. Rides inside the array, so no reader changed                                                    |
+| C   | `scene` on a world-file entity; scene-keyed `MapContext`; scene-keyed occupancy | **landed**. Anchor errors name the scene                                                                    |
+| D   | `npcPath` partial paths and a search budget; `approachTiles`; `nearestFreeTile` | **landed**. `partial` is opt-in: `loadContent` uses a null return to mean "unroutable" at authoring time    |
+| E   | `scene` on `Entity` and `Player`; the map derived and never persisted           | **landed**. The map left `GameStateDiff`; it is content the client already holds                            |
+| F   | conversation on arrival; `Conversation.tick` deleted                            | **landed**                                                                                                  |
+| G   | `reconcileEntities`: a save is brought up to its content rather than refused    | **landed**. `validateEntities`' two checks survive as post-conditions                                       |
+| H   | `story.sprites` and `placedAppearance`                                          | **landed**. An unresolvable sprite draws nothing rather than something wrong                                |
+| I   | delete the engine mover                                                         | waits on the init-side seam below, or the agentic world stops moving                                        |
+| J   | the placement pass: world-file entity + scene anchor → `EntityState`            | must live inside `initialEntities`: `validateEntities` is exact, so nothing may be created at runtime       |
+| K   | an agent destination as a `MemoryWorld` command                                 | the last seam. `execute()` is a whitelist matching exact key sets, so it lands in the input log and replays |
+| L   | the scene as a component of the address, with comparison helpers                | wants I done first, so the bundling is not spent on code about to be deleted                                |
+
+**One thing J changes that is worth knowing before it lands.** A recording embeds its own content
+(`replay.ts:89`), so editing scenes has never invalidated a save — the save keeps playing the old
+content. Reconciliation only does anything once something loads a save against the _current_
+package, and that path does not exist yet. Which content wins is a decision, not an oversight.
+
 ---
 
 ## 3. Time: fast-forward, idle pause, cadence

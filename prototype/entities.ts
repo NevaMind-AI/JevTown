@@ -19,6 +19,33 @@ export type EntityState = {
   activity?: { seatedOn: string };
 };
 
+/** Named prop art from the content package: sprite name -> the image to draw. */
+export type SpriteArt = Record<string, NonNullable<Entity['sprite']>>;
+
+/**
+ * How a world-file entity is drawn once it is placed on the map (docs/13 §2).
+ *
+ * The two sides name appearance differently. A scene entity carries a `character` from a small
+ * closed vocabulary — `f1`–`f8`, or `sprite` meaning "draw the attached art". A world file
+ * carries either a `character` (mobile actors) or a `sprite` **name** (props and fixed actors),
+ * and the name is an id into the content's `story.sprites`, never a path.
+ *
+ * `undefined` for anything that cannot be drawn: an unknown character, a sprite name the content
+ * has no art for, or neither. That is an authoring error and the caller reports it — inventing a
+ * placeholder would put a book on the map where a well was meant to be, and nothing downstream
+ * would ever say so.
+ */
+export function placedAppearance(
+  source: { character?: string; sprite?: string },
+  art: SpriteArt = {},
+): Appearance | undefined {
+  if (source.character !== undefined)
+    return /^f[1-8]$/.test(source.character) ? { character: source.character } : undefined;
+  if (source.sprite === undefined) return undefined;
+  const visual = art[source.sprite];
+  return visual ? { character: 'sprite', sprite: structuredClone(visual) } : undefined;
+}
+
 export function createEntity(
   name: string,
   appearance: Appearance,

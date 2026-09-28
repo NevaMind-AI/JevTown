@@ -1,7 +1,7 @@
 import { v } from '../util/validators';
 import { agentId, conversationId, parseGameId } from './ids';
 import { Player } from './player';
-import { Conversation, conversationInputs } from './conversation';
+import { conversationInputs } from './conversation';
 import { blocked, movePlayer } from './movement';
 import { targetIsStillLegal } from './manifest';
 import { Point } from '../util/types';
@@ -16,6 +16,13 @@ import { Game } from './game';
  * Where to stand to act on a target: the target itself if it moves, otherwise the nearest free
  * tile adjacent to its anchor rect — an anchor is a rectangle, so a 3x2 gate has ten choices
  * (docs/09 §6).
+ */
+/**
+ * The tile to walk to in order to act on a target (docs/13 §2).
+ *
+ * One shape for both kinds, which is the point: an approach to another actor and an approach to
+ * a prop differ in what arrival produces, not in how the walking works. `Agent.tickApproach`
+ * decides what happens when the walk ends.
  */
 function approachDestination(
   game: Game,
@@ -92,7 +99,10 @@ export const agentInputs = {
       if (!agent) {
         throw new Error(`Couldn't find agent: ${args.agentId}`);
       }
-      if (!agent.inProgressOperation || agent.inProgressOperation.operationId !== args.operationId) {
+      if (
+        !agent.inProgressOperation ||
+        agent.inProgressOperation.operationId !== args.operationId
+      ) {
         console.debug(`Agent ${args.agentId} didn't have ${args.operationId} in progress`);
         return null;
       }
@@ -121,17 +131,6 @@ export const agentInputs = {
         case 'approach': {
           if (!args.target || !targetIsStillLegal(game, now, player, args.target)) {
             console.debug(`Target ${args.target} is no longer legal; deciding again`);
-            return null;
-          }
-          if (args.target.startsWith('p:')) {
-            // Tier (a) needs no approach state of its own: `Conversation` already owns walking
-            // toward a target that is itself walking (docs/09 §6).
-            const invitee = game.world.players.get(parseGameId('players', args.target));
-            if (!invitee) {
-              return null;
-            }
-            Conversation.start(game, now, player, invitee);
-            agent.lastInviteAttempt = now;
             return null;
           }
           const destination = approachDestination(game, now, player, args.target);

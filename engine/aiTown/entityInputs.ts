@@ -71,6 +71,8 @@ export const entityInputs = {
       behavior: v.optional(v.string()),
       initialState: v.optional(v.string()),
       blocksMovement: v.optional(v.boolean()),
+      /** Which scene the anchor belongs to (docs/13 §2). */
+      scene: v.optional(v.string()),
     },
     handler: (game, now, args) => {
       const hasState = !!args.initialState;
@@ -85,6 +87,7 @@ export const entityInputs = {
           args.description ?? '',
           undefined,
           args.anchor,
+          args.scene,
         );
         const agentId = game.allocId('agents');
         game.world.agents.set(
@@ -129,6 +132,7 @@ export const entityInputs = {
         name: args.name,
         sprite: args.sprite,
         anchor: args.anchor!,
+        scene: args.scene,
         physics: initialPhysics(args.blocksMovement ?? false, hasState),
         stateVersion: args.initialState ? 1 : 0,
       });

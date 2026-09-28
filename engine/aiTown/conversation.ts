@@ -6,9 +6,8 @@ import { inputHandler } from './inputHandler';
 
 import { TYPING_TIMEOUT, CONVERSATION_DISTANCE } from '../constants';
 import { distance, normalize, vector } from '../util/geometry';
-import { Point } from '../util/types';
 import { Game } from './game';
-import { stopPlayer, blocked, movePlayer } from './movement';
+import { stopPlayer } from './movement';
 import { ConversationMembership, serializedConversationMembership } from './conversationMembership';
 import { parseMap, serializeMap } from '../util/object';
 
@@ -46,79 +45,6 @@ export class Conversation {
     this.participants = parseMap(participants, ConversationMembership, (m) => m.playerId);
   }
 
-  tick(game: Game, now: number) {
-    if (this.isTyping && this.isTyping.since + TYPING_TIMEOUT < now) {
-      delete this.isTyping;
-    }
-    if (this.participants.size !== 2) {
-      console.warn(`Conversation ${this.id} has ${this.participants.size} participants`);
-      return;
-    }
-    const [playerId1, playerId2] = [...this.participants.keys()];
-    const member1 = this.participants.get(playerId1)!;
-    const member2 = this.participants.get(playerId2)!;
-
-    const player1 = game.world.players.get(playerId1)!;
-    const player2 = game.world.players.get(playerId2)!;
-
-    const playerDistance = distance(player1?.position, player2?.position);
-
-    // If the players are both in the "walkingOver" state and they're sufficiently close, transition both
-    // of them to "participating" and stop their paths.
-    if (member1.status.kind === 'walkingOver' && member2.status.kind === 'walkingOver') {
-      if (playerDistance < CONVERSATION_DISTANCE) {
-        console.log(`Starting conversation between ${player1.id} and ${player2.id}`);
-
-        // First, stop the two players from moving.
-        stopPlayer(player1);
-        stopPlayer(player2);
-
-        member1.status = { kind: 'participating', started: now };
-        member2.status = { kind: 'participating', started: now };
-
-        // Try to move the first player to grid point nearest the other player.
-        const neighbors = (p: Point) => [
-          { x: p.x + 1, y: p.y },
-          { x: p.x - 1, y: p.y },
-          { x: p.x, y: p.y + 1 },
-          { x: p.x, y: p.y - 1 },
-        ];
-        const floorPos1 = { x: Math.floor(player1.position.x), y: Math.floor(player1.position.y) };
-        const p1Candidates = neighbors(floorPos1).filter((p) => !blocked(game, now, p, player1.id));
-        p1Candidates.sort((a, b) => distance(a, player2.position) - distance(b, player2.position));
-        if (p1Candidates.length > 0) {
-          const p1Candidate = p1Candidates[0];
-
-          // Try to move the second player to the grid point nearest the first player's
-          // destination.
-          const p2Candidates = neighbors(p1Candidate).filter(
-            (p) => !blocked(game, now, p, player2.id),
-          );
-          p2Candidates.sort(
-            (a, b) => distance(a, player2.position) - distance(b, player2.position),
-          );
-          if (p2Candidates.length > 0) {
-            const p2Candidate = p2Candidates[0];
-            movePlayer(game, now, player1, p1Candidate, true);
-            movePlayer(game, now, player2, p2Candidate, true);
-          }
-        }
-      }
-    }
-
-    // Orient the two players towards each other if they're not moving.
-    if (member1.status.kind === 'participating' && member2.status.kind === 'participating') {
-      const v = normalize(vector(player1.position, player2.position));
-      if (!player1.pathfinding && v) {
-        player1.facing = v;
-      }
-      if (!player2.pathfinding && v) {
-        player2.facing.dx = -v.dx;
-        player2.facing.dy = -v.dy;
-      }
-    }
-  }
-
   static start(game: Game, now: number, player: Player, invitee: Player) {
     if (player.id === invitee.id) {
       throw new Error(`Can't invite yourself to a conversation`);
@@ -134,6 +60,14 @@ export class Conversation {
       console.log(reason);
       return { error: reason };
     }
+    // docs/13 §2: a conversation is what arrival produces, so the approach has already
+    // happened by the time this runs. Refusing at range is what keeps that true — there is no
+    // longer any machinery that would walk these two together afterwards.
+    if (distance(player.position, invitee.position) > CONVERSATION_DISTANCE) {
+      const reason = `Player ${player.id} is too far from ${invitee.id} to start talking`;
+      console.log(reason);
+      return { error: reason };
+    }
     const conversationId = game.allocId('conversations');
     console.log(`Creating conversation ${conversationId}`);
     game.world.conversations.set(
@@ -144,50 +78,45 @@ export class Conversation {
         creator: player.id,
         numMessages: 0,
         participants: [
-          { playerId: player.id, invited: now, status: { kind: 'walkingOver' } },
-          { playerId: invitee.id, invited: now, status: { kind: 'invited' } },
+          { playerId: player.id, invited: now, status: { kind: 'participating', started: now } },
+          { playerId: invitee.id, invited: now, status: { kind: 'participating', started: now } },
         ],
       }),
     );
+    // Face each other once, here, rather than every tick: they are adjacent and neither is
+    // walking, so nothing later changes the answer.
+    const facing = normalize(vector(player.position, invitee.position));
+    if (facing) {
+      player.facing = facing;
+      // `|| 0` so a zero component negates to 0 rather than -0, which would otherwise ride into
+      // stored state and make two identical worlds compare unequal.
+      invitee.facing = { dx: -facing.dx || 0, dy: -facing.dy || 0 };
+    }
+    stopPlayer(player);
+    stopPlayer(invitee);
     return { conversationId };
   }
 
+  /**
+   * The typing lock, if it is still live.
+   *
+   * Expiry is lazy because there is no longer a tick to expire it on, and lazy is the better
+   * shape anyway: a lock that times out on read cannot be left held by a model call that died
+   * mid-generation, and it mutates nothing on a step where nobody asked.
+   */
+  activeTyping(now: number) {
+    return this.isTyping && this.isTyping.since + TYPING_TIMEOUT >= now ? this.isTyping : undefined;
+  }
+
   setIsTyping(now: number, player: Player, messageUuid: string) {
-    if (this.isTyping) {
-      if (this.isTyping.playerId !== player.id) {
-        throw new Error(`Player ${this.isTyping.playerId} is already typing in ${this.id}`);
+    const active = this.activeTyping(now);
+    if (active) {
+      if (active.playerId !== player.id) {
+        throw new Error(`Player ${active.playerId} is already typing in ${this.id}`);
       }
       return;
     }
     this.isTyping = { playerId: player.id, messageUuid, since: now };
-  }
-
-  acceptInvite(game: Game, player: Player) {
-    const member = this.participants.get(player.id);
-    if (!member) {
-      throw new Error(`Player ${player.id} not in conversation ${this.id}`);
-    }
-    if (member.status.kind !== 'invited') {
-      throw new Error(
-        `Invalid membership status for ${player.id}:${this.id}: ${JSON.stringify(member)}`,
-      );
-    }
-    member.status = { kind: 'walkingOver' };
-  }
-
-  rejectInvite(game: Game, now: number, player: Player) {
-    const member = this.participants.get(player.id);
-    if (!member) {
-      throw new Error(`Player ${player.id} not in conversation ${this.id}`);
-    }
-    if (member.status.kind !== 'invited') {
-      throw new Error(
-        `Rejecting invite in wrong membership state: ${this.id}:${player.id}: ${JSON.stringify(
-          member,
-        )}`,
-      );
-    }
-    this.stop(game, now);
   }
 
   stop(game: Game, now: number) {
@@ -325,52 +254,6 @@ export const conversationInputs = {
     },
   }),
 
-  // Accept an invite to a conversation, which puts the
-  // player in the "walkingOver" state until they're close
-  // enough to the other participant.
-  acceptInvite: inputHandler({
-    args: {
-      playerId,
-      conversationId,
-    },
-    handler: (game: Game, now: number, args): null => {
-      const playerId = parseGameId('players', args.playerId);
-      const player = game.world.players.get(playerId);
-      if (!player) {
-        throw new Error(`Invalid player ID ${playerId}`);
-      }
-      const conversationId = parseGameId('conversations', args.conversationId);
-      const conversation = game.world.conversations.get(conversationId);
-      if (!conversation) {
-        throw new Error(`Invalid conversation ID ${conversationId}`);
-      }
-      conversation.acceptInvite(game, player);
-      return null;
-    },
-  }),
-
-  // Reject the invite. Eventually we might add a message
-  // that explains why!
-  rejectInvite: inputHandler({
-    args: {
-      playerId,
-      conversationId,
-    },
-    handler: (game: Game, now: number, args): null => {
-      const playerId = parseGameId('players', args.playerId);
-      const player = game.world.players.get(playerId);
-      if (!player) {
-        throw new Error(`Invalid player ID ${playerId}`);
-      }
-      const conversationId = parseGameId('conversations', args.conversationId);
-      const conversation = game.world.conversations.get(conversationId);
-      if (!conversation) {
-        throw new Error(`Invalid conversation ID ${conversationId}`);
-      }
-      conversation.rejectInvite(game, now, player);
-      return null;
-    },
-  }),
   // Leave a conversation.
   leaveConversation: inputHandler({
     args: {

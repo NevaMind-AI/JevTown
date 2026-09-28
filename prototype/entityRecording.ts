@@ -97,6 +97,65 @@ export function decodeState(
   return restoreActivities(result);
 }
 
+/**
+ * What changed between a saved state's entity set and the content it is being loaded against.
+ *
+ * Empty on both sides for any save that matches its content, which is every save a player makes.
+ */
+export type EntityReconciliation = { added: string[]; dropped: string[] };
+
+/**
+ * Bring a loaded state's entity set up to the content it is being loaded against (docs/13 §2).
+ *
+ * The rule is per entity, and it is three cases:
+ *
+ * | in the save | in the content | outcome                                    |
+ * | ----------- | -------------- | ------------------------------------------ |
+ * | yes         | yes            | kept, and still has to match — `validateEntities` |
+ * | yes         | no             | dropped: it is not in the world any more   |
+ * | no          | yes            | created from the content, as at load       |
+ *
+ * This exists for the stage the project is in, where entities are added and removed between
+ * runs, and every such edit used to invalidate every save. What it costs is stated in §2.9: a
+ * recording replayed against content whose entity set has moved no longer reproduces exactly,
+ * and the two checks that used to catch that are now this function's post-conditions instead of
+ * its guards. So it reports what it did and the caller says so out loud — silence is the part
+ * that would make this a bug rather than a convenience.
+ *
+ * Renaming an entity or changing its appearance is still a hard failure, because it lands in the
+ * first row: same id, different thing.
+ */
+export function reconcileEntities(content: Content, state: State): EntityReconciliation {
+  const initial = initialEntities(content);
+  const added: string[] = [];
+  const dropped: string[] = [];
+  for (const id of Object.keys(state.entities))
+    if (!Object.hasOwn(initial, id)) {
+      delete state.entities[id];
+      dropped.push(id);
+    }
+  for (const [id, actor] of Object.entries(initial))
+    if (!Object.hasOwn(state.entities, id)) {
+      state.entities[id] = structuredClone(actor);
+      added.push(id);
+    }
+
+  // A dropped entity can leave the player pointed at something that is gone. Repairing that is
+  // not optional: `choose` dereferences `activeEntity` without a guard (`world.ts`), and a
+  // seated player whose chair left the world would otherwise stand on a tile it never chose.
+  if (state.activeEntity && !Object.hasOwn(state.entities, state.activeEntity)) {
+    state.activeEntity = null;
+    state.dialogue = false;
+    delete state.dialogueTopic;
+    state.interactionRevision++;
+  }
+  if (state.seated && !Object.hasOwn(state.entities, state.seated.entity)) {
+    state.player = { ...state.seated.returnPosition };
+    delete state.seated;
+  }
+  return { added, dropped };
+}
+
 export function validateEntities(content: Content, state: State) {
   const fail = () => {
     throw new Error('Invalid entity snapshot');
