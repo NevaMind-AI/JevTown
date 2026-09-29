@@ -30,6 +30,7 @@ import { useAgenticRuntime } from '../sim/useAgenticRuntime';
 import { BodyBridge } from '../sim/bodyBridge';
 import { HumanPlayer } from '../sim/humanPlayer';
 import AgentChat from './AgentChat';
+import AgentDebug, { AGENT_DEBUG_ENABLED } from '../debug/AgentDebug';
 import {
   currentProseStep,
   readWorldStateDocument,
@@ -1125,6 +1126,7 @@ function LoadedLocalGame({
           )}
           {saves.window}
           {chatOpen && human && <AgentChat human={human} onClose={closeChat} />}
+          {AGENT_DEBUG_ENABLED && <AgentDebug runtime={agentic} />}
           <WaitPanel
             open={waitOpen || !!sleep}
             sleeping={!!sleep}
