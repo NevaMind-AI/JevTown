@@ -1,11 +1,6 @@
 import { WORLD_STATE_ID, STATE_WORD_BUDGET } from '../prose/contract';
 import { budgetedText, wordCount } from '../prose/stateDocument';
 
-/** docs/13 §1.8 item E: `world_state` is the field; `common_knowledge` is what it used to be. */
-export function worldStateOf(file: WorldFile): string | undefined {
-  return file.world_state ?? file.common_knowledge;
-}
-
 /**
  * The `a1.0` world file, its validation rules, and the load-time repairs docs/07 §5.2 requires.
  *
@@ -48,8 +43,6 @@ export interface WorldFile {
    * rewritten by the god and by agents — unlike `world_rules`, which never changes.
    */
   world_state?: string;
-  /** What `world_state` was called before docs/13 §1.4. Read, never written. */
-  common_knowledge?: string;
   entities: WorldFileEntity[];
   god?: {
     persona?: string;
@@ -118,14 +111,11 @@ export function validateWorldFile(file: WorldFile, map: MapContext): ValidationR
   if (file.world_rules !== undefined && file.world_rules.trim() === '') {
     warnings.push('world_rules is empty');
   }
-  if (file.world_state !== undefined && file.common_knowledge !== undefined) {
-    errors.push('world_state and common_knowledge are the same field; write only world_state');
-  }
   // docs/05 §5.3: the same budget every state document gets, checked at authoring time as
   // `initial_state` is, since nothing at runtime will re-ask on the author's behalf. The record
   // blocks are excluded here as they are at runtime (docs/13 §1.7), so an authored world with a
   // long task list is not rejected for prose it does not have.
-  const authoredWorldState = worldStateOf(file);
+  const authoredWorldState = file.world_state;
   if (
     authoredWorldState !== undefined &&
     wordCount(budgetedText(authoredWorldState)) > STATE_WORD_BUDGET

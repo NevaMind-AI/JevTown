@@ -44,7 +44,12 @@ export class Conversation {
     this.participants = parseMap(participants, ConversationMembership, (m) => m.playerId);
   }
 
-  static start(game: Game, now: number, player: Player, invitee: Player) {
+  /**
+   * `nearEnough` is the caller vouching for range. The human's `startConversation` passes it: the
+   * ground decided the player may talk to this NPC — `nearby()`, whose `interactionOffsets` reach
+   * across a counter — and the engine's distance check cannot see those offsets.
+   */
+  static start(game: Game, now: number, player: Player, invitee: Player, nearEnough = false) {
     if (player.id === invitee.id) {
       throw new Error(`Can't invite yourself to a conversation`);
     }
@@ -65,7 +70,7 @@ export class Conversation {
     // Close means close within one scene (docs/13 §2): two bodies at (4, 7) in two rooms are not.
     if (
       game.sceneOf(player) !== game.sceneOf(invitee) ||
-      distance(player.position, invitee.position) > CONVERSATION_DISTANCE
+      (!nearEnough && distance(player.position, invitee.position) > CONVERSATION_DISTANCE)
     ) {
       const reason = `Player ${player.id} is too far from ${invitee.id} to start talking`;
       console.log(reason);
@@ -199,10 +204,26 @@ export const conversationInputs = {
         throw new Error(`Invalid player ID: ${inviteeId}`);
       }
       console.log(`Starting ${playerId} ${inviteeId}...`);
-      const { conversationId, error } = Conversation.start(game, now, player, invitee);
+      if (player.human) player.lastInput = now;
+      const { conversationId, error } = Conversation.start(
+        game,
+        now,
+        player,
+        invitee,
+        !!player.human,
+      );
       if (!conversationId) {
         // TODO: pass it back to the client for them to show an error.
         throw new Error(error);
+      }
+      // Only a human sends this input; agents start talking on arrival (docs/13 §2). An agent
+      // spoken to stops where it is: its body may still be walking an approach it chose before,
+      // and a conversation partner that wanders off mid-sentence is a bug, not autonomy.
+      for (const other of [player, invitee]) {
+        const agent = [...game.world.agents.values()].find((a) => a.playerId === other.id);
+        if (!agent) continue;
+        delete agent.pendingInteraction;
+        game.stopBody(other);
       }
       return conversationId;
     },
@@ -251,6 +272,8 @@ export const conversationInputs = {
       if (conversation.isTyping && conversation.isTyping.playerId === playerId) {
         delete conversation.isTyping;
       }
+      const player = game.world.players.get(playerId);
+      if (player?.human) player.lastInput = now;
       conversation.lastMessage = { author: playerId, timestamp: args.timestamp };
       conversation.numMessages++;
       return null;

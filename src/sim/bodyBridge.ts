@@ -24,7 +24,7 @@ export interface GroundWorld {
 }
 
 /** `MemoryWorld` faces in degrees: 0 is +x, 90 is +y (down), 180 is -x, 270 is -y. */
-const FACING: Record<number, { dx: number; dy: number }> = {
+export const FACING: Record<number, { dx: number; dy: number }> = {
   0: { dx: 1, dy: 0 },
   90: { dx: 0, dy: 1 },
   180: { dx: -1, dy: 0 },

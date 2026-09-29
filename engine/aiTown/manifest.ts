@@ -47,7 +47,12 @@ function band(tiles: number): ManifestTarget['distance'] {
   return tiles <= 15 ? 'nearby' : 'far';
 }
 
-export function buildManifest(game: Game, now: number, agent: Agent, player: Player): DecisionManifest {
+export function buildManifest(
+  game: Game,
+  now: number,
+  agent: Agent,
+  player: Player,
+): DecisionManifest {
   const targets: ManifestTarget[] = [];
   // docs/13 §2: only what shares this agent's scene, and only what the map-owning side can find.
   // A target in another room is not "far", it is unreachable — agents do not take portals — and
@@ -64,7 +69,9 @@ export function buildManifest(game: Game, now: number, agent: Agent, player: Pla
     agent.lastInviteAttempt !== undefined && now < agent.lastInviteAttempt + CONVERSATION_COOLDOWN;
   if (!justLeftConversation && !recentlyAttemptedInvite) {
     for (const other of game.world.sortedPlayers()) {
-      if (other.id === player.id) {
+      // The human is spoken to, never approached: their body is the player's, which no agent
+      // intent can walk up to on the ground, so offering it would only buy a refused move.
+      if (other.id === player.id || other.human) {
         continue;
       }
       if (game.sceneOf(other) !== here || other.sourceId === undefined) {
@@ -99,9 +106,7 @@ export function buildManifest(game: Game, now: number, agent: Agent, player: Pla
       // A prop's `description` is immutable and public — unlike its state, it is what anyone
       // walking past would see (docs/05 §4.2).
       description: entity.kind === 'prop' ? entityDescription?.description : undefined,
-      distance: anchor
-        ? band(distance(player.position, { x: anchor.x, y: anchor.y }))
-        : 'far',
+      distance: anchor ? band(distance(player.position, { x: anchor.x, y: anchor.y })) : 'far',
       where: entity.anchor,
     });
   }

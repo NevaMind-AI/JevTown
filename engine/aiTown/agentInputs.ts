@@ -69,6 +69,11 @@ export const agentInputs = {
       delete agent.inProgressOperation;
       agent.lastDecision = now;
       const player = game.world.players.get(agent.playerId)!;
+      // Decided before someone started talking to it, and answered after: the conversation wins,
+      // or the agent would walk off mid-sentence on a plan made for a moment that has passed.
+      if (game.world.playerConversation(player)) {
+        return null;
+      }
 
       switch (args.action) {
         case 'idle':

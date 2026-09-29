@@ -72,7 +72,7 @@ export interface AgenticRuntimeOptions {
   game: Game;
   store?: InMemoryAgentStore;
   description: WorldDescription;
-  /** Game time this world starts at. Never zero — see the note on `runTicks`'s falsy test. */
+  /** Game time this world starts at. Zero is legal: `runTicks` tests for `undefined`, not falsy. */
   startTime: number;
   /**
    * What runs an agent operation. Defaults to the real one; a test passes a stub so the loop can
@@ -98,6 +98,11 @@ export class AgenticRuntime {
   readonly context: AgentContext;
 
   private currentTime: number;
+  /**
+   * The game time the host has handed over. `currentTime` trails it by less than one tick: only
+   * whole ticks are simulated, and the remainder waits for the next `advance`.
+   */
+  private targetTime: number;
   private nextIdx = 0;
   private pending: EngineInput[] = [];
   private log: LoggedEvent[] = [];
@@ -112,6 +117,7 @@ export class AgenticRuntime {
     this.game = options.game;
     this.store = options.store ?? new InMemoryAgentStore();
     this.currentTime = options.startTime;
+    this.targetTime = options.startTime;
     this.lastGodStep = options.startTime;
     this.runOperation = options.runOperation ?? runAgentOperation;
     this.runGod = options.runGod ?? godStep;
@@ -195,20 +201,25 @@ export class AgenticRuntime {
    */
   advance(elapsed: number) {
     if (!Number.isFinite(elapsed) || elapsed <= 0) return;
-    const target = this.currentTime + elapsed;
+    this.targetTime += elapsed;
     // `runTicks` simulates at most `maxTicksPerStep * tickDuration` — 9.6s at the shipped 600×16 —
     // and reports where it stopped. Taking its result as the new clock without looping is what
     // made `advance(sevenDays)` move the world 9,616ms and drop the rest, silently
     // (docs/13 §3.1). Looping here is what makes this method mean what its name says.
     //
+    // It loops only while a whole tick is owed. `runTicks` always ticks at
+    // `previousCurrentTime + tickDuration`, even past `now`, so looping until the clock reaches the
+    // target rounded every call up to a whole tick: a 17ms frame moved the world 32ms, and 60Hz
+    // frames ran the agentic clock ~1.6x ahead of `MemoryWorld`'s.
+    //
     // It stays synchronous, so a caller asking for a long span blocks for it. That is the caller's
     // decision to make: a night's sleep is ~113 passes, which docs/13 §3.4 prices as a real cost
     // rather than an impossibility.
-    while (this.currentTime < target) {
+    while (this.targetTime - this.currentTime >= this.game.tickDuration) {
       const before = this.currentTime;
       const result = runTicks(this.game, {
         previousCurrentTime: this.currentTime,
-        now: target,
+        now: this.targetTime,
         inputs: this.pending,
         processedInputNumber: undefined,
       });
@@ -225,7 +236,7 @@ export class AgenticRuntime {
       // throws rather than breaking: reaching it means the tick arithmetic changed underneath.
       if (this.currentTime <= before) {
         throw new Error(
-          `Simulation did not advance: ${before} -> ${this.currentTime}, target ${target}`,
+          `Simulation did not advance: ${before} -> ${this.currentTime}, target ${this.targetTime}`,
         );
       }
     }
@@ -406,6 +417,7 @@ export class AgenticRuntime {
     }
     this.game.world = new World(structuredClone(snapshot.world));
     this.currentTime = snapshot.currentTime;
+    this.targetTime = snapshot.currentTime;
     this.lastGodStep = snapshot.currentTime;
     this.nextIdx = snapshot.nextIdx;
     this.pending = [];

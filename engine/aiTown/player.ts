@@ -84,6 +84,11 @@ export class Player {
     spawnAnchor?: string,
     spawnScene?: string,
     sourceId?: string,
+    /**
+     * Exactly where to stand, skipping the search. The human's body is already somewhere on the
+     * ground (docs/13 §2), and a sampled tile would only fail on a crowded scene for no reason.
+     */
+    at?: Point,
   ) {
     if (tokenIdentifier) {
       let numHumans = 0;
@@ -112,7 +117,9 @@ export class Player {
         (p) => game.sceneOf(p) === scene && p.position.x === tile.x && p.position.y === tile.y,
       );
     let position: Point | undefined;
-    if (spawnAnchor) {
+    if (at) {
+      position = { x: at.x, y: at.y };
+    } else if (spawnAnchor) {
       const tile = map.anchorTiles(spawnAnchor).find((t) => !taken(t));
       position = tile && { ...tile };
     } else {
@@ -198,9 +205,27 @@ export const playerInputs = {
       character: v.string(),
       description: v.string(),
       tokenIdentifier: v.optional(v.string()),
+      /**
+       * The human's body on the ground (docs/13 §2): its scene, where it stands, and the authored
+       * id `syncBodies` will keep it current by.
+       */
+      scene: v.optional(v.string()),
+      position: v.optional(point),
+      sourceId: v.optional(v.string()),
     },
     handler: (game, now, args) => {
-      Player.join(game, now, args.name, args.character, args.description, args.tokenIdentifier);
+      Player.join(
+        game,
+        now,
+        args.name,
+        args.character,
+        args.description,
+        args.tokenIdentifier,
+        undefined,
+        args.scene,
+        args.sourceId,
+        args.position,
+      );
       return null;
     },
   }),
@@ -249,6 +274,8 @@ export const playerInputs = {
         player.scene = body.scene;
         player.facing = { dx: body.facing.dx, dy: body.facing.dy };
         player.speed = body.walking ? 1 : 0;
+        // A human who walks is present; `HUMAN_IDLE_TOO_LONG` is measured from this.
+        if (player.human) player.lastInput = now;
       }
       return null;
     },
