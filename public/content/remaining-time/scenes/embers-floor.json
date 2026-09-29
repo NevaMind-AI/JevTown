@@ -11,7 +11,13 @@
     "from-return": [5, 22],
     "from-to-backstage": [34, 8],
     "from-to-office": [41, 12],
-    "from-to-lounge": [5, 12]
+    "from-to-lounge": [5, 12],
+    "rook-post": [22, 17],
+    "lyra-post": [24, 7],
+    "flint-post": [7, 20],
+    "gambler-post": [34, 14],
+    "cashier-post": [21, 25],
+    "gambler-dispute-post": [10, 20]
   },
   "entities": [
     {
@@ -91,6 +97,7 @@
       "name": "Rook",
       "position": [22, 17],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/rook-idle.png",
         "size": [160, 160],
@@ -103,6 +110,7 @@
       "name": "Lyra",
       "position": [24, 7],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/lyra-idle.png",
         "size": [160, 160],
@@ -115,6 +123,7 @@
       "name": "Flint",
       "position": [7, 20],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/flint-idle.png",
         "size": [160, 160],

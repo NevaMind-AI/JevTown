@@ -9,7 +9,8 @@
   "anchors": {
     "start": [23, 25],
     "from-return": [24, 24],
-    "from-lift": [24, 10]
+    "from-lift": [24, 10],
+    "receptionist-post": [15, 17]
   },
   "entities": [
     {

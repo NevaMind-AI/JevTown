@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "content_version": "room-world-7-s01-guided-2",
+  "content_version": "room-world-8-agentic-1",
   "start": {
     "scene": "unit-404",
     "anchor": "start"
@@ -38,5 +38,6 @@
     "stories/npcs.json",
     "stories/unit-404.json",
     "stories/s01-door-tag.json"
-  ]
+  ],
+  "world": "worlds/remaining-time.json"
 }

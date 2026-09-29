@@ -88,6 +88,10 @@ def export():
         for path in recipe.get('stories', [])
         for entity_id in read(ROOT / 'public/content/remaining-time' / path)['interactions']
     }
+    # The agentic world file is hand-written, like the recipe's stories. Its mobile actors walk, so
+    # their scene NPCs are exported movable: a fixed NPC's authored tile stays blocked after it leaves.
+    world = read(ROOT / 'public/content/remaining-time' / recipe['world']) if 'world' in recipe else None
+    mobile = {e['id'] for e in (world or {}).get('entities', []) if e.get('kind') == 'actor' and e.get('mobile')}
     roster = read(ROOT / 'art/room-npcs.json')
     portal_recipe = read(ROOT / 'art/room-portals.json')
     npc_definitions = {npc['id']: npc for npc in roster['definitions']}
@@ -176,6 +180,9 @@ def export():
         player_scale = recipe.get('playerScale', {}).get(ident, source.get('characterScale', 2.5))
         assert 1 <= player_scale <= 3, f'{ident}: unsupported player scale'
         npc_occupied = occupied | {tuple(p) for p in anchors.values()} | {tuple(e['position']) for e in entities}
+        # Each NPC's own tile, named `<id>-post`: where the world file places it and a place agents
+        # can walk back to. Not an arrival anchor, so it may hold the NPC standing on it.
+        posts = {}
         for npc in roster['instances']:
             if npc['map'] != ident:
                 continue
@@ -186,6 +193,7 @@ def export():
             frame = asset['frames'][asset['animations']['idle']['frames'][0]]
             point = nearest(npc['at'], grid, npc_occupied)
             npc_occupied.add(tuple(point))
+            posts[f'{npc["id"]}-post'] = point
             scale = player_scale * asset['displayScale']
             image = f'assets/room-npcs/{npc["characterId"]}-idle.png'
             assert (ROOT / 'public' / image).is_file(), image
@@ -194,6 +202,7 @@ def export():
             entities.append({
                 'id': npc['id'], 'name': npc['name'], 'position': point,
                 'character': 'sprite',
+                **({'movable': True} if npc['id'] in mobile else {}),
                 'sprite': {
                     'image': image,
                     'size': [round(frame['w'] * scale), round(frame['h'] * scale)],
@@ -223,7 +232,7 @@ def export():
         scenes.append({
             'schema_version': '1.0', 'content_version': metadata[ident].get('contentVersion', recipe['contentVersion']),
             'id': ident, 'name': source['name'], 'map': {'source': f'maps/{ident}.json'},
-            'anchors': anchors, 'entities': entities,
+            'anchors': {**anchors, **posts}, 'entities': entities,
         })
     connected, queue = {recipe['start']['scene']}, deque([recipe['start']['scene']])
     while queue:
@@ -250,6 +259,7 @@ def export():
         'schema_version': '1.0', 'content_version': recipe.get('packageVersion', recipe['contentVersion']), 'start': recipe['start'],
         'scenes': [f'scenes/{s["id"]}.json' for s in scenes],
         'stories': ['stories/travel.json', 'stories/npcs.json'] + recipe.get('stories', []),
+        **({'world': recipe['world']} if world else {}),
     })
     npc_count = sum(1 for scene in scenes for entity in scene['entities']
                     if entity['sprite']['image'].startswith('assets/room-npcs/'))

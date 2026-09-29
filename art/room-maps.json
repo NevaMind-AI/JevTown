@@ -1,7 +1,8 @@
 {
   "contentVersion": "room-world-2-npc-menu",
-  "packageVersion": "room-world-7-s01-guided-2",
+  "packageVersion": "room-world-8-agentic-1",
   "stories": ["stories/unit-404.json", "stories/s01-door-tag.json"],
+  "world": "worlds/remaining-time.json",
   "start": { "scene": "unit-404", "anchor": "start" },
   "scenes": [
     "unit-404",

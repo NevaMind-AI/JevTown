@@ -15,7 +15,12 @@
     "from-enter-clinic": [20, 12],
     "from-laundry-a": [5, 21],
     "from-laundry-b": [42, 21],
-    "from-duct-b": [16, 30]
+    "from-duct-b": [16, 30],
+    "ash-post": [10, 12],
+    "milo-post": [32, 12],
+    "mara-post": [36, 26],
+    "bio-swift-post": [18, 29],
+    "resident-door-post": [13, 12]
   },
   "entities": [
     {
@@ -180,6 +185,7 @@
       "name": "Ash",
       "position": [10, 12],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/ash-idle.png",
         "size": [102, 102],
@@ -192,6 +198,7 @@
       "name": "Milo",
       "position": [32, 12],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/milo-idle.png",
         "size": [102, 102],
@@ -204,6 +211,7 @@
       "name": "Mara",
       "position": [36, 26],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/mara-idle.png",
         "size": [102, 102],
