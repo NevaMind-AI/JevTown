@@ -107,6 +107,12 @@ export class AgenticRuntime {
   private pending: EngineInput[] = [];
   private log: LoggedEvent[] = [];
   private moves: BodyMove[] = [];
+  /**
+   * Fixed entities in an exchange right now, by engine id: an agent's `agentInteract`, or the
+   * human's. A fixed actor holds one exchange at a time, because each ends in a state write and two
+   * concurrent ones would land last-write-wins over each other.
+   */
+  private engaged = new Set<string>();
   private lastGodStep: number;
   private readonly runOperation: NonNullable<AgenticRuntimeOptions['runOperation']>;
   private readonly runGod: NonNullable<AgenticRuntimeOptions['runGod']>;
@@ -255,12 +261,34 @@ export class AgenticRuntime {
       this.applyProseWrite(write);
     }
     for (const operation of diff.agentOperations) {
-      const args = operation.args as { operationId: string };
-      void this.step(
-        () => this.runOperation(this.context, operation.name, args as any),
-        `${operation.name}:${args?.operationId}`,
-      );
+      const args = operation.args as { operationId: string; agentId?: string; targetId?: string };
+      const holds = operation.name === 'agentInteract' ? args.targetId : undefined;
+      if (holds !== undefined) {
+        if (!this.engage(holds)) {
+          // Somebody is already talking to it. The agent is told it is done, and decides again.
+          this.send('finishInteraction', { agentId: args.agentId!, operationId: args.operationId });
+          continue;
+        }
+      }
+      void this.step(async () => {
+        try {
+          await this.runOperation(this.context, operation.name, args as any);
+        } finally {
+          if (holds !== undefined) this.release(holds);
+        }
+      }, `${operation.name}:${args?.operationId}`);
     }
+  }
+
+  /** Claim a fixed entity for one exchange. False if somebody already holds it. */
+  engage(entityId: string): boolean {
+    if (this.engaged.has(entityId)) return false;
+    this.engaged.add(entityId);
+    return true;
+  }
+
+  release(entityId: string) {
+    this.engaged.delete(entityId);
   }
 
   /**

@@ -1,4 +1,5 @@
 import type { GameId } from '../../engine/aiTown/ids';
+import { HumanExchange } from '../../agent/interact';
 import type { AgenticRuntime } from './agenticRuntime';
 import { FACING } from './bodyBridge';
 
@@ -62,18 +63,41 @@ export interface ChatView {
  * agent: its turn comes when the other side spoke last (`Agent.tick`), and its prompt reads every
  * line from the store.
  *
+ * A fixed actor (tier b) is talked to differently, because it is not a `Player` (`08` §7 D3): a
+ * `HumanExchange`, the same turn-taking an agent has with it, one reply per line the human types.
+ * The runtime's `engage` lock keeps it to one exchange at a time, human or agent.
+ *
  * Called by the host around the agentic step, beside `BodyBridge`.
  */
+/** A mobile agent, spoken to through the engine's `Conversation`. */
+interface ConversationTalk {
+  kind: 'conversation';
+  self: GameId<'players'>;
+  partner: GameId<'players'>;
+  partnerName: string;
+  sentAt: number;
+  conversationId?: string;
+}
+
+/** A fixed actor, spoken to through a `HumanExchange` that answers each line as it comes. */
+interface ExchangeTalk {
+  kind: 'exchange';
+  entityId: string;
+  partnerName: string;
+  exchange?: HumanExchange;
+  failed?: boolean;
+  typing: boolean;
+}
+
+/** Who can be talked to, by authored id. */
+type Talker =
+  | { kind: 'agent'; playerId: GameId<'players'>; name: string }
+  | { kind: 'fixed'; entityId: string; name: string };
+
 export class HumanPlayer {
   private sentBody?: string;
   private joinSentAt?: number;
-  private talk?: {
-    self: GameId<'players'>;
-    partner: GameId<'players'>;
-    partnerName: string;
-    sentAt: number;
-    conversationId?: string;
-  };
+  private talk?: ConversationTalk | ExchangeTalk;
   /** Conversations already asked to end, so a stray one is left once rather than every frame. */
   private leaving = new Set<string>();
 
@@ -123,23 +147,18 @@ export class HumanPlayer {
     // keep an agent talking to nobody until `MAX_CONVERSATION_DURATION`.
     this.track();
     const conversation = this.conversation();
-    if (
-      conversation &&
-      conversation.id !== this.talk?.conversationId &&
-      !this.leaving.has(conversation.id)
-    ) {
+    const shown = this.talk?.kind === 'conversation' ? this.talk.conversationId : undefined;
+    if (conversation && conversation.id !== shown && !this.leaving.has(conversation.id)) {
       this.leaving.add(conversation.id);
       this.runtime.send('leaveConversation', { playerId: me.id, conversationId: conversation.id });
     }
   }
 
-  /** The agent standing next to the player, by authored id: who E would talk to. */
-  adjacentAgent(): string | undefined {
+  /** Who stands next to the player and can be talked to, by authored id: who E would talk to. */
+  adjacentTalker(): string | undefined {
     const state = this.world.inspect();
-    const game = this.runtime.game;
-    for (const agent of game.world.sortedAgents()) {
-      const id = game.world.players.get(agent.playerId)?.sourceId;
-      const entity = id !== undefined ? state.entities[id] : undefined;
+    for (const id of this.talkers().keys()) {
+      const entity = state.entities[id];
       if (!entity || entity.sceneId !== state.sceneId) continue;
       const dx = Math.abs(entity.position[0] - state.player.x);
       const dy = Math.abs(entity.position[1] - state.player.y);
@@ -149,42 +168,84 @@ export class HumanPlayer {
   }
 
   /**
-   * Whether the entity with this authored id has an agent to talk to. An NPC authored in both
-   * the story and the world file does: the story gives it a body and dialogue, the world file a
-   * mind, and this is what the dialogue's chat button asks.
+   * Whether the entity with this authored id has a mind to talk to: a mobile agent or a fixed
+   * actor. An NPC authored in both the story and the world file does — the story gives it a body
+   * and dialogue, the world file a mind — and this is what the dialogue's chat button asks.
    */
   canTalkTo(sourceId: string): boolean {
-    const game = this.runtime.game;
-    return game.world
-      .sortedAgents()
-      .some((agent) => game.world.players.get(agent.playerId)?.sourceId === sourceId);
+    return this.talkers().has(sourceId);
   }
 
-  /** Ask to talk to the agent with this authored id. The answer shows up in `view()`. */
+  /** Ask to talk to whoever has this authored id. The answer shows up in `view()`. */
   talkTo(sourceId: string): boolean {
+    const talker = this.talkers().get(sourceId);
+    if (!talker) return false;
     // Where the player stands now, not as of the last frame: the engine refuses at range.
     this.syncIn();
     const me = this.me();
-    const game = this.runtime.game;
-    const partner = game.world.sortedPlayers().find((p) => p.sourceId === sourceId);
-    if (!me || !partner) return false;
-    this.talk = {
-      self: me.id,
-      partner: partner.id,
-      partnerName: game.playerDescriptions.get(partner.id)?.name ?? sourceId,
-      sentAt: this.runtime.time,
+    if (!me) return false;
+    if (talker.kind === 'agent') {
+      this.talk = {
+        kind: 'conversation',
+        self: me.id,
+        partner: talker.playerId,
+        partnerName: talker.name,
+        sentAt: this.runtime.time,
+      };
+      this.runtime.send('startConversation', { playerId: me.id, invitee: talker.playerId });
+      return true;
+    }
+    const talk: ExchangeTalk = {
+      kind: 'exchange',
+      entityId: talker.entityId,
+      partnerName: talker.name,
+      typing: false,
     };
-    this.runtime.send('startConversation', { playerId: me.id, invitee: partner.id });
+    this.talk = talk;
+    // One exchange at a time: an agent mid-exchange with it, and the human has to wait.
+    if (!this.runtime.engage(talker.entityId)) {
+      talk.failed = true;
+      return true;
+    }
+    HumanExchange.open(this.runtime.context, talker.entityId, {
+      id: me.id,
+      name: this.identity.name,
+    }).then(
+      (exchange) => {
+        if (this.talk === talk) talk.exchange = exchange;
+        // Left before it opened: nothing was said, so there is nothing to conclude.
+        else this.runtime.release(talker.entityId);
+      },
+      (error) => {
+        console.error('Could not open the exchange:', error);
+        talk.failed = true;
+        this.runtime.release(talker.entityId);
+      },
+    );
     return true;
   }
 
-  /** Say one line. Refused unless the conversation is open. */
+  /** Say one line. Refused unless the conversation is open and it is the human's turn. */
   async say(text: string): Promise<boolean> {
-    this.track();
-    const talk = this.talk;
-    const conversation = this.conversation();
     const line = text.trim();
-    if (!line || !talk || !conversation || conversation.id !== talk.conversationId) return false;
+    const talk = this.talk;
+    if (!line || !talk) return false;
+    if (talk.kind === 'exchange') {
+      if (!talk.exchange || talk.typing) return false;
+      talk.typing = true;
+      // The reply is awaited in the background: the human's line is visible at once, and the
+      // chat shows the fixed actor answering until it has.
+      talk.exchange
+        .reply(line)
+        .catch((error) => console.error('The fixed actor could not answer:', error))
+        .finally(() => {
+          talk.typing = false;
+        });
+      return true;
+    }
+    this.track();
+    const conversation = this.conversation();
+    if (!conversation || conversation.id !== talk.conversationId) return false;
     // Game time on both stamps, as an agent's line has (docs/13 §3.5): `timestamp` becomes
     // `lastMessage.timestamp`, which `Agent.tick` subtracts from game-time `now`.
     const now = this.runtime.time;
@@ -205,10 +266,26 @@ export class HumanPlayer {
 
   /** Stop talking. Ends the conversation for both sides, as either side leaving always has. */
   leave() {
-    this.track();
     const talk = this.talk;
+    this.talk = undefined;
+    if (!talk) return;
+    if (talk.kind === 'exchange') {
+      const { exchange, entityId } = talk;
+      if (!exchange) return; // still opening, or refused: `talkTo` releases it
+      // The fixed actor writes what the exchange left it with. It stays engaged until that write
+      // is in, so an agent arriving meanwhile cannot race it.
+      exchange
+        .conclude()
+        .catch((error) => console.error('The fixed actor could not write its state:', error))
+        .finally(() => this.runtime.release(entityId));
+      return;
+    }
     const conversation = this.conversation();
-    if (talk && conversation && conversation.id === talk.conversationId) {
+    if (
+      conversation &&
+      (conversation.id === talk.conversationId ||
+        (!talk.conversationId && conversation.participants.has(talk.partner)))
+    ) {
       this.leaving.add(conversation.id);
       this.runtime.send('leaveConversation', {
         playerId: talk.self,
@@ -216,13 +293,25 @@ export class HumanPlayer {
       });
     }
     // A request still in flight is dropped too: if it does start, `syncIn` leaves it.
-    this.talk = undefined;
   }
 
   async view(): Promise<ChatView | undefined> {
     this.track();
     const talk = this.talk;
     if (!talk) return undefined;
+    if (talk.kind === 'exchange') {
+      return {
+        status: talk.failed ? 'failed' : talk.exchange ? 'open' : 'connecting',
+        partnerName: talk.partnerName,
+        lines: (talk.exchange?.lines ?? []).map((line, i) => ({
+          id: String(i),
+          mine: line.speaker === 'actor',
+          name: line.name,
+          text: line.text,
+        })),
+        partnerTyping: talk.typing,
+      };
+    }
     const conversation = this.conversation();
     const open = !!conversation && conversation.id === talk.conversationId;
     const status: ChatView['status'] = open
@@ -253,6 +342,33 @@ export class HumanPlayer {
     };
   }
 
+  /**
+   * Everyone with a mind, by authored id: mobile agents and fixed actors. A prop (tier c) is not
+   * here — it is acted on, never spoken to (docs/05 §3).
+   */
+  private talkers(): Map<string, Talker> {
+    const game = this.runtime.game;
+    const talkers = new Map<string, Talker>();
+    for (const agent of game.world.sortedAgents()) {
+      const player = game.world.players.get(agent.playerId);
+      if (player?.sourceId === undefined) continue;
+      talkers.set(player.sourceId, {
+        kind: 'agent',
+        playerId: player.id,
+        name: game.playerDescriptions.get(player.id)?.name ?? player.sourceId,
+      });
+    }
+    for (const entity of game.world.sortedEntities()) {
+      if (entity.kind !== 'actor' || entity.sourceId === undefined) continue;
+      talkers.set(entity.sourceId, {
+        kind: 'fixed',
+        entityId: entity.id,
+        name: game.entityDescriptions.get(entity.id)?.name ?? entity.sourceId,
+      });
+    }
+    return talkers;
+  }
+
   private me() {
     return this.runtime.game.world.sortedPlayers().find((p) => p.sourceId === HUMAN_SOURCE_ID);
   }
@@ -265,9 +381,9 @@ export class HumanPlayer {
   /** Bind a requested conversation to the one the engine started for it. */
   private track() {
     const talk = this.talk;
+    if (talk?.kind !== 'conversation') return;
     const conversation = this.conversation();
     if (
-      talk &&
       !talk.conversationId &&
       conversation?.participants.has(talk.partner) &&
       !this.leaving.has(conversation.id)

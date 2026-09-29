@@ -118,6 +118,88 @@ async function interactWithProp(
   });
 }
 
+/** One line of a two-sided exchange with a fixed actor, as every later prompt reads it back. */
+export interface ExchangeLine {
+  name: string;
+  text: string;
+  /** Who said it, in `recordInteractionTurn`'s terms: the visitor, or the fixed actor. */
+  speaker: 'actor' | 'target';
+}
+
+/**
+ * One turn: `speaker` says one thing to `otherName`, given everything said so far.
+ *
+ * World-level prose goes through the shared sections rather than an inlined variant. This was the
+ * one prompt that phrased `world_rules` in its own words, which meant it was also the one prompt
+ * that would have silently missed common knowledge (docs/05 §5.3).
+ */
+async function speakTurn(
+  speaker: PromptContext,
+  otherName: string,
+  transcript: ExchangeLine[],
+  opening: string | undefined,
+  trace: ReturnType<Tracer['generation']>,
+): Promise<string> {
+  const system = [
+    `You are ${speaker.name}. ${describe(speaker)}`,
+    ...(speaker.state ? [speaker.state] : []),
+    ...worldRulesSection(speaker),
+    ...worldStateSection(speaker),
+    `You are speaking with ${otherName}.`,
+    'Say one thing. Keep it under 200 characters. Reply with the words you say and nothing else.',
+  ].join('\n');
+  const messages: LLMMessage[] = [
+    { role: 'system', content: system },
+    ...(opening ? [{ role: 'user' as const, content: opening }] : []),
+    ...transcript.map((line) => ({ role: 'user' as const, content: `${line.name}: ${line.text}` })),
+    { role: 'user' as const, content: `${speaker.name}:` },
+  ];
+  const { content } = await chatCompletion({ messages, max_tokens: 200, trace });
+  return content.trim();
+}
+
+/**
+ * docs/05 §6.1's conclusion for one side: a single call that emits state, physics, memory and
+ * reason together, re-asked once if the state runs over budget.
+ */
+async function writeStateAfterExchange(
+  ctx: AgentContext,
+  side: PromptContext,
+  otherName: string,
+  transcript: ExchangeLine[],
+  tracer: Tracer,
+) {
+  const system = stateWritingSystemPrompt(side, ENVELOPE_INSTRUCTION);
+  let attempt = 0;
+  const outcome = await requestStateUpdate({
+    ask: async (retryHint) => {
+      const { content } = await chatCompletion({
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: `You just spoke with ${otherName}. It went like this.` },
+          ...transcript.map((line) => ({
+            role: 'user' as const,
+            content: `${line.name}: ${line.text}`,
+          })),
+          {
+            role: 'user',
+            content: retryHint ?? 'Rewrite your state now that the exchange is over.',
+          },
+        ],
+        max_tokens: 1200,
+        // Re-asks get their own span, so a trace shows how many attempts the envelope took.
+        trace: tracer.generation(
+          attempt === 0 ? 'interaction.state' : `interaction.state.reask.${attempt}`,
+          { entityId: side.entityId, tier: side.tier, attempt },
+        ),
+      });
+      attempt++;
+      return content;
+    },
+  });
+  await sendStateUpdate(ctx, side.entityId, outcome);
+}
+
 /**
  * docs/05 §6.1 across two sides, where one of them cannot move. The turns alternate inside this
  * action; on conclusion each side makes its own single call that emits state, physics, memory and
@@ -130,7 +212,7 @@ async function interactWithFixedActor(
   intent: string,
 ) {
   const interactionId = crypto.randomUUID();
-  const transcript: { speaker: 'actor' | 'target'; text: string }[] = [];
+  const transcript: ExchangeLine[] = [];
   // The whole exchange runs in this one action, so the wrapper span is a real measured span and
   // every turn below leaves in a single export when it closes.
   const tracer = await Tracer.forInteraction({
@@ -140,85 +222,44 @@ async function interactWithFixedActor(
     metadata: { actorId: actor.entityId, targetId: target.entityId, intent },
   });
 
-  // World-level prose goes through the shared sections rather than an inlined variant. This was
-  // the one prompt that phrased `world_rules` in its own words, which meant it was also the one
-  // prompt that would have silently missed common knowledge (docs/05 §5.3).
-  const turnPrompt = (speaker: PromptContext, other: PromptContext) =>
-    [
-      `You are ${speaker.name}. ${describe(speaker)}`,
-      ...(speaker.state ? [speaker.state] : []),
-      ...worldRulesSection(speaker),
-      ...worldStateSection(speaker),
-      `You are speaking with ${other.name}.`,
-      'Say one thing. Keep it under 200 characters. Reply with the words you say and nothing else.',
-    ].join('\n');
-
   for (let turn = 0; turn < MAX_INTERACTION_TURNS; turn++) {
     const speakerIsActor = turn % 2 === 0;
     const speaker = speakerIsActor ? actor : target;
     const other = speakerIsActor ? target : actor;
-    const messages: LLMMessage[] = [
-      { role: 'system', content: turnPrompt(speaker, other) },
-      ...(turn === 0 && intent
-        ? [{ role: 'user' as const, content: `You came here meaning to: ${intent}.` }]
-        : []),
-      ...transcript.map((entry) => ({
-        role: 'user' as const,
-        content: `${entry.speaker === 'actor' ? actor.name : target.name}: ${entry.text}`,
-      })),
-      { role: 'user' as const, content: `${speaker.name}:` },
-    ];
-    const { content } = await chatCompletion({
-      messages,
-      max_tokens: 200,
-      trace: tracer.generation(`interaction.turn.${turn}`, {
+    const text = await speakTurn(
+      speaker,
+      other.name,
+      transcript,
+      turn === 0 && intent ? `You came here meaning to: ${intent}.` : undefined,
+      tracer.generation(`interaction.turn.${turn}`, {
         speaker: speaker.name,
         listener: other.name,
         turn,
       }),
-    });
-    const text = content.trim();
-    transcript.push({ speaker: speakerIsActor ? 'actor' : 'target', text });
+    );
+    const line: ExchangeLine = {
+      name: speaker.name,
+      text,
+      speaker: speakerIsActor ? 'actor' : 'target',
+    };
+    transcript.push(line);
     await ctx.store.recordInteractionTurn({
       interactionId,
       actorId: actor.entityId,
       targetId: target.entityId,
-      speaker: speakerIsActor ? 'actor' : 'target',
+      speaker: line.speaker,
       text,
     });
   }
 
   for (const side of [actor, target]) {
-    const other = side === actor ? target : actor;
-    const system = stateWritingSystemPrompt(side, ENVELOPE_INSTRUCTION);
-    let attempt = 0;
-    const outcome = await requestStateUpdate({
-      ask: async (retryHint) => {
-        const { content } = await chatCompletion({
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: `You just spoke with ${other.name}. It went like this.` },
-            ...transcript.map((entry) => ({
-              role: 'user' as const,
-              content: `${entry.speaker === 'actor' ? actor.name : target.name}: ${entry.text}`,
-            })),
-            {
-              role: 'user',
-              content: retryHint ?? 'Rewrite your state now that the exchange is over.',
-            },
-          ],
-          max_tokens: 1200,
-          // Re-asks get their own span, so a trace shows how many attempts the envelope took.
-          trace: tracer.generation(
-            attempt === 0 ? 'interaction.state' : `interaction.state.reask.${attempt}`,
-            { entityId: side.entityId, tier: side.tier, attempt },
-          ),
-        });
-        attempt++;
-        return content;
-      },
-    });
-    await sendStateUpdate(ctx, side.entityId, outcome);
+    await writeStateAfterExchange(
+      ctx,
+      side,
+      (side === actor ? target : actor).name,
+      transcript,
+      tracer,
+    );
   }
 
   await tracer.close({
@@ -226,6 +267,102 @@ async function interactWithFixedActor(
     output: transcript,
     metadata: { turns: transcript.length },
   });
+}
+
+/**
+ * The human's side of docs/05 §6.3, with a fixed actor (tier b).
+ *
+ * The same exchange an agent has with a fixed actor, turned inside out: an agent's runs start to
+ * finish inside one operation, because both sides are models; here one side is a person, so the
+ * fixed actor answers one line at a time as the person types, and concludes when they leave.
+ * Nothing about the fixed actor changes to allow it — no `Player`, no `Conversation` — which is
+ * what keeps `08` §7 D3's split whole.
+ *
+ * On conclusion only the fixed actor writes state and memory. The human side writes nothing,
+ * exactly as in a human's conversation with a mobile agent (§6.3).
+ */
+export class HumanExchange {
+  readonly lines: ExchangeLine[] = [];
+
+  private constructor(
+    private readonly interactionId: string,
+    private readonly ctx: AgentContext,
+    private readonly target: PromptContext,
+    private readonly human: { id: string; name: string },
+    private readonly tracer: Tracer,
+  ) {}
+
+  static async open(
+    ctx: AgentContext,
+    targetId: string,
+    human: { id: string; name: string },
+  ): Promise<HumanExchange> {
+    const target = await promptContextFor(ctx, targetId);
+    if (!target || target.tier !== 'actor') {
+      throw new Error(`${targetId} is not a fixed actor anybody can talk to`);
+    }
+    const interactionId = crypto.randomUUID();
+    return new HumanExchange(
+      interactionId,
+      ctx,
+      target,
+      human,
+      await Tracer.forInteraction({
+        worldId: ctx.world.worldId,
+        interactionId,
+        name: `${human.name} ↔ ${target.name}`,
+        metadata: { actorId: human.id, targetId, human: true },
+      }),
+    );
+  }
+
+  get partnerName(): string {
+    return this.target.name;
+  }
+
+  /** The human says a line; the fixed actor answers it. The line is visible before the answer. */
+  async reply(text: string): Promise<string> {
+    await this.record({ name: this.human.name, text, speaker: 'actor' });
+    const turn = this.lines.length;
+    const answer = await speakTurn(
+      this.target,
+      this.human.name,
+      this.lines,
+      undefined,
+      this.tracer.generation(`interaction.turn.${turn}`, {
+        speaker: this.target.name,
+        listener: this.human.name,
+        turn,
+      }),
+    );
+    await this.record({ name: this.target.name, text: answer, speaker: 'target' });
+    return answer;
+  }
+
+  /** The fixed actor writes what the exchange left it with. Nothing to write if nobody spoke. */
+  async conclude(): Promise<void> {
+    if (this.lines.length) {
+      await writeStateAfterExchange(
+        this.ctx,
+        this.target,
+        this.human.name,
+        this.lines,
+        this.tracer,
+      );
+    }
+    await this.tracer.close({ output: this.lines, metadata: { turns: this.lines.length } });
+  }
+
+  private async record(line: ExchangeLine) {
+    this.lines.push(line);
+    await this.ctx.store.recordInteractionTurn({
+      interactionId: this.interactionId,
+      actorId: this.human.id,
+      targetId: this.target.entityId,
+      speaker: line.speaker,
+      text: line.text,
+    });
+  }
 }
 
 export async function interactWithEntity(
