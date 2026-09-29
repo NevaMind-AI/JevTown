@@ -196,13 +196,37 @@ export class SyncClient {
     if (!body.ok) this.goReadOnly(`Lost the lease to ${body.holder}.`);
   }
 
-  /** Anything the outbox still holds, oldest first. */
+  /**
+   * Anything the outbox still holds, oldest first.
+   *
+   * A batch left by an earlier page — a reload, a crash, a stretch offline — carries that page's
+   * session and generation, which the lease just taken has superseded. Sent as stored, it would be
+   * refused as `stale-session`, and this tab would go read-only while holding the lease
+   * (docs/14 §4.5). So every batch is re-stamped with the current lease and keeps its `batchId`.
+   * The other two guards still decide: a `batchId` already in the ledger answers `duplicate`, and
+   * a `baseVersion` other than the stored one answers `version-conflict`, so a re-stamped batch
+   * can only land exactly where it was always going to.
+   *
+   * An earlier page's batch describes that page's runtime, not this one, so taking it moves only
+   * the stored version and leaves this runtime's own counters alone.
+   *
+   * Once resume is wired (docs/14 §5 step 0), this has to run before the bootstrap it restores
+   * from, or the restored runtime starts a batch behind the stored version.
+   */
   private async resend() {
-    for (const batch of await this.outbox.list()) {
+    for (const owed of await this.outbox.list()) {
+      const own = owed.sessionId === this.sessionId;
+      const batch = { ...owed, sessionId: this.sessionId, generation: this.generation };
       const { body } = await this.post<BatchResponse>('/batches', batch);
-      if (body.ok) {
+      if (body.ok && own) {
         await this.acknowledge(batch, body.version, body.changeSeq);
+      } else if (body.ok) {
+        // A duplicate answers with the version that batch made, which may be older than what is
+        // stored now; only a batch that actually landed moves the stored version.
+        if (!body.duplicate) this.storedVersion = body.version;
+        await this.outbox.remove(batch.batchId);
       } else if (body.reason === 'stale-session') {
+        // Another tab has taken the lease since this one did. Now it really is theirs.
         this.goReadOnly('Another session took this world while we were away.');
         return;
       } else {
