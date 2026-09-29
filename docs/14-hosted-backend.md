@@ -353,6 +353,56 @@ from the bootstrap response before the first flush. `AgenticRuntime.restore()` a
 (`src/sim/agenticRuntime.ts:442`). What is missing is the call, and the mapping from
 `BootstrapResponse` to the runtime's snapshot.
 
+### 4.5 Batches left by an earlier page
+
+A batch goes into the `IndexedDbOutbox` before it is sent, and leaves only when the backend
+acknowledges it (`src/sim/syncClient.ts`). That is what limits a closed tab's loss to the
+unacknowledged batch. Leftovers appear when a page closes while a flush is in flight, and more often
+after a stretch in which the server was unreachable, since every failed flush stays queued.
+
+**The problem.** Every page load builds a new `SyncClient` with a new random `sessionId`, and
+`start()` takes the lease under it. It then re-sends the leftovers as they were stored, carrying the
+earlier page's `sessionId` and `generation`. `applyBatch` refuses them as `stale-session`, and
+`resend()` answers that by going read-only. The tab that has just taken the lease stops saving.
+
+A reload and a new tab look the same to the server: each is a new session taking the lease. They
+differ only in the browser. After a reload the earlier page is gone, and its leftovers are orphans
+that nobody else will send. A new tab opens beside a page that is still running, and because the
+outbox belongs to the origin, the new tab also sees that page's in-flight batches.
+
+**The fix.** `resend()` re-stamps each leftover with the current `sessionId` and `generation`, and
+keeps its `batchId`. This does not weaken the lease, because the other two guards of `applyBatch`
+still decide:
+
+- a `batchId` already in the ledger answers `duplicate`: the acknowledgement was lost, and the batch
+  is done;
+- a `baseVersion` other than the stored one answers `version-conflict`: the batch was superseded,
+  and it is dropped;
+- otherwise the batch applies exactly where it was always going to. A re-stamped batch cannot fork
+  history.
+
+A leftover describes the earlier page's runtime, not this one, so accepting it moves only the stored
+version. This runtime's shipped index and change sequence stay as they were. `stale-session` during
+the resend still means read-only, because then another tab really has taken the lease since.
+
+Keeping the session id in `sessionStorage` would also let a reload keep its session, but "Duplicate
+tab" copies `sessionStorage`. Two live tabs would share one session, and the lease would no longer
+tell them apart.
+
+**Two live tabs.** The new tab may send the older tab's in-flight batch on its behalf. That is
+harmless: the version chain still applies, the batch lands at most once, and the older tab goes
+read-only at its next heartbeat or flush, as §4.4 says.
+
+**Order with resume.** Once step 0 restores from `bootstrap`, the resend must come first: claim the
+lease, send the leftovers, then bootstrap and restore, then flush. Restoring first would leave the
+runtime a batch behind the stored version, and its first flush would conflict. Today
+`resolveWorld` bootstraps before `start()`, which is harmless only because nothing restores yet.
+
+**What read-only means today.** Only that nothing more is stored. The older tab logs a console
+warning and keeps simulating, and it keeps calling models, which its owner's quota pays for. Telling
+the player, pausing the runtime and offering to take the world back are a separate change. §3.3
+would also refuse the older tab's model calls on the server.
+
 ---
 
 ## 5. Sequence
@@ -362,7 +412,7 @@ the exposure. Step 5 is the real change. Step 0 is not about the hosted backend 
 needs it too, and the rest builds on it.
 
 0. Resume in both modes: a `/worlds` Vite proxy entry, create-if-missing, and restore from
-   `bootstrap` (§4.2, §4.4).
+   `bootstrap` once the outbox is drained (§4.2, §4.4, §4.5).
 
 1. Pin the cost fields on `/llm/chat` and `/llm/embed` (§3.1).
 2. Stop `bootstrap` returning every row of `blobs` and `embeddings_cache`. Move writes to those
