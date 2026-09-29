@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
@@ -43,14 +43,19 @@ export async function closeDb() {
 /**
  * Apply the schema.
  *
- * Idempotent by construction — every statement is `IF NOT EXISTS` — so this runs on every boot
- * rather than needing a migration runner. That holds while there is one file; the day there is a
- * second, this becomes a real ordered migration table.
+ * Every file in this directory, in name order. Each is idempotent by construction — every
+ * statement is `IF NOT EXISTS` — so all of them run on every boot rather than needing a table of
+ * applied migrations. That holds only while every file can be written that way; the first one
+ * that cannot is the day this becomes a real migration table.
  */
 export async function migrate() {
   const here = dirname(fileURLToPath(import.meta.url));
-  const sql = readFileSync(join(here, '001_init.sql'), 'utf8');
-  await db().query(sql);
+  const files = readdirSync(here)
+    .filter((name) => name.endsWith('.sql'))
+    .sort();
+  for (const file of files) {
+    await db().query(readFileSync(join(here, file), 'utf8'));
+  }
 }
 
 /**

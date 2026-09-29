@@ -43,8 +43,7 @@ export type StoreChange =
   | { seq: number; kind: 'playerName'; playerId: string; name: string }
   | { seq: number; kind: 'transcript'; row: TranscriptRow }
   | { seq: number; kind: 'audit'; row: AuditRow & { seq: number } }
-  | { seq: number; kind: 'turn'; turn: InteractionTurn & { seq: number } }
-  | { seq: number; kind: 'embedding'; textHash: string; embedding: number[] };
+  | { seq: number; kind: 'turn'; turn: InteractionTurn & { seq: number } };
 
 /** `Omit` does not distribute over a union; this does, so each variant keeps its own fields. */
 type WithoutSeq<T> = T extends unknown ? Omit<T, 'seq'> : never;
@@ -357,11 +356,17 @@ export class InMemoryAgentStore implements AgentStore {
     return out;
   }
 
+  /**
+   * Remember vectors for this tab only.
+   *
+   * Not a durable write, so nothing is recorded for the backend. The shared cache lives on the
+   * server, which fills it from vectors it fetched itself; a vector the client sent would become
+   * every player's (docs/14 §2.2).
+   */
   async cacheEmbeddings(entries: { textHash: string; embedding: number[] }[]): Promise<void> {
     for (const entry of entries) {
       if (this.embeddings.has(entry.textHash)) continue;
       this.embeddings.set(entry.textHash, entry.embedding);
-      this.record({ kind: 'embedding', textHash: entry.textHash, embedding: entry.embedding });
     }
   }
 

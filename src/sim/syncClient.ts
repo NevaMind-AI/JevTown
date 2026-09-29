@@ -146,6 +146,13 @@ export class SyncClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+    // 409 is the protocol's own refusal and carries a body worth reading. Anything else — a world
+    // this token does not own, a batch over the size cap — is not an answer to the batch, and
+    // reading it as one would set the stored version from a field that is not there. The caller
+    // keeps the batch in the outbox.
+    if (response.status !== 200 && response.status !== 409) {
+      throw new Error(`Storage ${path} failed (${response.status}): ${await response.text()}`);
+    }
     return { status: response.status, body: (await response.json()) as T };
   }
 

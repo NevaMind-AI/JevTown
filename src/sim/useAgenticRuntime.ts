@@ -3,6 +3,8 @@ import { AgenticRuntime } from './agenticRuntime';
 import { createAgenticWorld, worldFileOf } from './createAgenticWorld';
 import type { Content } from '../../prototype/content';
 import { IndexedDbOutbox, SyncClient } from './syncClient';
+import { resolveWorld } from './resolveWorld';
+import { serverFetch } from '../lib/identity';
 
 /**
  * The agentic world, attached to the tab that is already running a simulation.
@@ -77,42 +79,72 @@ export function useAgenticRuntime(host: HostClock): AgenticRuntime | undefined {
 }
 
 /**
+ * One resolution per page. StrictMode runs the effect twice in development, and on a first launch
+ * two resolutions would create two worlds.
+ */
+let resolving: ReturnType<typeof resolveWorld> | undefined;
+
+/**
  * Ship the world to the backend, when there is one to ship it to.
  *
- * Off unless `VITE_SYNC_WORLD_ID` names a world, so the default session stays entirely local and
- * needs no database. When it is on, the tab claims the writer lease, re-sends anything the last
- * session left unacknowledged, and flushes on a timer.
+ * First the tab finds its world (`resolveWorld`, docs/14 §4.4). That needs the server, since a
+ * hosted one chooses world ids, so nothing is shipped until it answers. With no storage behind the
+ * server, or no server, the session simply stays local. Once it has a world, the tab claims the
+ * writer lease, re-sends anything the last session left unacknowledged, and flushes on a timer.
+ *
+ * Resuming from what `resolveWorld` read back is not wired yet (docs/14 §5 step 0): the tab still
+ * starts from the world file.
  */
 function useAgenticSync(runtime: AgenticRuntime | undefined) {
   useEffect(() => {
-    const worldId = (import.meta as any).env?.VITE_SYNC_WORLD_ID as string | undefined;
-    if (!runtime || !worldId) return;
+    if (!runtime) return;
+    const env = (import.meta as any).env ?? {};
+    const baseUrl: string = env.VITE_STORAGE_URL ?? '/worlds';
 
     let stopped = false;
-    const sync = new SyncClient({
-      worldId,
-      runtime,
-      outbox: new IndexedDbOutbox(),
-      onReadOnly: (reason) =>
-        console.warn(`This world is now read-only and will not be saved. ${reason}`),
-    });
+    let teardown: (() => void) | undefined;
 
-    const flush = window.setInterval(() => {
-      if (!stopped) void sync.flush().catch((error) => console.error('Batch failed:', error));
-    }, FLUSH_INTERVAL_MS);
-    const heartbeat = window.setInterval(() => {
-      if (!stopped) void sync.heartbeat().catch(() => {});
-    }, HEARTBEAT_INTERVAL_MS);
+    const open = async () => {
+      resolving ??= resolveWorld({
+        baseUrl,
+        pinned: env.VITE_SYNC_WORLD_ID,
+        fetchImpl: serverFetch,
+      });
+      const world = await resolving;
+      if (!world || stopped) return;
 
-    void sync.start().catch((error) => console.error('Could not claim the world:', error));
+      const sync = new SyncClient({
+        worldId: world.worldId,
+        runtime,
+        baseUrl,
+        // One outbox per world: a batch owed to one world must never be re-sent to another.
+        outbox: new IndexedDbOutbox(`remaining-time-sync:${world.worldId}`),
+        fetchImpl: serverFetch,
+        onReadOnly: (reason) =>
+          console.warn(`This world is now read-only and will not be saved. ${reason}`),
+      });
+
+      const flush = window.setInterval(() => {
+        void sync.flush().catch((error) => console.error('Batch failed:', error));
+      }, FLUSH_INTERVAL_MS);
+      const heartbeat = window.setInterval(() => {
+        void sync.heartbeat().catch(() => {});
+      }, HEARTBEAT_INTERVAL_MS);
+      teardown = () => {
+        window.clearInterval(flush);
+        window.clearInterval(heartbeat);
+        // One last attempt on the way out. It may not finish, which is exactly why the outbox is
+        // written before a batch is sent rather than after.
+        void sync.flush().catch(() => {});
+      };
+
+      await sync.start();
+    };
+    void open().catch((error) => console.error('Could not open the world:', error));
 
     return () => {
       stopped = true;
-      window.clearInterval(flush);
-      window.clearInterval(heartbeat);
-      // One last attempt on the way out. It may not finish, which is exactly why the outbox is
-      // written before a batch is sent rather than after.
-      void sync.flush().catch(() => {});
+      teardown?.();
     };
   }, [runtime]);
 }

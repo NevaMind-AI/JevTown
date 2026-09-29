@@ -1,27 +1,42 @@
 import type pg from 'pg';
+import { createHash, randomBytes } from 'node:crypto';
 import { db, transaction } from './db/index.ts';
 import type {
   BatchRequest,
   BatchResponse,
   BootstrapResponse,
+  CreateWorldResponse,
   LlmCallRecord,
   SessionRequest,
   SessionResponse,
+  WorldListResponse,
 } from './protocol.ts';
 import type { AgentStoreSnapshot, StoreChange } from '../agent/store/memoryStore.ts';
 
-/** Create a world, or return the one already there. Creating is idempotent by id. */
+/** A world id nobody chose, so nobody can squat on one or guess another's (docs/14 §2.3). */
+export function newWorldId(): string {
+  return `w_${randomBytes(12).toString('base64url')}`;
+}
+
+/**
+ * Create a world, or return the one already there. Creating is idempotent by id.
+ *
+ * Idempotent whoever owns the existing row, which is only safe because a hosted server never
+ * passes a client's id here: it passes `newWorldId()`. A local server has one owner.
+ */
 export async function createWorld(input: {
   id: string;
+  ownerId: string;
   name?: string;
   definition?: unknown;
-}): Promise<{ id: string; created: boolean }> {
+}): Promise<CreateWorldResponse> {
   return await transaction(async (client) => {
     const existing = await client.query('SELECT id FROM worlds WHERE id = $1', [input.id]);
     if (existing.rowCount) return { id: input.id, created: false };
-    await client.query('INSERT INTO worlds (id, name) VALUES ($1, $2)', [
+    await client.query('INSERT INTO worlds (id, name, owner_id) VALUES ($1, $2, $3)', [
       input.id,
       input.name ?? input.id,
+      input.ownerId,
     ]);
     if (input.definition !== undefined) {
       await client.query(
@@ -32,6 +47,52 @@ export async function createWorld(input: {
     }
     return { id: input.id, created: true };
   });
+}
+
+/** Whether `ownerId` owns `worldId`. A world that does not exist is owned by nobody. */
+export async function ownsWorld(ownerId: string, worldId: string): Promise<boolean> {
+  const result = await db().query('SELECT 1 FROM worlds WHERE id = $1 AND owner_id = $2', [
+    worldId,
+    ownerId,
+  ]);
+  return Boolean(result.rowCount);
+}
+
+export async function countWorlds(ownerId: string): Promise<number> {
+  const result = await db().query<{ count: string }>(
+    'SELECT count(*)::text AS count FROM worlds WHERE owner_id = $1',
+    [ownerId],
+  );
+  return Number(result.rows[0]?.count ?? 0);
+}
+
+/** An owner's worlds, newest first. How a browser that has lost its last world id finds one. */
+export async function listWorlds(ownerId: string): Promise<WorldListResponse['worlds']> {
+  const result = await db().query<{ id: string; name: string; created_at: Date }>(
+    'SELECT id, name, created_at FROM worlds WHERE owner_id = $1 ORDER BY created_at DESC',
+    [ownerId],
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    createdAt: row.created_at.toISOString(),
+  }));
+}
+
+/**
+ * Delete worlds nobody has written to in `days` (docs/14 §2.5).
+ *
+ * A lost token orphans its worlds, and nothing else would ever remove them. The cascade takes
+ * everything under each one. A world that has never shipped a batch is judged by its creation.
+ */
+export async function pruneIdleWorlds(days: number): Promise<number> {
+  const result = await db().query(
+    "DELETE FROM worlds w WHERE w.created_at < now() - ($1::int * interval '1 day')" +
+      ' AND NOT EXISTS (SELECT 1 FROM batches b WHERE b.world_id = w.id' +
+      "   AND b.received_at > now() - ($1::int * interval '1 day'))",
+    [days],
+  );
+  return result.rowCount ?? 0;
 }
 
 /**
@@ -182,6 +243,14 @@ async function applyChanges(
         );
         break;
       case 'blob':
+        // Blobs are shared between worlds and the first write wins, so a hash the client chose
+        // would let one player plant content under a key another player's world reads. The key
+        // is ours to compute; a blob that does not hash to its claimed key is dropped, and the
+        // reference to it dangles in the world that sent it rather than in anyone else's.
+        if (sha256(change.content) !== change.hash) {
+          console.warn(`Dropped a blob whose content does not hash to ${change.hash}.`);
+          break;
+        }
         await client.query(
           'INSERT INTO blobs (hash, content) VALUES ($1,$2) ON CONFLICT (hash) DO NOTHING',
           [change.hash, change.content],
@@ -300,13 +369,8 @@ async function applyChanges(
           ],
         );
         break;
-      case 'embedding':
-        await client.query(
-          'INSERT INTO embeddings_cache (text_hash, embedding) VALUES ($1,$2)' +
-            ' ON CONFLICT (text_hash) DO NOTHING',
-          [change.textHash, change.embedding],
-        );
-        break;
+      // No `embedding` case: the cache is written only by `/llm/embed`, from vectors the server
+      // fetched itself (docs/14 §2.2). An old outbox may still carry one; it is ignored.
     }
   }
 }
@@ -336,7 +400,6 @@ export async function bootstrap(worldId: string): Promise<BootstrapResponse | nu
     names,
     transcript,
     audits,
-    embeddings,
   ] = await Promise.all([
     pool.query('SELECT doc FROM world_definition WHERE world_id = $1', [worldId]),
     pool.query('SELECT idx, version, state FROM world_state WHERE world_id = $1', [worldId]),
@@ -345,7 +408,13 @@ export async function bootstrap(worldId: string): Promise<BootstrapResponse | nu
         ' ORDER BY entity_id, version',
       [worldId],
     ),
-    pool.query('SELECT hash, content FROM blobs'),
+    // Only the blobs this world points at. `blobs` has no world column, and an unfiltered read
+    // would hand every player's resume every other player's prose (docs/14 §2.2).
+    pool.query(
+      'SELECT hash, content FROM blobs WHERE hash IN' +
+        ' (SELECT state_ref FROM entity_state WHERE world_id = $1 AND state_ref IS NOT NULL)',
+      [worldId],
+    ),
     pool.query(
       'SELECT channel_id, author_id, text, message_uuid, created_at FROM messages' +
         " WHERE world_id = $1 AND channel_kind = 'conversation' ORDER BY created_at",
@@ -372,7 +441,6 @@ export async function bootstrap(worldId: string): Promise<BootstrapResponse | nu
         ' batch_id, tags FROM state_audit WHERE world_id = $1 ORDER BY seq',
       [worldId],
     ),
-    pool.query('SELECT text_hash, embedding FROM embeddings_cache'),
   ]);
 
   const byEntity = new Map<string, { version: number; state: string }[]>();
@@ -439,7 +507,8 @@ export async function bootstrap(worldId: string): Promise<BootstrapResponse | nu
       tags: row.tags ?? undefined,
     })) as never,
     turns: [],
-    embeddings: embeddings.rows.map((row) => [row.text_hash, (row.embedding ?? []).map(Number)]),
+    // The cache stays on the server, behind `/llm/embed` (docs/14 §2.2).
+    embeddings: [],
     // A resumed world keeps minting ids above everything it already has.
     nextMemoryId:
       storedMemories.reduce((max, m) => Math.max(max, Number(m.id.split(':')[1]) || 0), 0) + 1,
@@ -482,9 +551,10 @@ export async function readEvents(worldId: string, from: number, to: number) {
 /** One row per model call. §4.4's quota reads this, and spend reconciles against Langfuse. */
 export async function recordLlmCall(call: LlmCallRecord) {
   await db().query(
-    'INSERT INTO llm_calls (world_id, purpose, model, prompt_tokens, completion_tokens,' +
-      ' latency_ms, trace_id) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+    'INSERT INTO llm_calls (owner_id, world_id, purpose, model, prompt_tokens,' +
+      ' completion_tokens, latency_ms, trace_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
     [
+      call.ownerId ?? null,
       call.worldId ?? null,
       call.purpose ?? null,
       call.model ?? null,
@@ -496,12 +566,54 @@ export async function recordLlmCall(call: LlmCallRecord) {
   );
 }
 
-/** Calls this world has made in the trailing window, for the quota to read. */
-export async function callsInWindow(worldId: string, windowMs: number): Promise<number> {
+/**
+ * Calls this owner has made in the trailing window, for the quota to read.
+ *
+ * By owner rather than by world: counted by world, a new world came with a fresh quota, and
+ * creating one is free (docs/14 §2.4).
+ */
+export async function callsInWindow(ownerId: string, windowMs: number): Promise<number> {
   const result = await db().query<{ count: string }>(
-    'SELECT count(*)::text AS count FROM llm_calls WHERE world_id = $1' +
+    'SELECT count(*)::text AS count FROM llm_calls WHERE owner_id = $1' +
       " AND called_at > now() - ($2::bigint * interval '1 millisecond')",
-    [worldId, windowMs],
+    [ownerId, windowMs],
   );
   return Number(result.rows[0]?.count ?? 0);
+}
+
+// ---------------------------------------------------------------- embeddings cache
+
+/**
+ * The key of the shared embeddings cache, and of `blobs`.
+ *
+ * Hex SHA-256, the same as `hashText` in `agent/embeddingsCache.ts` computes in the tab, so a key
+ * means the same thing on both sides.
+ */
+export function sha256(text: string): string {
+  return createHash('sha256').update(text, 'utf8').digest('hex');
+}
+
+/** The cached vectors among `textHashes`, by hash. */
+export async function readEmbeddings(textHashes: string[]): Promise<Map<string, number[]>> {
+  const result = await db().query<{ text_hash: string; embedding: number[] }>(
+    'SELECT text_hash, embedding FROM embeddings_cache WHERE text_hash = ANY($1::text[])',
+    [textHashes],
+  );
+  return new Map(result.rows.map((row) => [row.text_hash, row.embedding.map(Number)]));
+}
+
+/**
+ * Remember vectors the server fetched.
+ *
+ * The only writer of `embeddings_cache`. The cache is shared, and the first write for a key wins,
+ * so a vector a client supplied would become every player's (docs/14 §2.2).
+ */
+export async function writeEmbeddings(entries: { textHash: string; embedding: number[] }[]) {
+  for (const entry of entries) {
+    await db().query(
+      'INSERT INTO embeddings_cache (text_hash, embedding) VALUES ($1,$2)' +
+        ' ON CONFLICT (text_hash) DO NOTHING',
+      [entry.textHash, entry.embedding],
+    );
+  }
 }

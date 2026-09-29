@@ -49,8 +49,21 @@ class ModelProxyError extends Error {
   }
 }
 
+let http: typeof fetch = (input, init) => fetch(input, init);
+
+/**
+ * Send the proxy's requests through the app's fetch, which attaches the player's token
+ * (docs/14 §1.2).
+ *
+ * Injected rather than imported: the identity lives in the app, and the agent layer has no
+ * business knowing where a token comes from or whether the server checks it.
+ */
+export function setModelProxyFetch(fetchImpl: typeof fetch) {
+  http = fetchImpl;
+}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${BASE}${path}`, {
+  const response = await http(`${BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

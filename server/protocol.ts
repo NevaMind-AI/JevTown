@@ -74,11 +74,43 @@ export interface BootstrapResponse {
    *
    * This is what makes "clear the browser and come back" work without replaying anything: resume
    * reads state and the store, and the log stays a log (§6.1).
+   *
+   * Its `embeddings` is always empty: the cache is shared between players, so it stays on the
+   * server, which consults it behind `/llm/embed` (docs/14 §2.2).
    */
   store: AgentStoreSnapshot;
 }
 
+/** `POST /identity`: a new token for a browser that has none (docs/14 §1.2). */
+export interface IdentityResponse {
+  token: string;
+}
+
+/**
+ * `POST /worlds`.
+ *
+ * A local server takes `id` as given and is idempotent by it. A hosted one ignores it and makes
+ * its own, so nobody can squat on an id or probe for one (docs/14 §2.3). Either way, the world to
+ * use is the `id` that comes back.
+ */
+export interface CreateWorldRequest {
+  id?: string;
+  name?: string;
+  definition?: unknown;
+}
+
+export interface CreateWorldResponse {
+  id: string;
+  created: boolean;
+}
+
+/** `GET /worlds`: the caller's worlds, newest first. */
+export interface WorldListResponse {
+  worlds: { id: string; name: string; createdAt: string }[];
+}
+
 export interface LlmCallRecord {
+  ownerId?: string;
   worldId?: string;
   purpose?: string;
   model?: string;
