@@ -8,7 +8,8 @@
   },
   "anchors": {
     "start": [19, 25],
-    "from-return": [19, 28]
+    "from-return": [19, 28],
+    "n07-post": [30, 13]
   },
   "entities": [
     {
@@ -110,6 +111,7 @@
       "name": "N-07",
       "position": [30, 13],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/n07-idle.png",
         "size": [192, 192],

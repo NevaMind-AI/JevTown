@@ -8,7 +8,9 @@
   },
   "anchors": {
     "start": [39, 17],
-    "from-return": [39, 17]
+    "from-return": [39, 17],
+    "volunteer-post": [30, 11],
+    "resident-zeroing-post": [18, 11]
   },
   "entities": [
     {

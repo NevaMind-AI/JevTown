@@ -8,7 +8,8 @@
   },
   "anchors": {
     "start": [24, 23],
-    "from-return": [24, 22]
+    "from-return": [24, 22],
+    "rhea-post": [13, 16]
   },
   "entities": [
     {
@@ -38,6 +39,7 @@
       "name": "Rhea",
       "position": [13, 16],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/rhea-idle.png",
         "size": [160, 160],

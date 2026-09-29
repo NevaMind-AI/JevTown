@@ -10,7 +10,8 @@
     "start": [23, 23],
     "from-bridge-entry": [7, 21],
     "from-lift-entry": [39, 20],
-    "from-to-vault": [24, 9]
+    "from-to-vault": [24, 9],
+    "iris-post": [36, 9]
   },
   "entities": [
     {
@@ -69,6 +70,7 @@
       "name": "Iris",
       "position": [36, 9],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/iris-idle.png",
         "size": [102, 102],

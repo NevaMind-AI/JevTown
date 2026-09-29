@@ -8,7 +8,8 @@
   },
   "anchors": {
     "start": [23, 23],
-    "from-return": [23, 23]
+    "from-return": [23, 23],
+    "noel-post": [24, 10]
   },
   "entities": [
     {
@@ -37,6 +38,7 @@
       "name": "Noel",
       "position": [24, 10],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/noel-idle.png",
         "size": [160, 160],

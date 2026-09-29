@@ -12,7 +12,13 @@
     "from-to-archive": [41, 10],
     "from-to-mediation": [6, 15],
     "from-to-zeroing": [6, 21],
-    "from-to-consult": [41, 15]
+    "from-to-consult": [41, 15],
+    "adrian-post": [21, 10],
+    "meridian-post": [36, 24],
+    "elder-post": [40, 20],
+    "clerk-post": [14, 10],
+    "guard-post": [42, 10],
+    "resident-queue-post": [29, 17]
   },
   "entities": [
     {
@@ -110,6 +116,7 @@
       "name": "Adrian",
       "position": [21, 10],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/adrian-idle.png",
         "size": [160, 160],
@@ -122,6 +129,7 @@
       "name": "Meridian",
       "position": [36, 24],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/meridian-idle.png",
         "size": [160, 160],

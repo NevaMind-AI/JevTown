@@ -8,7 +8,9 @@
   },
   "anchors": {
     "start": [24, 24],
-    "from-return": [24, 25]
+    "from-return": [24, 25],
+    "rowan-post": [18, 12],
+    "resident-post": [12, 20]
   },
   "entities": [
     {
@@ -38,6 +40,7 @@
       "name": "Rowan",
       "position": [18, 12],
       "character": "sprite",
+      "movable": true,
       "sprite": {
         "image": "assets/room-npcs/rowan-idle.png",
         "size": [160, 160],
