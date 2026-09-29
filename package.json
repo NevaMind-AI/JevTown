@@ -18,6 +18,8 @@
     "level-editor": "vite src/editor/",
     "le": "vite src/editor/",
     "proxy": "node --experimental-strip-types server/index.ts",
+    "play:remote": "vite --mode remote",
+    "server:start": "HOSTED=1 node --experimental-strip-types server/index.ts",
     "vite:local": "vite --mode memory",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose stop postgres"
