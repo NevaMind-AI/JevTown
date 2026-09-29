@@ -552,7 +552,7 @@ function LoadedLocalGame({
         // An authored interaction wins; an agent has none, so E beside one starts a chat.
         const agent =
           !watchingRef.current && !world.inspect().seated && !world.nearby().length
-            ? human?.adjacentAgent()
+            ? human?.adjacentTalker()
             : undefined;
         if (agent && human?.talkTo(agent)) {
           openChat();
@@ -853,7 +853,7 @@ function LoadedLocalGame({
   // The agent E would talk to, lit the same way, since nothing authored marks it.
   const talkable =
     !watching && !state.seated && !state.dialogue && !chatOpen && !nearby.length
-      ? human?.adjacentAgent()
+      ? human?.adjacentTalker()
       : undefined;
   if (talkable) highlightedEntities.add(talkable);
   const seat = currentScene.entities.find((e) => e.id === state.seated?.entity);
