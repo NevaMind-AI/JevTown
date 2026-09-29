@@ -28,6 +28,8 @@ import { useAutoSaves, Restored, PlayHandler } from './AutoSaves';
 import { loadPackage, Package } from '../../prototype/package';
 import { useAgenticRuntime } from '../sim/useAgenticRuntime';
 import { BodyBridge } from '../sim/bodyBridge';
+import { HumanPlayer } from '../sim/humanPlayer';
+import AgentChat from './AgentChat';
 import {
   currentProseStep,
   readWorldStateDocument,
@@ -199,6 +201,20 @@ function LoadedLocalGame({
   });
   // The seam for bodies (docs/13 §2): positions in before the agentic step, intents out after.
   const bridge = useMemo(() => agentic && new BodyBridge(agentic, world), [agentic, world]);
+  // The player's own body and voice in the agentic world: E beside an agent opens a chat.
+  const human = useMemo(() => agentic && new HumanPlayer(agentic, world), [agentic, world]);
+  const [chatOpen, setChatOpen] = useState(false);
+  /** Read by the key handler, whose closure outlives any one render. */
+  const chatRef = useRef(false);
+  const openChat = () => {
+    chatRef.current = true;
+    setChatOpen(true);
+  };
+  const closeChat = () => {
+    human?.leave();
+    chatRef.current = false;
+    setChatOpen(false);
+  };
   const gainCursor = useRef<{
     sequence: number;
     state: Pick<typeof state, 'tasks' | 'commerce' | 'clues' | 'balance' | 'storyTime'>;
@@ -524,20 +540,35 @@ function LoadedLocalGame({
         return;
       sprint.current = event.shiftKey;
       if (key in directions) {
-        if (world.inspect().dialogue) return;
+        // Talking to an agent holds the player in place, as an authored dialogue does.
+        if (world.inspect().dialogue || chatRef.current) return;
         event.preventDefault();
         if (!keys.current.has(key) && !flushTime()) return;
         keys.current.add(key);
       } else if (!event.repeat && key === 'e') {
         event.preventDefault();
-        if (world.inspect().dialogue) return;
+        if (world.inspect().dialogue || chatRef.current) return;
         stop();
+        // An authored interaction wins; an agent has none, so E beside one starts a chat.
+        const agent =
+          !watchingRef.current && !world.inspect().seated && !world.nearby().length
+            ? human?.adjacentAgent()
+            : undefined;
+        if (agent && human?.talkTo(agent)) {
+          openChat();
+          return;
+        }
         send(
           world.inspect().seated
             ? { type: 'stand' }
             : { type: 'interact', target: world.nearby()[0]?.id ?? '' },
         );
       } else if (key === 'escape') {
+        if (chatRef.current) {
+          event.preventDefault();
+          closeChat();
+          return;
+        }
         stop();
         send({ type: 'closeDialogue' });
       }
@@ -595,6 +626,7 @@ function LoadedLocalGame({
       // Bodies first, so the agents decide on where everyone stands this frame; their moves after,
       // so the stepping below walks them in the same frame (docs/13 §2).
       bridge?.syncIn();
+      human?.syncIn();
       agentic?.advance(quantum);
       bridge?.applyMoves();
       if (current.seated || current.dialogue) {
@@ -818,6 +850,12 @@ function LoadedLocalGame({
           .filter((e) => !world.seatUnavailable(e.id) && (!e.seat || !state.dialogue))
           .map((e) => e.id),
   );
+  // The agent E would talk to, lit the same way, since nothing authored marks it.
+  const talkable =
+    !watching && !state.seated && !state.dialogue && !chatOpen && !nearby.length
+      ? human?.adjacentAgent()
+      : undefined;
+  if (talkable) highlightedEntities.add(talkable);
   const seat = currentScene.entities.find((e) => e.id === state.seated?.entity);
   const sleep = sleepChoice ? world.sleepView(sleepChoice) : undefined;
   const visualPaused =
@@ -1086,6 +1124,7 @@ function LoadedLocalGame({
             </section>
           )}
           {saves.window}
+          {chatOpen && human && <AgentChat human={human} onClose={closeChat} />}
           <WaitPanel
             open={waitOpen || !!sleep}
             sleeping={!!sleep}
@@ -1189,9 +1228,21 @@ function LoadedLocalGame({
             }
             feedback={feedback && feedback !== '操作完成' ? feedback : undefined}
           >
+            {!state.dialogueTopic && active && human?.canTalkTo(active.id) && (
+              // An NPC the world file also defines has a mind as well as a script: chatting leaves
+              // the authored dialogue and opens the agent's conversation (docs/13 §2).
+              <button
+                disabled={watching || controlsBlocked}
+                onClick={() => {
+                  if (!send({ type: 'closeDialogue' })) return;
+                  if (human.talkTo(active.id)) openChat();
+                }}
+              >
+                闲聊
+              </button>
+            )}
             {activeNpcId && !state.dialogueTopic && (
               <>
-                <button disabled>闲聊（LLM 待接入）</button>
                 <button
                   onClick={() => {
                     if (!flushTime()) return;

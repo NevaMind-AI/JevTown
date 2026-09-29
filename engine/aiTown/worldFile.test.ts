@@ -215,21 +215,6 @@ describe('world state (docs/05 §5.3, docs/13 §1.4)', () => {
     expect(errors.join(' ')).not.toContain('over');
   });
 
-  test('the old spelling still loads, and the two together are an error', () => {
-    // docs/13 §1.8 item E.
-    const legacy = validateWorldFile(
-      file([ACTOR], { common_knowledge: 'word '.repeat(STATE_WORD_BUDGET + 1) }),
-      context(),
-    );
-    expect(legacy.errors.join(' ')).toContain('world_state is over');
-
-    const both = validateWorldFile(
-      file([ACTOR], { world_state: 'state: a', common_knowledge: 'state: b' }),
-      context(),
-    );
-    expect(both.errors.join(' ')).toContain('write only world_state');
-  });
-
   test('a world with none is fine — most worlds start with nothing to know', () => {
     const { errors } = validateWorldFile(file([ACTOR]), context());
 

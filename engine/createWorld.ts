@@ -6,7 +6,6 @@ import {
   createEntityArgs,
   subtractEntityAnchors,
   validateWorldFile,
-  worldStateOf,
 } from './aiTown/worldFile';
 import { CollisionLayer } from './aiTown/worldMap';
 
@@ -89,7 +88,7 @@ export function createWorldPlan(
 
   const subtracted = subtractEntityAnchors(staticCollision, worldFile, mapContext);
   const seed = worldFile.meta?.seed ?? options.fallbackSeed;
-  const worldState = worldStateOf(worldFile)?.trim() || undefined;
+  const worldState = worldFile.world_state?.trim() || undefined;
 
   const entityInputs = [];
   let mobileCreated = 0;
