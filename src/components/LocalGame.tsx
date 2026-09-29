@@ -30,6 +30,7 @@ import { useAgenticRuntime } from '../sim/useAgenticRuntime';
 import { BodyBridge } from '../sim/bodyBridge';
 import { HumanPlayer } from '../sim/humanPlayer';
 import AgentChat from './AgentChat';
+import { AgentOverhead, thinkingBodies, useAgentSpeech } from './AgentOverhead';
 import AgentDebug, { AGENT_DEBUG_ENABLED } from '../debug/AgentDebug';
 import {
   currentProseStep,
@@ -204,6 +205,7 @@ function LoadedLocalGame({
   const bridge = useMemo(() => agentic && new BodyBridge(agentic, world), [agentic, world]);
   // The player's own body and voice in the agentic world: E beside an agent opens a chat.
   const human = useMemo(() => agentic && new HumanPlayer(agentic, world), [agentic, world]);
+  const agentSpeech = useAgentSpeech(agentic);
   const [chatOpen, setChatOpen] = useState(false);
   /** Read by the key handler, whose closure outlives any one render. */
   const chatRef = useRef(false);
@@ -872,6 +874,22 @@ function LoadedLocalGame({
     saves.blocked ||
     (watching && !playing);
   const visualTime = state.time + frameMs;
+  /** Where an entity's body is drawn this frame, in tiles, partway through its current step. */
+  const actorPosition = (id: string) => {
+    const actor = state.entities[id];
+    const progress = actor.moving
+      ? Math.max(0, Math.min(1, 1 - (actor.moving.arrivesAt - visualTime) / stepMs))
+      : 0;
+    return {
+      x:
+        actor.position[0] +
+        ((actor.moving?.target.x ?? actor.position[0]) - actor.position[0]) * progress,
+      y:
+        actor.position[1] +
+        ((actor.moving?.target.y ?? actor.position[1]) - actor.position[1]) * progress,
+    };
+  };
+  const thinkingAgents = thinkingBodies(agentic);
   const target = state.moving?.target ?? state.player;
   const progress = state.moving
     ? Math.max(
@@ -1413,15 +1431,7 @@ function LoadedLocalGame({
                   </Container>
                 );
               const actor = state.entities[entity.id];
-              const progress = actor.moving
-                ? Math.max(0, Math.min(1, 1 - (actor.moving.arrivesAt - visualTime) / stepMs))
-                : 0;
-              const x =
-                actor.position[0] +
-                ((actor.moving?.target.x ?? actor.position[0]) - actor.position[0]) * progress;
-              const y =
-                actor.position[1] +
-                ((actor.moving?.target.y ?? actor.position[1]) - actor.position[1]) * progress;
+              const { x, y } = actorPosition(entity.id);
               const visual = entity.sprite;
               if (visual) {
                 const occupiedSeat = actor.activity?.seatedOn
@@ -1500,6 +1510,21 @@ function LoadedLocalGame({
                   orientation={actor.orientation}
                   isMoving={!!actor.moving && !visualPaused}
                   onClick={() => send({ type: 'interact', target: entity.id })}
+                />
+              );
+            })}
+            {currentScene.entities.map((entity) => {
+              const text = agentSpeech.get(entity.id);
+              const thinking = thinkingAgents.has(entity.id);
+              if (!text && !thinking) return null;
+              const { x, y } = actorPosition(entity.id);
+              return (
+                <AgentOverhead
+                  key={`overhead-${entity.id}`}
+                  x={x}
+                  y={y}
+                  text={text}
+                  thinking={thinking}
                 />
               );
             })}
