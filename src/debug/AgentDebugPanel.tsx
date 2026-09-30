@@ -1,5 +1,4 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { decider } from '../../agent/config';
 import { StoredMessage, TranscriptRow } from '../../agent/ports';
 import { InputArgs } from '../../engine/aiTown/inputs';
 import { AgenticRuntime } from '../sim/agenticRuntime';
@@ -46,7 +45,7 @@ export default function AgentDebugPanel({
         <div role="tablist" className="flex flex-1 gap-1">
           {(
             [
-              ['agents', `${decider()} 决策 · 对话`],
+              ['agents', 'Agent 决策 · 对话'],
               ['god', 'God 记录'],
             ] as const
           ).map(([id, label]) => (
