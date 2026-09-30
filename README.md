@@ -8,8 +8,8 @@ Jev Town is a game engine where the characters are driven by AI, not scripts. Ev
 world decides what to do next through two kinds of models working together:
 
 - **Jev**, a System One model, makes the fast, structured decisions: whether to seek someone out,
-  who to go to, where to wander, how long to wait. The engine offers the options; Jev chooses
-  within them, so an illegal move is never possible.
+  who to go to, where to wander, how long to wait. The engine offers the options; Jev chooses within
+  them, so an illegal move is never possible.
 - **An LLM** does the language work: conversations between agents, memory, and what each agent
   believes about the world.
 
@@ -19,8 +19,8 @@ never sees them. It is an MVP and still taking shape.
 
 ## Coming soon
 
-We are building a game on top of this engine: a pixel-art narrative world where every character
-you meet is a Jev-driven agent with a life of its own. Star the repository to follow along.
+We are building a game on top of this engine: a pixel-art narrative world where every character you
+meet is a Jev-driven agent with a life of its own. Star the repository to follow along.
 
 ## Installation
 
