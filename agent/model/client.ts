@@ -1,4 +1,5 @@
 import { ChatTrace, TraceEntry } from './trace';
+import type { PurposeName, PurposeResponse, ResultOf, VarsOf } from '../purposes/index.ts';
 
 /**
  * The browser's model client.
@@ -9,32 +10,11 @@ import { ChatTrace, TraceEntry } from './trace';
  * is also where the spend limit of docs/11 §4.4 lives, because a client that can be edited is not
  * a client that can enforce one.
  *
- * The shape deliberately matches what `server/model/llm.ts` exported, so the agent layer did not
- * have to change when the boundary moved.
+ * Model calls go by purpose (docs/14 §3.2): the tab names what it wants and sends what it knows,
+ * and never a prompt. There is no free-form chat or System One call left to make.
  */
 
-export interface LLMMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
 export type LLMUsage = { input?: number; output?: number; total?: number };
-
-export interface ChatCompletionBody {
-  messages: LLMMessage[];
-  model?: string;
-  max_tokens?: number;
-  temperature?: number;
-  stop?: string | string[];
-  trace?: ChatTrace;
-}
-
-export interface ChatCompletionResult {
-  content: string;
-  retries: number;
-  ms: number;
-  usage?: LLMUsage;
-}
 
 /** Where the proxy lives. Same origin in production; Vite proxies it in development. */
 const BASE = (import.meta as any).env?.VITE_MODEL_PROXY_URL ?? '/llm';
@@ -78,19 +58,30 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function chatCompletion(body: ChatCompletionBody): Promise<ChatCompletionResult> {
-  return await post<ChatCompletionResult>('/chat', body);
+/**
+ * A model call by purpose: its name and its vars, never a prompt (docs/14 §3.2).
+ *
+ * The server renders the request from a template registered under `agent/purposes/`, picks which
+ * kind of model answers, and parses the answer. What comes back is the purpose's result, already
+ * in its final shape. `provider` says which kind answered, for logging only.
+ */
+export async function runPurpose<P extends PurposeName>(
+  purpose: P,
+  vars: VarsOf<P>,
+  trace?: ChatTrace,
+): Promise<PurposeResponse<ResultOf<P>>> {
+  return await post<PurposeResponse<ResultOf<P>>>('/purpose', { purpose, vars, trace });
 }
 
 // ---------------------------------------------------------------- System One
 
 /**
- * The other kind of model call: a typed decision rather than text (docs/12).
+ * The shape of the other kind of model call: a typed decision rather than text (docs/12).
  *
  * A System One model takes a `state` and a map of named questions and answers each one with a
- * typed, calibrated value. It is not a chat model with a different body — it has no messages, no
- * completion and no streaming — so it gets its own endpoint here rather than a `provider` field on
- * `chatCompletion`, and its own route on the proxy, which still holds the key.
+ * typed, calibrated value. It has no messages, no completion and no streaming. The tab never
+ * makes one itself any more; these are the types the System One variants of `agent/purposes/`
+ * render and read, on the server.
  */
 
 export type SystemOneQuestion =
@@ -120,29 +111,6 @@ export type SystemOneAnswer =
     };
 
 export type SystemOneAnswers = Record<string, SystemOneAnswer>;
-
-export interface SystemOneBody {
-  /** A string, or an object or array of text. Never an image (the model is text-only). */
-  state: unknown;
-  questions: SystemOneQuestions;
-  model?: string;
-  /** Lets the proxy charge this call to a world's quota, as `/chat` does. */
-  worldId?: string;
-  trace?: ChatTrace;
-}
-
-export interface SystemOneResult {
-  answers: SystemOneAnswers;
-  /** The versioned id that actually answered, which an alias hides. Worth logging. */
-  model?: string;
-  usage?: LLMUsage;
-  retries: number;
-  ms: number;
-}
-
-export async function systemOne(body: SystemOneBody): Promise<SystemOneResult> {
-  return await post<SystemOneResult>('/systemone', body);
-}
 
 export async function fetchEmbeddingBatch(
   texts: string[],

@@ -1,19 +1,11 @@
-import { LLMMessage, chatCompletion } from './model/client';
+import { runPurpose } from './model/client';
 import { GameId } from '../engine/aiTown/ids';
 import { MAX_INTERACTION_TURNS } from '../engine/constants';
-import { ENVELOPE_INSTRUCTION, TARGET_ENVELOPE_INSTRUCTION } from '../engine/prose/contract';
-import { parseEnvelope } from '../engine/prose/envelope';
 import { parseStateDocument } from '../engine/prose/stateDocument';
-import {
-  PromptContext,
-  worldStateSection,
-  describe,
-  promptContextFor,
-  stateWritingSystemPrompt,
-  worldRulesSection,
-} from './promptContext';
+import { PromptContext, promptContextFor } from './promptContext';
+import { proseOf } from './purposes/sections';
 import { AgentContext } from './ports';
-import { StateUpdateOutcome, requestStateUpdate, sendStateUpdate } from './stateUpdate';
+import { StateUpdateOutcome, sendStateUpdate } from './stateUpdate';
 import { Tracer } from './model/tracing';
 
 /**
@@ -37,6 +29,8 @@ import { Tracer } from './model/tracing';
  * This is where a locked door becomes an open one, and it is the reason physics rides alongside
  * the prose — the same call that decides Alice forces the door must tell the pathfinder it no
  * longer blocks.
+ *
+ * The prompt and the envelope's parsing are the server's (`interaction.prop`, docs/14 §3.2).
  */
 async function interactWithProp(
   ctx: AgentContext,
@@ -44,25 +38,6 @@ async function interactWithProp(
   target: PromptContext,
   intent: string,
 ) {
-  const system = [
-    stateWritingSystemPrompt(actor, ''),
-    '',
-    // `behavior` rides along with the description here as it does everywhere else, and it has to:
-    // a prop writes no state of its own, so any rule about how this thing behaves is only ever
-    // read by the actor acting on it (docs/05 §6.2).
-    `In front of you: ${target.name}. ${describe(target)}`,
-    ...(target.state ? ['Its state right now:', target.state] : []),
-    ...(target.physics
-      ? [
-          target.physics.blocksMovement
-            ? 'Right now it is solid: nobody can get past it.'
-            : 'Right now it is not solid: people can get past it.',
-        ]
-      : []),
-    '',
-    TARGET_ENVELOPE_INSTRUCTION,
-  ].join('\n');
-
   // One call, one trace -- a prop makes no call of its own, so there is no exchange to group.
   const tracer = await Tracer.standalone({
     worldId: ctx.world.worldId,
@@ -71,22 +46,13 @@ async function interactWithProp(
     tags: ['interaction', 'prop'],
     metadata: { actorId: actor.entityId, targetId: target.entityId, intent },
   });
-  const { content } = await chatCompletion({
-    messages: [
-      { role: 'system', content: system },
-      {
-        role: 'user',
-        content: intent
-          ? `You came here meaning to: ${intent}. Do it, and write what you and it are like afterwards.`
-          : `Act on it, and write what you and it are like afterwards.`,
-      },
-    ],
-    max_tokens: 1200,
-    trace: tracer.generation('interaction.prop', { targetId: target.entityId }),
-  });
-  await tracer.close({ input: intent, output: content });
+  const { result: parsed } = await runPurpose(
+    'interaction.prop',
+    { actor: proseOf(actor), target: proseOf(target), intent },
+    tracer.generation('interaction.prop', { targetId: target.entityId }),
+  );
+  await tracer.close({ input: intent, output: parsed });
 
-  const parsed = parseEnvelope(content);
   const selfDocument = parsed.self.state
     ? parseStateDocument(parsed.self.state).conformance
     : undefined;
@@ -127,40 +93,36 @@ export interface ExchangeLine {
 }
 
 /**
- * One turn: `speaker` says one thing to `otherName`, given everything said so far.
+ * One turn: `speaker` says one thing to `otherName`, given everything said so far. The prompt is
+ * the server's (`interaction.turn`, docs/14 §3.2).
  *
- * World-level prose goes through the shared sections rather than an inlined variant. This was the
- * one prompt that phrased `world_rules` in its own words, which meant it was also the one prompt
- * that would have silently missed common knowledge (docs/05 §5.3).
+ * `intent` is what the agent came for, and only ever given on the exchange's first turn.
  */
 async function speakTurn(
   speaker: PromptContext,
   otherName: string,
   transcript: ExchangeLine[],
-  opening: string | undefined,
+  intent: string | undefined,
   trace: ReturnType<Tracer['generation']>,
 ): Promise<string> {
-  const system = [
-    `You are ${speaker.name}. ${describe(speaker)}`,
-    ...(speaker.state ? [speaker.state] : []),
-    ...worldRulesSection(speaker),
-    ...worldStateSection(speaker),
-    `You are speaking with ${otherName}.`,
-    'Say one thing. Keep it under 200 characters. Reply with the words you say and nothing else.',
-  ].join('\n');
-  const messages: LLMMessage[] = [
-    { role: 'system', content: system },
-    ...(opening ? [{ role: 'user' as const, content: opening }] : []),
-    ...transcript.map((line) => ({ role: 'user' as const, content: `${line.name}: ${line.text}` })),
-    { role: 'user' as const, content: `${speaker.name}:` },
-  ];
-  const { content } = await chatCompletion({ messages, max_tokens: 200, trace });
-  return content.trim();
+  const { result } = await runPurpose(
+    'interaction.turn',
+    {
+      speaker: proseOf(speaker),
+      otherName,
+      transcript: transcript.map(({ name, text }) => ({ name, text })),
+      intent,
+    },
+    trace,
+  );
+  return result;
 }
 
 /**
  * docs/05 §6.1's conclusion for one side: a single call that emits state, physics, memory and
- * reason together, re-asked once if the state runs over budget.
+ * reason together, re-asked once if the state runs over budget. The call, the re-ask and the
+ * parsing run on the server (`interaction.state`); a re-ask gets its own span there, named
+ * `interaction.state.reask.<n>`.
  */
 async function writeStateAfterExchange(
   ctx: AgentContext,
@@ -169,34 +131,19 @@ async function writeStateAfterExchange(
   transcript: ExchangeLine[],
   tracer: Tracer,
 ) {
-  const system = stateWritingSystemPrompt(side, ENVELOPE_INSTRUCTION);
-  let attempt = 0;
-  const outcome = await requestStateUpdate({
-    ask: async (retryHint) => {
-      const { content } = await chatCompletion({
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: `You just spoke with ${otherName}. It went like this.` },
-          ...transcript.map((line) => ({
-            role: 'user' as const,
-            content: `${line.name}: ${line.text}`,
-          })),
-          {
-            role: 'user',
-            content: retryHint ?? 'Rewrite your state now that the exchange is over.',
-          },
-        ],
-        max_tokens: 1200,
-        // Re-asks get their own span, so a trace shows how many attempts the envelope took.
-        trace: tracer.generation(
-          attempt === 0 ? 'interaction.state' : `interaction.state.reask.${attempt}`,
-          { entityId: side.entityId, tier: side.tier, attempt },
-        ),
-      });
-      attempt++;
-      return content;
+  const { result: outcome } = await runPurpose(
+    'interaction.state',
+    {
+      self: proseOf(side),
+      otherName,
+      transcript: transcript.map(({ name, text }) => ({ name, text })),
     },
-  });
+    tracer.generation('interaction.state', {
+      entityId: side.entityId,
+      tier: side.tier,
+      attempt: 0,
+    }),
+  );
   await sendStateUpdate(ctx, side.entityId, outcome);
 }
 
@@ -230,7 +177,7 @@ async function interactWithFixedActor(
       speaker,
       other.name,
       transcript,
-      turn === 0 && intent ? `You came here meaning to: ${intent}.` : undefined,
+      turn === 0 && intent ? intent : undefined,
       tracer.generation(`interaction.turn.${turn}`, {
         speaker: speaker.name,
         listener: other.name,

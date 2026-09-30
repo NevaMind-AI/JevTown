@@ -1,91 +1,17 @@
-import { LLMMessage, chatCompletion, fetchEmbedding } from './model/client';
+import { fetchEmbedding, runPurpose } from './model/client';
 import { GameId } from '../engine/aiTown/ids';
 import { AgentContext } from './ports';
 import { memoryStamp } from './storyClock';
-import {
-  ENVELOPE_INSTRUCTION,
-  STATE_REASK_LIMIT,
-  STATE_WORD_BUDGET,
-} from '../engine/prose/contract';
-import { EnvelopeUpdate, parseEnvelope } from '../engine/prose/envelope';
 import { Tracer } from './model/tracing';
-import { Conformance, StateDocument, parseStateDocument } from '../engine/prose/stateDocument';
-import { agentIdForPlayer, promptContextFor, stateWritingSystemPrompt } from './promptContext';
+import { agentIdForPlayer, promptContextFor } from './promptContext';
+import { proseOf } from './purposes/sections';
+import type { StateUpdateOutcome } from './purposes/stateWrite';
 import { calculateImportance, loadConversation } from './memory';
 
-export interface StateUpdateOutcome {
-  update: EnvelopeUpdate;
-  document?: StateDocument;
-  conformance?: Conformance;
-  /** Present only when the update survived: the document to write. */
-  state?: string;
-  reasks: number;
-  /** True when the update was discarded and the entity keeps its previous document. */
-  fellBack: boolean;
-  problems: string[];
-}
-
-/**
- * The re-ask loop of docs/08 §7 D2, as a pure function over an `ask` callback.
- *
- * It lives in an action rather than in an input handler because **Convex mutations cannot call
- * models**: a handler can reject or truncate but never re-ask. Length is the only thing worth
- * re-asking over — a missing section, an invented head-state or a document with no structure at
- * all are tolerated and recorded, because what an entity does with a malformed state document is
- * an observation rather than a bug (docs/05 §5.1 as amended).
- *
- * Taking `ask` as a parameter is what makes the loop testable without a model.
- */
-export async function requestStateUpdate(opts: {
-  ask: (retryHint?: string) => Promise<string>;
-  reaskLimit?: number;
-}): Promise<StateUpdateOutcome> {
-  const limit = opts.reaskLimit ?? STATE_REASK_LIMIT;
-  let reasks = 0;
-  let raw = await opts.ask();
-  let parsed = parseEnvelope(raw);
-  let problems = [...parsed.problems, ...parsed.self.problems];
-
-  for (;;) {
-    const state = parsed.self.state;
-    if (state === undefined) {
-      // No state in the envelope. Nothing to fall back *from* — the entity simply keeps what it
-      // had, and physics and memory in the same envelope still apply.
-      return { update: parsed.self, reasks, fellBack: false, problems };
-    }
-    const { document, conformance } = parseStateDocument(state);
-    conformance.reasks = reasks;
-    if (!conformance.overBudget) {
-      return {
-        update: parsed.self,
-        document,
-        conformance,
-        state,
-        reasks,
-        fellBack: false,
-        problems,
-      };
-    }
-    if (reasks >= limit) {
-      conformance.fellBack = true;
-      problems = [...problems, `still over ${STATE_WORD_BUDGET} words after ${reasks} re-ask(s)`];
-      return {
-        update: { ...parsed.self, state: undefined },
-        document,
-        conformance,
-        reasks,
-        fellBack: true,
-        problems,
-      };
-    }
-    reasks += 1;
-    raw = await opts.ask(
-      `That was ${conformance.budgetWordCount} words of prose, over the ${STATE_WORD_BUDGET}-word limit. Send the same state document again, shorter, keeping every section. The record blocks do not count toward the limit and must come back unchanged.`,
-    );
-    parsed = parseEnvelope(raw);
-    problems = [...problems, ...parsed.problems, ...parsed.self.problems];
-  }
-}
+// The re-ask loop runs on the server now, inside the state-writing purposes (docs/14 §3.2).
+// Re-exported for what already imports it from here.
+export { requestStateUpdate } from './purposes/stateWrite';
+export type { StateUpdateOutcome } from './purposes/stateWrite';
 
 /**
  * docs/05 §6.1: on conclusion, each side makes **one** call that emits its rewritten state, its
@@ -108,16 +34,6 @@ export async function updateStateAfterConversation(
   }
   const { player, otherPlayer } = data;
 
-  const transcript: LLMMessage[] = messages.map((message) => {
-    const author = message.author === player.id ? player : otherPlayer;
-    const recipient = message.author === player.id ? otherPlayer : player;
-    return {
-      role: 'user' as const,
-      content: `${author.name} to ${recipient.name}: ${message.text}`,
-    };
-  });
-
-  const system = stateWritingSystemPrompt(context, ENVELOPE_INSTRUCTION);
   // Same conversation id, so this lands in the same trace as the turns it is summarising -- the
   // state write is the last thing that happens to a conversation, not a separate event.
   const tracer = await Tracer.forConversation({
@@ -126,35 +42,21 @@ export async function updateStateAfterConversation(
     name: `${player.name} ↔ ${otherPlayer.name}`,
     metadata: { playerId, otherPlayerId: otherPlayer.id },
   });
-  let attempt = 0;
-  const outcome = await requestStateUpdate({
-    ask: async (retryHint) => {
-      const llmMessages: LLMMessage[] = [
-        { role: 'system', content: system },
-        {
-          role: 'user',
-          content: `You just finished a conversation with ${otherPlayer.name}. It went like this.`,
-        },
-        ...transcript,
-        {
-          role: 'user',
-          content:
-            retryHint ??
-            `Rewrite your state now that the conversation is over, and say what you will remember.`,
-        },
-      ];
-      const { content } = await chatCompletion({
-        messages: llmMessages,
-        max_tokens: 1200,
-        trace: tracer.generation(
-          attempt === 0 ? 'conversation.state' : `conversation.state.reask.${attempt}`,
-          { playerId, attempt },
-        ),
-      });
-      attempt++;
-      return content;
+  // The prompt, the re-ask and the parsing run on the server (`conversation.state`, docs/14
+  // §3.2). A re-ask gets its own span there, named `conversation.state.reask.<n>`.
+  const { result: outcome } = await runPurpose(
+    'conversation.state',
+    {
+      self: proseOf(context),
+      speaker: player.name,
+      listener: otherPlayer.name,
+      history: messages.map((message) => ({
+        fromSpeaker: message.author === player.id,
+        text: message.text,
+      })),
     },
-  });
+    tracer.generation('conversation.state', { playerId, attempt: 0 }),
+  );
 
   await sendStateUpdate(ctx, playerId, outcome);
   await storeConversationMemories(ctx, playerId, conversationId, otherPlayer, outcome, tracer);

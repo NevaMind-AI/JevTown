@@ -1,4 +1,4 @@
-import { parseImportance } from './memory';
+import { parseImportance } from './purposes/memoryImportance';
 
 describe('parseImportance', () => {
   test('reads the bare digit the prompt asks for', () => {

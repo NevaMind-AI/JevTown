@@ -19,7 +19,7 @@
 //     produce the state it is judging.
 //
 // Everything degrades to nothing when the keys are unset: `generation()` returns `undefined`,
-// which `chatCompletion` treats as "don't trace", and `close()` does no work.
+// which `runPurpose` treats as "don't trace", and `close()` does no work.
 
 import { recordTrace } from './client';
 import {
@@ -148,7 +148,7 @@ export class Tracer {
   }
 
   /**
-   * The `trace` to hand to `chatCompletion`, or `undefined` when tracing is off.
+   * The `trace` to hand to `runPurpose`, or `undefined` when tracing is off.
    *
    * The proxy exports a generation as it serves the completion it belongs to; the wrapper span
    * leaves on `close()`. Which is one more request than the old in-process batch made, and free:
@@ -169,13 +169,21 @@ export class Tracer {
   async close(summary?: {
     input?: unknown;
     output?: unknown;
+    /**
+     * Tags known only once the work is done, added to the ones the trace opened with -- which
+     * decider answered, say, now that the server rather than the tab chooses it (docs/14 §3.2).
+     */
+    tags?: string[];
     metadata?: Record<string, unknown>;
     level?: 'DEFAULT' | 'ERROR';
     statusMessage?: string;
   }): Promise<void> {
     if (!this.init) return;
+    const tags = summary?.tags?.length
+      ? [...(this.init.base.tags ?? []), ...summary.tags]
+      : this.init.base.tags;
     this.entries.push({
-      trace: { traceId: this.init.traceId, ...this.init.base },
+      trace: { traceId: this.init.traceId, ...this.init.base, tags },
       observation: {
         name: this.init.rootName,
         spanId: this.init.rootSpanId,

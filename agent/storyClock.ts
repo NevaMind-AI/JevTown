@@ -8,6 +8,9 @@
  * `storyTime` is seconds on the story's own calendar, not since the run began: the shipped world
  * starts at 64,800 — 18:00 on its first day (`prototype/content.ts`, `startTimeSeconds`). So the
  * day number here is a property of the content's calendar and not of how long anybody has played.
+ *
+ * The server imports this through `agent/purposes/` (docs/14 §3.2), and runs with type stripping
+ * and no build step. So it keeps to no imports, and to TypeScript that only needs erasing.
  */
 
 const SECONDS_PER_DAY = 86_400;

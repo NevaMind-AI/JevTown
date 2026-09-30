@@ -164,9 +164,11 @@ Today the client sends finished `messages`, so `/llm/chat` accepts any prompt at
 a general-purpose LLM endpoint with our key attached. The change:
 
 ```
-before:  POST /llm/chat  { messages: [...], max_tokens, model, trace }
-after:   POST /llm/chat  { worldId, purpose: 'conversation.continue', vars: {...}, trace }
+before:  POST /llm/chat     { messages: [...], max_tokens, model, trace }
+after:   POST /llm/purpose  { purpose: 'conversation.continue', vars: {...}, trace }
 ```
+
+The world travels in the lease headers of §3.3 rather than in the body.
 
 The server looks up the template registered for `purpose` and renders it from `vars`. It fixes the
 model and the token limit for that purpose, and requests structured output where the purpose has a
@@ -187,6 +189,21 @@ Three points about the move:
   the same path, and a change to an agent's prompt reaches both.
 - **The cost:** changing a prompt means redeploying the backend.
 
+**One route for every kind of model.** A purpose has one variant per kind of model that can answer
+it: a chat variant renders `messages` and parses text, and a System One variant renders `state` and
+`questions` and parses typed answers (`12`). Where a purpose has both, as the action decision does,
+a server setting picks one. The tab sends the same purpose and vars either way and cannot choose.
+That is why the route is `/llm/purpose` rather than one route per kind: a route per kind would put
+the choice back in the client.
+
+**The server parses.** It has to read the answer to check its shape anyway, so it returns the
+purpose's result already parsed, in one shape whichever variant answered. The response also names
+the `provider` that answered. The tab may log or show it but never branches on it. Parsing in the
+tab instead would mean parsing twice, and every new provider would need a client change.
+
+The registry lives in `agent/purposes/`, with explicit `.ts` imports so the server can import it
+without a build step (§4.3, option one). The first purpose is `memory.importance`.
+
 ### 3.3 Model calls require a world and a lease
 
 A model call is accepted only when the token owns `worldId` and the request carries that world's
@@ -198,6 +215,29 @@ a world and hold its lease, and it makes the per-owner accounting of §2.4 mean 
 The request is already typed (`SystemOneRequest`). Validate it at runtime against a schema, for
 example with zod, and reject anything else. The same caps as §3.1 apply to the number and size of
 questions.
+
+That check is a stopgap, and its weak point is that its limits have to be generic. The god's gate
+asks one question per document written in the batch, plus one (`agent/gateJev.ts`), so a large batch
+can pass any fixed cap on question count. The lasting fix is the same as §3.2: System One calls
+become purposes. That buys three things:
+
+- **The questions come from the server.** Today the client writes each question's `instructions` and
+  `criteria`, so it can ask anything of the model with our key attached.
+- **So does the fixed text in `state`.** The gate sends the same contracts
+  (`how_documents_must_be_written`, `what_the_world_state_is_for`) on every call. The server adds
+  them instead, so the payload shrinks and a caller cannot substitute its own rules.
+- **Answers are checked exactly.** The server knows the question keys and option labels it asked, so
+  it can reject an answer that does not match them.
+
+It is the lower priority of the two. System One returns probabilities, or a choice among the options
+it was given, and never free text, so it is not the general-purpose generator that §3.2 exists to
+close. The budgets and the lease requirement already bound what is left. The largest input, the
+world's documents and state, stays client-supplied either way, because the tab owns the world.
+
+There are two call sites: the action decision (`agent/decideJev.ts`) and the god's gate
+(`agent/gateJev.ts`). Both already have a chat counterpart (`agent/decide.ts`, and the chat gate in
+`agent/god.ts`), which becomes the other variant of the same purpose (§3.2). The deciders are then
+picked by server settings rather than by `VITE_ACTION_DECIDER` and `VITE_GOD_GATE_DECIDER`.
 
 ### 3.5 `/llm/trace`
 
@@ -395,8 +435,8 @@ read-only at its next heartbeat or flush, as §4.4 says.
 
 **Order with resume.** Once step 0 restores from `bootstrap`, the resend must come first: claim the
 lease, send the leftovers, then bootstrap and restore, then flush. Restoring first would leave the
-runtime a batch behind the stored version, and its first flush would conflict. Today
-`resolveWorld` bootstraps before `start()`, which is harmless only because nothing restores yet.
+runtime a batch behind the stored version, and its first flush would conflict. Today `resolveWorld`
+bootstraps before `start()`, which is harmless only because nothing restores yet.
 
 **What read-only means today.** Only that nothing more is stored. The older tab logs a console
 warning and keeps simulating, and it keeps calling models, which its owner's quota pays for. Telling
@@ -420,8 +460,10 @@ needs it too, and the rest builds on it.
 3. `POST /identity`, `worlds.owner_id`, `authorizeWorld`, and world IDs generated by the server
    (§1.2, §2.1, §2.3).
 4. Quotas by owner, and the process cap as a circuit breaker (§2.4, §3.6).
-5. Prompts as purposes (§3.2), one call site at a time. Only once every call site has moved can the
-   free-form `messages` path close.
+5. Prompts as purposes (§3.2), one call site at a time: a small chat purpose as the pilot, the other
+   chat call sites, then the two System One call sites (§3.4). Only once every call site has moved
+   can the free-form `/llm/chat` and `/llm/systemone` paths close, together with the generic checks
+   of §3.1 and §3.4.
 6. The lease requirement, `systemone` validation and trace binding (§3.3 to §3.5).
 7. Edge and provider limits, and the idle-world cleanup job (§3.6, §2.5), at deployment.
 

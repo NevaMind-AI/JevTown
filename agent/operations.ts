@@ -8,14 +8,14 @@ import {
 } from './conversation';
 import { assertNever } from '../engine/util/assertNever';
 import { DecisionManifest } from '../engine/aiTown/manifest';
-import { decisionSystemPrompt, idleFallback, parseDecision } from './decide';
-import { decisionFromAnswers, jevDecisionRequest } from './decideJev';
+import { idleFallback } from './decide';
 import { interactWithEntity } from './interact';
-import { chatCompletion, systemOne } from './model/client';
+import { runPurpose } from './model/client';
 import { Tracer } from './model/tracing';
 import { promptContextFor } from './promptContext';
+import { proseOf } from './purposes/sections';
+import { deciderOf } from './purposes/types';
 import { AgentContext } from './ports';
-import { decider } from './config';
 
 /**
  * The four things an agent can go away and do.
@@ -165,34 +165,23 @@ export async function agentDecide(
       worldId: ctx.world.worldId,
       key: `decision:${ctx.world.worldId}:${args.operationId}`,
       name: `${context.name} decides`,
-      tags: ['decision', `decider:${decider()}`],
+      tags: ['decision'],
       metadata: { playerId: args.playerId, agentId: args.agentId },
     });
-    // The two deciders of docs/12 §1. Same manifest, same trace shape, same `Decision` out --
-    // which is the whole point of the flag: they are comparable, and neither is load-bearing for
-    // the other. What differs is that the Jev decider returns no prose (docs/12 §2).
-    if (decider() === 'jev') {
-      const request = jevDecisionRequest(context, manifest);
-      const { answers } = await systemOne({
-        state: request.state,
-        questions: request.questions,
-        worldId: ctx.world.worldId,
-        trace: tracer.generation('agent.decide'),
-      });
-      ({ decision, problems } = decisionFromAnswers(answers, request));
-    } else {
-      const { content } = await chatCompletion({
-        messages: [
-          { role: 'system', content: decisionSystemPrompt(context, manifest) },
-          { role: 'user', content: 'What do you do next?' },
-        ],
-        max_tokens: 400,
-        trace: tracer.generation('agent.decide'),
-      });
-      ({ decision, problems } = parseDecision(content, manifest));
-    }
+    // The two deciders of docs/12 §1 are the two variants of one purpose, and the server setting
+    // `ACTION_DECIDER` picks between them (docs/14 §3.2). Same manifest, same `Decision` out --
+    // which is what keeps them comparable. What differs is that the Jev decider returns no prose
+    // (docs/12 §2).
+    const { result, provider } = await runPurpose(
+      'agent.decide',
+      { context: proseOf(context), manifest },
+      tracer.generation('agent.decide'),
+    );
+    ({ decision, problems } = result);
     await tracer.close({
       output: decision,
+      // Which decider answered is a tag, not metadata (docs/12 §2), and only the answer says.
+      tags: [`decider:${deciderOf(provider)}`],
       metadata: { action: decision.action, problems },
       ...(problems.length ? { level: 'ERROR' as const, statusMessage: problems.join('; ') } : {}),
     });

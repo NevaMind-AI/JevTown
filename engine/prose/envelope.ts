@@ -1,6 +1,6 @@
-import { MEMORY_WORD_BUDGET, REASON_WORD_BUDGET } from './contract';
-import { truncateWords } from './stateDocument';
-import { recordPatchOnly } from './worldState';
+import { MEMORY_WORD_BUDGET, REASON_WORD_BUDGET } from './contract.ts';
+import { truncateWords } from './stateDocument.ts';
+import { recordPatchOnly } from './worldState.ts';
 
 /**
  * The state-update envelope of docs/05 §6.1, and its nested §6.2 variant.

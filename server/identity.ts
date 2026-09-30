@@ -77,14 +77,14 @@ export function clientAddress(request: IncomingMessage): string {
 }
 
 /**
- * A fixed-window counter per key, in memory.
+ * A fixed-window meter per key, in memory.
  *
  * Deliberately crude. It forgets on restart and is not shared between instances, which is enough
- * for what it guards: minting identities by address (§1.4), and model calls by address as a
- * backstop behind the per-owner quota (§2.4).
+ * for what it guards: minting identities by address (§1.4), counted in hits, and model spend by
+ * address as a backstop behind the per-owner budget (§2.4, §3.6), counted in dollars.
  */
 export class WindowCounter {
-  private windows = new Map<string, { start: number; count: number }>();
+  private windows = new Map<string, { start: number; used: number }>();
   // Plain fields: the server runs with type stripping only, which has no parameter properties.
   private readonly limit: number;
   private readonly windowMs: number;
@@ -94,17 +94,31 @@ export class WindowCounter {
     this.windowMs = windowMs;
   }
 
-  /** Count one hit for `key`. `false` when the key is already at its limit, and nothing is counted. */
-  take(key: string): boolean {
+  private window(key: string) {
     const now = Date.now();
     if (this.windows.size > 10_000) this.sweep(now);
     let window = this.windows.get(key);
     if (!window || now - window.start >= this.windowMs) {
-      window = { start: now, count: 0 };
+      window = { start: now, used: 0 };
       this.windows.set(key, window);
     }
-    if (window.count >= this.limit) return false;
-    window.count += 1;
+    return window;
+  }
+
+  /** Whether `key` is at its limit for this window. */
+  over(key: string): boolean {
+    return this.window(key).used >= this.limit;
+  }
+
+  /** Count `amount` against `key`, for a cost known only after the fact. */
+  add(key: string, amount: number) {
+    this.window(key).used += amount;
+  }
+
+  /** Count one hit for `key`. `false` when the key is already at its limit, and nothing is counted. */
+  take(key: string): boolean {
+    if (this.over(key)) return false;
+    this.add(key, 1);
     return true;
   }
 

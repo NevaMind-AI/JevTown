@@ -7,6 +7,7 @@ import type {
   BootstrapResponse,
   CreateWorldResponse,
   LlmCallRecord,
+  ModelCallLease,
   SessionRequest,
   SessionResponse,
   WorldListResponse,
@@ -552,7 +553,7 @@ export async function readEvents(worldId: string, from: number, to: number) {
 export async function recordLlmCall(call: LlmCallRecord) {
   await db().query(
     'INSERT INTO llm_calls (owner_id, world_id, purpose, model, prompt_tokens,' +
-      ' completion_tokens, latency_ms, trace_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+      ' completion_tokens, latency_ms, trace_id, cost_usd) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
     [
       call.ownerId ?? null,
       call.worldId ?? null,
@@ -562,23 +563,68 @@ export async function recordLlmCall(call: LlmCallRecord) {
       call.completionTokens ?? null,
       call.latencyMs ?? null,
       call.traceId ?? null,
+      call.costUsd ?? 0,
     ],
   );
 }
 
 /**
- * Calls this owner has made in the trailing window, for the quota to read.
+ * What this owner's model calls cost over the trailing window, for the budget to read.
  *
- * By owner rather than by world: counted by world, a new world came with a fresh quota, and
- * creating one is free (docs/14 §2.4).
+ * By owner rather than by world: counted by world, a new world came with a fresh budget, and
+ * creating one is free (docs/14 §2.4). In dollars rather than calls (§3.6).
  */
-export async function callsInWindow(ownerId: string, windowMs: number): Promise<number> {
-  const result = await db().query<{ count: string }>(
-    'SELECT count(*)::text AS count FROM llm_calls WHERE owner_id = $1' +
+export async function spentInWindow(ownerId: string, windowMs: number): Promise<number> {
+  const result = await db().query<{ spent: number | null }>(
+    'SELECT sum(cost_usd) AS spent FROM llm_calls WHERE owner_id = $1' +
       " AND called_at > now() - ($2::bigint * interval '1 millisecond')",
     [ownerId, windowMs],
   );
-  return Number(result.rows[0]?.count ?? 0);
+  return Number(result.rows[0]?.spent ?? 0);
+}
+
+/** What every owner's calls cost over the trailing window: the global circuit breaker (§3.6). */
+export async function spentByEveryone(windowMs: number): Promise<number> {
+  const result = await db().query<{ spent: number | null }>(
+    'SELECT sum(cost_usd) AS spent FROM llm_calls' +
+      " WHERE called_at > now() - ($1::bigint * interval '1 millisecond')",
+    [windowMs],
+  );
+  return Number(result.rows[0]?.spent ?? 0);
+}
+
+/**
+ * Whether this lease is the one `worldId` stands under right now, and the world is `ownerId`'s.
+ *
+ * What a hosted model call has to show (docs/14 §3.3). Not cryptographic: it means a caller has
+ * to create a world and hold its lease, and an older tab that lost the lease stops spending.
+ */
+export async function holdsLease(ownerId: string, lease: ModelCallLease): Promise<boolean> {
+  const result = await db().query(
+    'SELECT 1 FROM worlds w JOIN world_sessions s ON s.world_id = w.id' +
+      ' WHERE w.id = $1 AND w.owner_id = $2 AND s.session_id = $3 AND s.generation = $4',
+    [lease.worldId, ownerId, lease.sessionId, lease.generation],
+  );
+  return Boolean(result.rowCount);
+}
+
+/**
+ * The trace ids among `traceIds` that this owner's own model calls used in the trailing window.
+ *
+ * `/llm/trace` exports only into those (docs/14 §3.5), so it cannot be used to flood Langfuse
+ * with traces no model call of ours ever belonged to.
+ */
+export async function knownTraceIds(
+  ownerId: string,
+  traceIds: string[],
+  windowMs: number,
+): Promise<Set<string>> {
+  const result = await db().query<{ trace_id: string }>(
+    'SELECT DISTINCT trace_id FROM llm_calls WHERE owner_id = $1 AND trace_id = ANY($2::text[])' +
+      " AND called_at > now() - ($3::bigint * interval '1 millisecond')",
+    [ownerId, traceIds, windowMs],
+  );
+  return new Set(result.rows.map((row) => row.trace_id));
 }
 
 // ---------------------------------------------------------------- embeddings cache

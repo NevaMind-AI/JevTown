@@ -2,6 +2,7 @@ import type {
   BatchRequest,
   BatchResponse,
   BootstrapResponse,
+  ModelCallLease,
   SessionResponse,
 } from '../../server/protocol';
 import { AgenticRuntime, AgenticRuntimeSnapshot } from './agenticRuntime';
@@ -138,6 +139,11 @@ export class SyncClient {
   }
   get version() {
     return this.storedVersion;
+  }
+  /** The lease this tab holds, for its model calls to show (docs/14 §3.3). */
+  get lease(): ModelCallLease | undefined {
+    if (this.readOnly || this.generation === 0) return undefined;
+    return { worldId: this.worldId, sessionId: this.sessionId, generation: this.generation };
   }
 
   private async post<T>(path: string, body: unknown): Promise<{ status: number; body: T }> {

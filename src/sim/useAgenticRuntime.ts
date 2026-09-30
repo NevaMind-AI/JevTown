@@ -5,6 +5,7 @@ import type { Content } from '../../prototype/content';
 import { IndexedDbOutbox, SyncClient } from './syncClient';
 import { resolveWorld } from './resolveWorld';
 import { serverFetch } from '../lib/identity';
+import { holdLease } from '../lib/lease';
 
 /**
  * The agentic world, attached to the tab that is already running a simulation.
@@ -111,7 +112,11 @@ function useAgenticSync(runtime: AgenticRuntime | undefined) {
         fetchImpl: serverFetch,
       });
       const world = await resolving;
-      if (!world || stopped) return;
+      if (!world) {
+        holdLease(undefined);
+        return;
+      }
+      if (stopped) return;
 
       const sync = new SyncClient({
         worldId: world.worldId,
@@ -139,8 +144,13 @@ function useAgenticSync(runtime: AgenticRuntime | undefined) {
       };
 
       await sync.start();
+      // Model calls have been waiting for this (docs/14 §3.3).
+      holdLease(sync.lease);
     };
-    void open().catch((error) => console.error('Could not open the world:', error));
+    void open().catch((error) => {
+      console.error('Could not open the world:', error);
+      holdLease(undefined);
+    });
 
     return () => {
       stopped = true;

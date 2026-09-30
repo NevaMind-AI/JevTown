@@ -1,4 +1,4 @@
-import { STATE_WORD_BUDGET } from './contract';
+import { STATE_WORD_BUDGET } from './contract.ts';
 
 /**
  * Parsing for the state document of docs/05 §5.1 (as amended by docs/08 §7 D1).

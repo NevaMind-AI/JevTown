@@ -31,27 +31,6 @@ export function mysteryGiftEnabled(): boolean {
   return setting('GOD_MYSTERY_GIFT') === '1';
 }
 
-/**
- * Which decider answers the *action* decision -- what to do next -- the chat model or Jev
- * (docs/12 §2). Named for the decision rather than for the agent, because it is one of several an
- * agent makes: `ACTION_DECIDER` is a sibling of whatever eventually chooses how state is written.
- *
- * A flag rather than a replacement, because the two are not equivalent — the Jev decider drops the
- * prose the chat one writes. Keeping both selectable is also what makes them comparable: same
- * manifest, same world, one variable.
- */
-export function decider(): 'llm' | 'jev' {
-  return setting('ACTION_DECIDER') === 'jev' ? 'jev' : 'llm';
-}
-
-/**
- * Which decider answers the god's stage-one gate -- the chat model or Jev (docs/12 §11).
- *
- * A sibling of `ACTION_DECIDER` and named the same way: for the decision, not for the agent that
- * makes it. It is deliberately not a god-wide flag. Stage two writes state documents and common
- * knowledge, which a System One model cannot do at all; only the gate is a judgement a typed
- * answer can carry, so only the gate is switchable.
- */
-export function godGateDecider(): 'llm' | 'jev' {
-  return setting('GOD_GATE_DECIDER') === 'jev' ? 'jev' : 'llm';
-}
+// `ACTION_DECIDER` and `GOD_GATE_DECIDER` were read here. They are the server's settings now: the
+// tab asks for a decision by purpose and does not choose which kind of model makes it
+// (docs/14 §3.2). See `agent/purposes/agentDecide.ts` and `agent/purposes/god.ts`.

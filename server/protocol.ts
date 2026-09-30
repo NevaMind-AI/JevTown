@@ -118,6 +118,19 @@ export interface LlmCallRecord {
   completionTokens?: number;
   latencyMs?: number;
   traceId?: string;
+  /** Estimated when the call was made, at the prices configured then (docs/14 §3.6). */
+  costUsd?: number;
+}
+
+/**
+ * The lease a tab holds, sent on every model call as headers (docs/14 §3.3):
+ * `X-World-Id`, `X-Session-Id` and `X-Generation`. A hosted server serves a model call only for a
+ * tab that holds its world's writer lease right now.
+ */
+export interface ModelCallLease {
+  worldId: string;
+  sessionId: string;
+  generation: number;
 }
 
 export type { StoreChange, AgentStoreSnapshot };

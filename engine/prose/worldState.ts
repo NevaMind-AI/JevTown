@@ -1,4 +1,4 @@
-import { budgetedText, parseStateDocument } from './stateDocument';
+import { budgetedText, parseStateDocument } from './stateDocument.ts';
 
 /**
  * Folding the world-state document's version chain (docs/13 §4).

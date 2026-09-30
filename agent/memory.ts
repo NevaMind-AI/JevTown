@@ -1,4 +1,5 @@
-import { ChatTrace, LLMMessage, chatCompletion, fetchEmbedding } from './model/client';
+import { ChatTrace, fetchEmbedding, runPurpose } from './model/client';
+import { DEFAULT_IMPORTANCE } from './purposes/memoryImportance';
 import { asyncMap } from '../engine/util/asyncMap';
 import { GameId } from '../engine/aiTown/ids';
 import { Tracer } from './model/tracing';
@@ -85,25 +86,10 @@ export async function rememberConversation(
     return;
   }
 
-  const llmMessages: LLMMessage[] = [
-    {
-      role: 'user',
-      content: `You are ${player.name}, and you just finished a conversation with ${otherPlayer.name}. I would
-      like you to summarize the conversation from ${player.name}'s perspective, using first-person pronouns like
-      "I," and add if you liked or disliked this interaction.`,
-    },
-  ];
   const authors = new Set<GameId<'players'>>();
   for (const message of messages) {
-    const author = message.author === player.id ? player : otherPlayer;
-    authors.add(author.id as GameId<'players'>);
-    const recipient = message.author === player.id ? otherPlayer : player;
-    llmMessages.push({
-      role: 'user',
-      content: `${author.name} to ${recipient.name}: ${message.text}`,
-    });
+    authors.add((message.author === player.id ? player.id : otherPlayer.id) as GameId<'players'>);
   }
-  llmMessages.push({ role: 'user', content: 'Summary:' });
   // The control path for agents with no prose state, but still the same conversation -- so it
   // joins the same trace as the turns rather than floating on its own.
   const tracer = await Tracer.forConversation({
@@ -113,11 +99,19 @@ export async function rememberConversation(
     startedAt: data.conversation.created,
     metadata: { playerId, agentId, otherPlayerId: otherPlayer.id },
   });
-  const { content } = await chatCompletion({
-    messages: llmMessages,
-    max_tokens: 500,
-    trace: tracer.generation('conversation.remember', { playerId }),
-  });
+  // The prompt is the server's (`conversation.remember`, docs/14 §3.2).
+  const { result: content } = await runPurpose(
+    'conversation.remember',
+    {
+      speaker: player.name,
+      listener: otherPlayer.name,
+      history: messages.map((message) => ({
+        fromSpeaker: message.author === player.id,
+        text: message.text,
+      })),
+    },
+    tracer.generation('conversation.remember', { playerId }),
+  );
   const description = `Conversation with ${otherPlayer.name} at ${new Date(
     data.conversation.created,
   ).toLocaleString()}: ${content}`;
@@ -204,63 +198,24 @@ function normalize(value: number, range: readonly [number, number]) {
   return (value - min) / (max - min);
 }
 
-// A 0-9 rating is a single token of content, but a budget of exactly 1 leaves no room for
-// anything the model puts *around* it -- a leading newline, `**7**`, a chat template's preamble.
-// Worse, our gateway answers a truncated completion with a fatal 400 rather than the standard
-// `finish_reason: "length"`, so overrunning by one token loses the whole action. Small enough to
-// stay cheap, generous enough that the digit always fits.
-const IMPORTANCE_MAX_TOKENS = 16;
-// Importance only ranks memories against each other. A rating we could not get or could not read
-// is worth a mid-scale guess -- never worth losing the memory it belongs to.
-const DEFAULT_IMPORTANCE = 5;
-
 /**
  * `trace` is optional because this is called from three places with very different context --
  * a conversation, a reflection, and a state write. Callers that have a tracer hand one over;
  * callers that don't get an untraced call rather than a trace with no meaningful parent.
+ *
+ * The prompt and the parsing live on the server now, as the `memory.importance` purpose
+ * (`agent/purposes/memoryImportance.ts`, docs/14 §3.2).
  */
 export async function calculateImportance(description: string, trace?: ChatTrace) {
-  let importanceRaw: string;
   try {
-    ({ content: importanceRaw } = await chatCompletion({
-      messages: [
-        {
-          role: 'user',
-          content: `On the scale of 0 to 9, where 0 is purely mundane (e.g., brushing teeth, making bed) and 9 is extremely poignant (e.g., a break up, college acceptance), rate the likely poignancy of the following piece of memory.
-      Memory: ${description}
-      Answer on a scale of 0 to 9. Respond with number only, e.g. "5"`,
-        },
-      ],
-      temperature: 1,
-      max_tokens: IMPORTANCE_MAX_TOKENS,
-      trace,
-    }));
+    const { result } = await runPurpose('memory.importance', { description }, trace);
+    return result;
   } catch (e) {
     // Every caller rates a memory it is about to write. Rethrowing here would take the memory
     // down with the rating, so the score degrades instead.
     console.error('Could not rate memory importance, using the default:', e);
     return DEFAULT_IMPORTANCE;
   }
-  return parseImportance(importanceRaw);
-}
-
-// The prompt asks for a bare digit and that is usually what comes back, but a wrapper like
-// `**7**` or `Rating: 7` still carries one. A long answer is a different matter: it tends to
-// restate the prompt ("on a scale of 0 to 9..."), whose first number is not the rating -- so it
-// is not trusted to contain one at all.
-export function parseImportance(raw: string): number {
-  const trimmed = raw.trim();
-  const found = /^\d+$/.test(trimmed)
-    ? trimmed
-    : trimmed.length <= 32
-      ? trimmed.match(/\d+/)?.[0]
-      : undefined;
-  if (found === undefined) {
-    console.debug('Could not parse memory importance from: ', raw);
-    return DEFAULT_IMPORTANCE;
-  }
-  // The scale is 0-9; a model that answers "10" still gets clamped onto it.
-  return Math.min(9, Math.max(0, Number(found)));
 }
 
 async function reflectOnMemories(ctx: AgentContext, playerId: GameId<'players'>) {
@@ -282,18 +237,6 @@ async function reflectOnMemories(ctx: AgentContext, playerId: GameId<'players'>)
   }
   console.debug('sum of importance score = ', sumOfImportanceScore);
   console.debug('Reflecting...');
-  const prompt = ['[no prose]', '[Output only JSON]', `You are ${name}, statements about you:`];
-  memories.forEach((m, idx) => {
-    prompt.push(`Statement ${idx}: ${m.description}`);
-  });
-  prompt.push('What 3 high-level insights can you infer from the above statements?');
-  prompt.push(
-    'Return in JSON format, where the key is a list of input statements that contributed to your insights and value is your insight. Make the response parseable by Typescript JSON.parse() function. DO NOT escape characters or include "\n" or white space in response.',
-  );
-  prompt.push(
-    'Example: [{insight: "...", statementIds: [1,2]}, {insight: "...", statementIds: [1]}, ...]',
-  );
-
   // A reflection belongs to no conversation -- it is drawn from a hundred of them -- so it gets
   // its own trace, keyed by the run rather than by anything in the world.
   const tracer = await Tracer.standalone({
@@ -303,20 +246,17 @@ async function reflectOnMemories(ctx: AgentContext, playerId: GameId<'players'>)
     tags: ['reflection'],
     metadata: { playerId, memories: memories.length, sumOfImportanceScore },
   });
-  const { content: reflection } = await chatCompletion({
-    messages: [
-      {
-        role: 'user',
-        content: prompt.join('\n'),
-      },
-    ],
-    trace: tracer.generation('memory.reflect', { playerId }),
-  });
-
   try {
-    const insights = JSON.parse(reflection) as { insight: string; statementIds: number[] }[];
+    // The prompt and the reading of its JSON are the server's (`memory.reflect`, docs/14 §3.2). An
+    // answer that is not an array of insights over these statements comes back as an error, and
+    // lands in the catch below as an unreadable reflection always has.
+    const { result: insights } = await runPurpose(
+      'memory.reflect',
+      { name, statements: memories.map((memory) => memory.description) },
+      tracer.generation('memory.reflect', { playerId }),
+    );
     const memoriesToSave = await asyncMap(insights, async (item) => {
-      const relatedMemoryIds = item.statementIds.map((idx: number) => memories[idx].id);
+      const relatedMemoryIds = item.statementIds.map((idx) => memories[idx].id);
       const importance = await calculateImportance(
         item.insight,
         tracer.generation('memory.importance', { playerId }),
@@ -344,10 +284,9 @@ async function reflectOnMemories(ctx: AgentContext, playerId: GameId<'players'>)
     await tracer.close({ output: memoriesToSave.map((m) => m.description) });
   } catch (e) {
     console.error('error saving or parsing reflection', e);
-    console.debug('reflection', reflection);
-    // An unparseable reflection is the interesting case, so the trace keeps the raw text.
+    // An unparseable reflection is the interesting case. Its raw text is in the server's
+    // `memory.reflect` generation, and why it could not be read is here.
     await tracer.close({
-      output: reflection,
       level: 'ERROR',
       statusMessage: e instanceof Error ? e.message : String(e),
     });
