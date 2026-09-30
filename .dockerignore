@@ -1,0 +1,8 @@
+# The Dockerfile copies only what the server needs; this keeps the build context small and keeps
+# secrets out of it.
+.git
+node_modules
+**/node_modules
+dist
+.prototype
+.env*

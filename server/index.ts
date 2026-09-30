@@ -204,6 +204,14 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
   const url = new URL(request.url ?? '/', 'http://localhost');
   if (request.method === 'OPTIONS') return send(response, 204, {});
 
+  // No token: a load balancer or a container health check asks this, and neither holds one. It
+  // says whether this server can do its job and nothing about any player. A hosted server without
+  // its database refuses every model call, so it is not ready.
+  if (url.pathname === '/health') {
+    const ready = storageReady || !HOSTED;
+    return send(response, ready ? 200 : 503, { ok: ready, hosted: HOSTED, storage: storageReady });
+  }
+
   if (url.pathname === '/identity') return handleIdentity(request, response);
 
   const owner = ownerOf(request);
@@ -661,8 +669,12 @@ try {
 
 async function openStorage() {
   if (!databaseUrl()) {
+    if (HOSTED) {
+      // It would refuse every model call and every storage route, so it could only look up.
+      console.error('HOSTED=1 needs DATABASE_URL: a hosted server cannot count spend without it.');
+      process.exit(1);
+    }
     console.log('No DATABASE_URL; running as a model proxy only.');
-    if (HOSTED) console.error('A hosted server without storage refuses every model call.');
     return;
   }
   try {
@@ -670,9 +682,12 @@ async function openStorage() {
     storageReady = true;
     console.log('Storage ready.');
   } catch (error) {
-    // A proxy that cannot reach its database is still a proxy. The storage routes answer 503
-    // until it can, which is a better failure than refusing to start.
     console.error(`Storage unavailable: ${(error as Error).message}`);
+    // A hosted server exits, so whatever restarts it tries again once the database is up. This
+    // runs once, so staying up would mean refusing every call until someone noticed.
+    if (HOSTED) process.exit(1);
+    // A local proxy that cannot reach its database is still a proxy. The storage routes answer
+    // 503, which is a better failure than refusing to start.
     return;
   }
   if (WORLD_IDLE_DAYS > 0) {

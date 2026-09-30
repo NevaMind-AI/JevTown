@@ -1,12 +1,18 @@
 # The browser owns the simulation (docs/11 §1), so there is no game server here. What runs
 # alongside the frontend is storage; the key-holding model proxy runs from `npm run proxy`.
-version: '3.8'
+#
+# Local play starts only `postgres` (`npm run db:up`). The `hosted` profile adds the hosted server
+# of docs/14 next to it, for a single machine that runs both (see server/README.md, "Deploying"):
+#
+#   docker compose --env-file .env.hosted --profile hosted up -d --build
 
 services:
   postgres:
     image: postgres:16-alpine
+    # Loopback only by default: the host's own processes reach it, the network does not. Docker's
+    # published ports bypass a Linux host firewall, and the default password is `dev`.
     ports:
-      - '${PGPORT:-5432}:5432'
+      - '${PGBIND:-127.0.0.1}:${PGPORT:-5432}:5432'
     environment:
       - POSTGRES_PASSWORD=${PGPASSWORD:-dev}
       - POSTGRES_DB=${PGDATABASE:-remaining_time}
@@ -14,8 +20,30 @@ services:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       start_period: 5s
+    # `no` locally, as before; a hosted `.env.hosted` sets `unless-stopped` to survive reboots.
+    restart: ${PG_RESTART:-no}
     volumes:
       - pgdata:/var/lib/postgresql/data
+
+  # `npm run server:start`, in a container (docs/14 §4.2). Only with `--profile hosted`.
+  server:
+    profiles: [hosted]
+    build: .
+    init: true
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - path: .env.hosted
+        required: false
+    environment:
+      # Over the compose network, to the service above. Set here so it always matches it; a
+      # password used in this URL must be URL-safe.
+      - DATABASE_URL=postgres://postgres:${PGPASSWORD:-dev}@postgres:5432/${PGDATABASE:-remaining_time}
+    ports:
+      - '${SERVER_BIND:-0.0.0.0}:${SERVER_PORT:-3001}:3001'
+    # The image's own HEALTHCHECK asks GET /health.
 
 volumes:
   pgdata:

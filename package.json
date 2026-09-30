@@ -2,6 +2,9 @@
   "name": "ai-town",
   "version": "0.0.0",
   "private": true,
+  "engines": {
+    "node": ">=22.6"
+  },
   "scripts": {
     "play:local": "npm-run-all --parallel proxy vite:local",
     "build:local": "vite build --mode memory",

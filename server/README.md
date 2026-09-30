@@ -24,18 +24,19 @@ is idempotent — the day there is a second migration file, it becomes a real or
 
 ## Endpoints
 
-| route                        | what it does                                              |
-| ---------------------------- | --------------------------------------------------------- |
-| `POST /llm/purpose`          | a model call by purpose: rendered, called and parsed here |
-| `POST /llm/embed`            | embeddings                                                |
-| `POST /llm/trace`            | observations the tab built but cannot export itself       |
-| `POST /identity`             | a new identity token for a browser that has none          |
-| `GET  /worlds`               | the caller's worlds, newest first                         |
-| `POST /worlds`               | create a world; returns the id to use                     |
-| `GET  /worlds/:id/bootstrap` | everything needed to resume, in one round trip            |
-| `POST /worlds/:id/session`   | claim or renew the writer lease                           |
-| `POST /worlds/:id/batches`   | take one batch, whole or not at all                       |
-| `GET  /worlds/:id/events`    | a range of the log                                        |
+| route                        | what it does                                                 |
+| ---------------------------- | ------------------------------------------------------------ |
+| `GET  /health`               | readiness, without a token; 503 while a hosted one has no DB |
+| `POST /llm/purpose`          | a model call by purpose: rendered, called and parsed here    |
+| `POST /llm/embed`            | embeddings                                                   |
+| `POST /llm/trace`            | observations the tab built but cannot export itself          |
+| `POST /identity`             | a new identity token for a browser that has none             |
+| `GET  /worlds`               | the caller's worlds, newest first                            |
+| `POST /worlds`               | create a world; returns the id to use                        |
+| `GET  /worlds/:id/bootstrap` | everything needed to resume, in one round trip               |
+| `POST /worlds/:id/session`   | claim or renew the writer lease                              |
+| `POST /worlds/:id/batches`   | take one batch, whole or not at all                          |
+| `GET  /worlds/:id/events`    | a range of the log                                           |
 
 ## Settings
 
@@ -84,17 +85,58 @@ One server, two strictnesses (docs/14 §4.2). The client always does the same th
 - **`HOSTED=1`** (`npm run server:start`): `/llm/*` and `/worlds/*` answer 401 without a token this
   server signed. The owner is a hash of the token; the token itself is never stored. A world another
   owner holds answers 404. `POST /worlds` ignores the client's id and makes its own. Budgets count
-  by owner, with a per-address backstop, and minting is rate-limited per address. Model calls are
-  refused when the database is down, since they could not be counted, and when the request does not
-  carry its world's current lease in `X-World-Id`, `X-Session-Id` and `X-Generation` (docs/14 §3.3),
-  so a tab that lost the lease to a newer one stops spending. `/llm/trace` exports only into traces
-  this owner's own model calls used in the last hour (§3.5).
+  by owner, with a per-address backstop, and minting is rate-limited per address. A hosted server
+  will not start without its database, and model calls are refused while it is down, since they
+  could not be counted, and when the request does not carry its world's current lease in
+  `X-World-Id`, `X-Session-Id` and `X-Generation` (docs/14 §3.3), so a tab that lost the lease to a
+  newer one stops spending. `/llm/trace` exports only into traces this owner's own model calls used
+  in the last hour (§3.5).
 
 `npm run play:remote` runs this frontend against the hosted server, with the URLs in `.env.remote`.
 
 The embeddings cache is shared by every world, so only `/llm/embed` writes it, from vectors the
 server fetched itself, and `bootstrap` no longer returns it. Blobs are keyed by the server's own
 hash of their content, and `bootstrap` returns only those the world refers to (docs/14 §2.2).
+
+## Deploying
+
+The hosted server ships as a container: `Dockerfile` at the root builds `npm run server:start`, and
+the `hosted` profile of `docker-compose.yml` runs it beside the `postgres` service on one machine.
+Local play is unaffected: `npm run db:up` still starts only `postgres`, and `npm run play:local`
+still runs this server and Vite on the host.
+
+On the machine, with Docker and a clone of the repository:
+
+```sh
+cp .env.example .env.hosted   # git-ignored; fill it in, see below
+docker compose --env-file .env.hosted --profile hosted up -d --build
+curl -s http://127.0.0.1:3001/health
+```
+
+`.env.hosted` is read twice: by compose, for `PGPASSWORD`, `PG_RESTART`, `SERVER_BIND` and
+`SERVER_PORT`, and by the server container, for everything else. At the least:
+
+```sh
+IDENTITY_SECRET=...            # e.g. `openssl rand -base64 32`; changing it orphans every world
+PGPASSWORD=...                 # URL-safe; compose builds DATABASE_URL from it
+PG_RESTART=unless-stopped      # so the database survives a reboot, as the server does
+MODEL_PROXY_ORIGIN=http://localhost:5173
+TRUST_PROXY=1                  # when TLS ends in a proxy in front, which it should
+LLM_API_URL=...                # and the rest of the provider keys, as in .env.example
+WORLD_IDLE_DAYS=30
+```
+
+`DATABASE_URL` is set by compose and points at the `postgres` service. `PGPASSWORD` takes effect
+only when the volume is first created; after that, changing it means changing it inside Postgres
+too.
+
+Tokens travel as bearer headers, so put TLS in front of port 3001 (a load balancer, or Caddy or
+nginx on the machine) and point `.env.remote` at that address. With a proxy on the same machine, set
+`SERVER_BIND=127.0.0.1` so 3001 is not reachable from outside. `GET /health` needs no token, for the
+load balancer's health check.
+
+To update: `git pull`, then the same `up` command. The schema applies itself on boot. Logs:
+`docker compose --profile hosted logs -f server`.
 
 ## Tests
 
